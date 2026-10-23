@@ -3,7 +3,6 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Mwi.SwissBowling.Api.Features.Identity;
 using Mwi.SwissBowling.Api.Features.Results;
-using Mwi.SwissBowling.Api.Features.Setup;
 using Mwi.SwissBowling.Api.Features.Standings;
 using Mwi.SwissBowling.Api.Persistence;
 using Mwi.SwissBowling.Contracts;

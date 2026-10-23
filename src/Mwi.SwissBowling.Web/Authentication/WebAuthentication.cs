@@ -2,7 +2,6 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Mwi.SwissBowling.Core.Authentication;
 using Mwi.SwissBowling.Core.Persistence;

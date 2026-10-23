@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Program = Mwi.SwissBowling.Api.Program;
 
 namespace Mwi.SwissBowling.IntegrationTests;
 
@@ -32,7 +33,9 @@ public sealed class ApiFactory(PostgresFixture fixture) : WebApplicationFactory<
     }
     public string Token(string subject, string[] roles, string audience = "swissbowling-api") => new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
     {
-        Issuer = Issuer, Audience = audience, Expires = DateTime.UtcNow.AddMinutes(5),
+        Issuer = Issuer,
+        Audience = audience,
+        Expires = DateTime.UtcNow.AddMinutes(5),
         SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsa) { KeyId = "integration-key" }, SecurityAlgorithms.RsaSha256),
         Claims = new Dictionary<string, object> { ["sub"] = subject, ["name"] = "Testkonto", ["realm_access"] = new Dictionary<string, object> { ["roles"] = roles } }
     });

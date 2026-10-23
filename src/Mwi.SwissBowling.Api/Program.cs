@@ -7,38 +7,43 @@ using Mwi.SwissBowling.Api.Features.Publication;
 using Mwi.SwissBowling.Api.Persistence;
 using Mwi.SwissBowling.Core.Hosting;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.AddOperationalDefaults();
-builder.Services.AddDbContextFactory<ApplicationDbContext>(options => options.UseNpgsql(
-    builder.Configuration.GetConnectionString("application") ?? throw new InvalidOperationException("ConnectionStrings:application is required.")));
-builder.Services.AddHealthChecks().AddCheck<DatabaseReadinessCheck<ApplicationDbContext>>("postgres", tags: ["ready"]);
-builder.Services.AddResultRecording(builder.Configuration);
-builder.Services.AddScoped<PublicationService>();
-builder.Services.AddScoped<PublicationQueries>();
-if (!DeploymentCommands.IsRequested(args)) builder.AddApiIdentity();
-var app = builder.Build();
-if (DeploymentCommands.IsRequested(args))
-{
-    await DeploymentCommands.ExecuteAsync(app, args);
-    return;
-}
-app.UseExceptionHandler();
-app.UseAuthentication();
-app.UseAuthorization();
-app.Use(async (context, next) =>
-{
-    if (!context.Request.Path.StartsWithSegments("/api/public")) context.Response.Headers.CacheControl = "no-store";
-    await next();
-});
-app.MapOperationalEndpoints();
-app.MapIdentityEndpoints();
-app.MapSetupEndpoints();
-app.MapResultEndpoints();
-app.MapStandingEndpoints();
-app.MapPublicationEndpoints();
-await app.RunAsync();
+namespace Mwi.SwissBowling.Api;
 
 public partial class Program
 {
     protected Program() { }
+
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+        builder.AddOperationalDefaults();
+        builder.Services.AddDbContextFactory<ApplicationDbContext>(options => options.UseNpgsql(
+            builder.Configuration.GetConnectionString("application") ?? throw new InvalidOperationException("ConnectionStrings:application is required.")));
+        builder.Services.AddHealthChecks().AddCheck<DatabaseReadinessCheck<ApplicationDbContext>>("postgres", tags: ["ready"]);
+        builder.Services.AddResultRecording(builder.Configuration);
+        builder.Services.AddScoped<PublicationService>();
+        builder.Services.AddScoped<PublicationQueries>();
+        if (!DeploymentCommands.IsRequested(args)) builder.AddApiIdentity();
+        var app = builder.Build();
+        if (DeploymentCommands.IsRequested(args))
+        {
+            await DeploymentCommands.ExecuteAsync(app, args);
+            return;
+        }
+        app.UseExceptionHandler();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.Use(async (context, next) =>
+        {
+            if (!context.Request.Path.StartsWithSegments("/api/public")) context.Response.Headers.CacheControl = "no-store";
+            await next();
+        });
+        app.MapOperationalEndpoints();
+        app.MapIdentityEndpoints();
+        app.MapSetupEndpoints();
+        app.MapResultEndpoints();
+        app.MapStandingEndpoints();
+        app.MapPublicationEndpoints();
+        await app.RunAsync();
+    }
 }
