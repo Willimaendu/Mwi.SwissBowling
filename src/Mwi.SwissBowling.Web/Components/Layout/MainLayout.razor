@@ -1,8 +1,30 @@
 @inherits LayoutComponentBase
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
-<header class="club-header">
-    <a class="wordmark" href="/"><span class="brand-mark" aria-hidden="true">9</span><span>SwissBowling<small>Willisau-Sursee</small></span></a>
-    <nav aria-label="Hauptnavigation"><a href="/meisterschaften">Meisterschaften</a><a href="/administration">Administration</a></nav>
-</header>
-<main id="main" class="page-shell">@Body</main>
-<footer class="site-footer">SwissBowling · Unterverband Willisau-Sursee · Gemeinsam kegeln.</footer>
+<div class="application-shell">
+    <header class="club-header">
+        <a class="wordmark" href="/" aria-label="SwissBowling · Startseite"><span class="brand-mark" aria-hidden="true">9</span><span>SwissBowling<small>Willisau-Sursee</small></span></a>
+        <span class="app-bar-caption">Meisterschaften &amp; Vereinsleben</span>
+        <a class="app-bar-link" href="/meisterschaften">Öffentliche Ranglisten <span aria-hidden="true">↗</span></a>
+    </header>
+    <aside class="app-sidebar" aria-label="Seitennavigation">
+        <details class="shell-navigation" open>
+            <summary>Navigation</summary>
+            <nav aria-label="Hauptnavigation">
+                <p class="navigation-label">Arbeitsbereiche</p>
+                <NavLink class="shell-nav-link" href="/meisterschaften" Match="NavLinkMatch.Prefix">
+                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20V10h4v10m2 0V4h4v16m2 0v-7h4v7" /></svg>
+                    <span>Meisterschaften<small>Ranglisten &amp; Resultate</small></span>
+                </NavLink>
+                <NavLink class="shell-nav-link" href="/administration" Match="NavLinkMatch.Prefix">
+                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z" /></svg>
+                    <span>Administration<small>Erfassung &amp; Verwaltung</small></span>
+                </NavLink>
+            </nav>
+        </details>
+        <div class="sidebar-note"><span class="eyebrow">Unser Verband</span><p>Gemeinsam kegeln.<br />Fair im Sport, verbunden im Klub.</p></div>
+    </aside>
+    <div class="application-content">
+        <main id="main" class="page-shell" tabindex="-1">@Body</main>
+        <footer class="site-footer"><span>SwissBowling · Unterverband Willisau-Sursee</span><span>Gemeinsam kegeln.</span></footer>
+    </div>
+</div>

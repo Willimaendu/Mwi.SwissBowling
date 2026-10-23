@@ -36,7 +36,6 @@ public static class OperationalDefaults
                 logging.IncludeFormattedMessage = false;
                 logging.IncludeScopes = false;
                 logging.ParseStateValues = false;
-                logging.AddOtlpExporter();
             });
         }
         return builder;

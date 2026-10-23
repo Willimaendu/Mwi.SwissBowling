@@ -37,6 +37,7 @@ public static class Program
             client.Timeout = TimeSpan.FromSeconds(15);
         }).ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { UseCookies = false, AllowAutoRedirect = false });
         builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 64 * 1024);
+        var contentSecurityPolicy = BffContentSecurityPolicy.Create(builder.Configuration["Authentication:Authority"]);
         var app = builder.Build();
         app.UseExceptionHandler();
         if (!app.Environment.IsDevelopment()) app.UseHsts();
@@ -46,7 +47,7 @@ public static class Program
             context.Response.Headers.XContentTypeOptions = "nosniff";
             context.Response.Headers.XFrameOptions = "DENY";
             context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-            context.Response.Headers.ContentSecurityPolicy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+            context.Response.Headers.ContentSecurityPolicy = contentSecurityPolicy;
             if (context.Request.Path.StartsWithSegments("/bff") || context.Request.Path.StartsWithSegments("/account") || context.Request.Path.StartsWithSegments("/administration"))
                 context.Response.Headers.CacheControl = "no-store";
             if (context.Request.Path.StartsWithSegments("/live"))

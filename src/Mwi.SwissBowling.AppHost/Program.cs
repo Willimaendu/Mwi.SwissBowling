@@ -14,7 +14,7 @@ public static class Program
         var certificatePath = builder.AddParameter("certificate-path");
         var certificatePassword = builder.AddParameter("certificate-password", secret: true);
 
-        var postgres = builder.AddPostgres("postgres", password: postgresPassword).WithImageTag("18").WithDataVolume();
+        var postgres = builder.AddPostgres("postgres", password: postgresPassword).WithImageTag("18").WithDataVolume().WithPgAdmin();
         var application = postgres.AddDatabase("application", "swissbowling");
         var webState = postgres.AddDatabase("webstate", "swissbowling_web");
         var identityServer = builder.AddPostgres("identitydb", identityUser, identityPassword).WithImageTag("18").WithDataVolume();
