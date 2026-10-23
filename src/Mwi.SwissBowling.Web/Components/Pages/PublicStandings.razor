@@ -1,0 +1,77 @@
+@page "/meisterschaften/{EventId:guid}"
+@inject IHttpClientFactory Clients
+@inject IHttpContextAccessor Context
+@inject IConfiguration Configuration
+<PageTitle>@(_event?.Name ?? "Rangliste") · SwissBowling</PageTitle>
+<HeadContent>
+    <meta name="description" content="Veröffentlichte Rangliste mit Holz, 9ern und 8ern, getrennt nach Spielerkategorie." />
+    <meta property="og:title" content="@($"{_event?.Name ?? "Rangliste"} · SwissBowling")" />
+    <meta property="og:description" content="Veröffentlichte Resultate des Unterverbands Willisau-Sursee." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="@($"{Origin}/meisterschaften/{EventId}")" />
+    <meta property="og:image" content="@($"{Origin}/social.svg")" />
+</HeadContent>
+<a class="back-link" href="/meisterschaften">← Alle Meisterschaften</a>
+@if (_notFound)
+{
+    <h1>Keine veröffentlichte Rangliste</h1><p>Diese Meisterschaft ist nicht vorhanden oder noch nicht freigegeben.</p>
+}
+else if (_error)
+{
+    <h1>Rangliste derzeit nicht erreichbar</h1><p role="alert">Bitte versuchen Sie es später erneut.</p>
+}
+else if (_event is not null)
+{
+    <header class="page-heading"><div><p class="eyebrow">Saison @_event.Season · @_event.Venue</p><h1>@_event.Name</h1><p class="muted">@_event.StartDate.ToString("dd.MM.yyyy") – @_event.EndDate.ToString("dd.MM.yyyy")</p></div><a class="button" href="@($"/meisterschaften/{EventId}")" data-enhance-nav="false">Aktualisieren</a></header>
+    @if (_event.UnderCorrection)
+    {
+        <div class="notice" role="status"><strong>In Korrektur</strong><p>Sie sehen den letzten veröffentlichten Stand. Änderungen erscheinen erst nach erneuter Freigabe.</p></div>
+    }
+    <nav class="category-links" aria-label="Spielerkategorien">
+        @foreach (var category in _event.Standings.Select(row => row.Category).Distinct()) { <a href="@($"#kategorie-{category}")">@CategoryName(category)</a> }
+    </nav>
+    @foreach (var category in _event.Standings.GroupBy(row => row.Category))
+    {
+        <section class="panel ranking-panel" id="@($"kategorie-{category.Key}")"><h2>@CategoryName(category.Key)</h2>
+            <div class="table-scroll" role="region" aria-label="@($"Rangliste {CategoryName(category.Key)}")" tabindex="0">
+                <table><caption>Veröffentlichte Einzelrangliste · Version @_event.Revision</caption><thead><tr><th scope="col">Rang</th><th scope="col">Name / Klub</th><th scope="col" class="number">Holz</th><th scope="col" class="number">9er</th><th scope="col" class="number">8er</th></tr></thead><tbody>
+                    @foreach (var row in category)
+                    {
+                        <tr><td class="rank">@row.Rank</td><td><strong>@row.Name</strong><span class="club-name">@(row.Club ?? "Ohne Klub")</span>@if (row.Interrupted) { <span class="partial-label">Abgebrochen · erspieltes Resultat</span> }</td><td class="number score">@row.Total</td><td class="number">@row.Nines</td><td class="number">@row.Eights</td></tr>
+                    }
+                </tbody></table>
+            </div>
+        </section>
+    }
+    <p class="muted">Veröffentlicht: @SwissTime(_event.PublishedAt) (Schweizer Zeit). Rangfolge: Holz, 9er, 8er; bei Gleichheit geteilter Rang.</p>
+}
+@code {
+    [Parameter] public Guid EventId { get; set; }
+    private PublicEventDto? _event;
+    private bool _notFound;
+    private bool _error;
+    private string Origin => (Configuration["Site:PublicOrigin"] ?? "https://localhost:7443").TrimEnd('/');
+    private static string CategoryName(PlayerCategory category) => category == PlayerCategory.Guest ? "Gäste" : $"Kategorie {category}";
+    private static string SwissTime(DateTimeOffset time) => TimeZoneInfo.ConvertTime(time, TimeZoneInfo.FindSystemTimeZoneById("Europe/Zurich")).ToString("dd.MM.yyyy HH:mm", CultureInfo.GetCultureInfo("de-CH"));
+    protected override async Task OnParametersSetAsync()
+    {
+        _error = false; _notFound = false; _event = null;
+        try
+        {
+            using var response = await Clients.CreateClient("api").GetAsync($"api/public/events/{EventId}");
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _notFound = true;
+                if (Context.HttpContext?.Response.HasStarted == false) Context.HttpContext.Response.StatusCode = 404;
+                return;
+            }
+            response.EnsureSuccessStatusCode();
+            _event = await response.Content.ReadFromJsonAsync<PublicEventDto>();
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            _error = true;
+            if (Context.HttpContext?.Response.HasStarted == false) Context.HttpContext.Response.StatusCode = 503;
+        }
+    }
+}

@@ -1,0 +1,12 @@
+@page "/administration"
+@using Mwi.SwissBowling.Web.Client.Features.Administration
+@inject IHttpContextAccessor Context
+<PageTitle>Administration · SwissBowling</PageTitle>
+<HeadContent><meta name="robots" content="noindex,nofollow" /></HeadContent>
+<header class="page-heading"><div><p class="eyebrow">Sportadministration · Nicht öffentlich</p><h1>Gut vorbereitet. Einfach erfassen.</h1></div>
+    @if (Context.HttpContext?.User.Identity?.IsAuthenticated == true)
+    {
+        <form action="/account/logout" method="post"><AntiforgeryToken /><button class="button" type="submit">Abmelden</button></form>
+    }
+</header>
+<AdminWorkspace @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />

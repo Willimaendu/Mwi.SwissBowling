@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "timezone": "Europe/Zurich",
+  "schedule": ["before 7am on Monday"],
+  "dependencyDashboard": true,
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "automerge": false,
+  "minimumReleaseAge": "3 days",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "minimumReleaseAge": "0 days"
+  },
+  "packageRules": [
+    {
+      "description": "Review .NET major upgrades explicitly; this application targets .NET 10.",
+      "matchManagers": ["nuget"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Keep ASP.NET Core and EF Core maintenance updates together.",
+      "matchManagers": ["nuget"],
+      "matchPackageNames": ["/^Microsoft\\.AspNetCore\\./", "/^Microsoft\\.EntityFrameworkCore/"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "ASP.NET Core and EF Core maintenance"
+    },
+    {
+      "matchPackageNames": ["/^Aspire\\./"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Aspire maintenance"
+    },
+    {
+      "matchPackageNames": ["/^OpenTelemetry\\./"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "OpenTelemetry maintenance"
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "pinDigests": true
+    }
+  ]
+}

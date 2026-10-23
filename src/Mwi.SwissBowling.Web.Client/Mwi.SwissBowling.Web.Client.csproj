@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <PropertyGroup>
+	<StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+  </PropertyGroup>
+  <ItemGroup>
+	<ProjectReference Include="../Mwi.SwissBowling.Contracts/Mwi.SwissBowling.Contracts.csproj" />
+	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+	<PackageReference Include="MudBlazor" />
+  </ItemGroup>
+</Project>

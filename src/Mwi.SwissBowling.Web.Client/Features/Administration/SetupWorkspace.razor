@@ -1,0 +1,61 @@
+@inject AdminApi Api
+<section class="panel"><h2>Stammdaten und Vorbereitung</h2><p>Saison, Spieler und Zuordnungen vor dem ersten Resultat vorbereiten. Danach sind saisonale Zuordnungen gesperrt.</p>
+@if (_error is not null) { <div class="notice error" role="alert">@_error</div> }
+@if (_message is not null) { <p class="notice" role="status">@_message</p> }
+<div class="setup-grid">
+<form @onsubmit="CreateSeasonAsync" @onsubmit:preventDefault><h3>Saison</h3><label for="season-year">Jahr</label><input id="season-year" type="number" min="1" max="9999" @bind="_year" required /><button class="button" disabled="@_busy">Saison anlegen</button><p>@string.Join(", ", Data.Seasons.Select(row => row.Year))</p></form>
+<form @onsubmit="CreateClubAsync" @onsubmit:preventDefault><h3>Klub</h3><label for="club-name">Name</label><input id="club-name" @bind="_clubName" maxlength="160" required /><label for="club-email">E-Mail (optional)</label><input id="club-email" type="email" @bind="_clubEmail" /><label for="club-phone">Telefon (optional)</label><input id="club-phone" type="tel" @bind="_clubPhone" /><button class="button" disabled="@_busy">Klub anlegen</button></form>
+<form @onsubmit="SavePlayerAsync" @onsubmit:preventDefault><h3>Spieler</h3><label for="edit-player">Neuer oder bestehender Spieler</label><select id="edit-player" value="@_editPlayerId" @onchange="ChoosePlayer"><option value="@Guid.Empty">Neuer Spieler</option>@foreach (var player in Data.Players) { <option value="@player.Id">@player.LastName @player.FirstName</option> }</select><label for="first-name">Vorname</label><input id="first-name" @bind="_firstName" maxlength="100" required /><label for="last-name">Nachname</label><input id="last-name" @bind="_lastName" maxlength="100" required /><label for="sfkv">SFKV-Nummer (für Gäste optional)</label><input id="sfkv" inputmode="numeric" @bind="_sfkv" /><label for="birth-date">Geburtsdatum (optional)</label><input id="birth-date" type="date" @bind="_birthDate" /><label for="player-email">E-Mail (optional)</label><input id="player-email" type="email" @bind="_playerEmail" /><label for="player-phone">Telefon (optional)</label><input id="player-phone" type="tel" @bind="_playerPhone" /><button class="button" disabled="@_busy">Spieler speichern</button></form>
+<form @onsubmit="AssignAsync" @onsubmit:preventDefault><h3>Saisonale Zuordnung</h3><label for="member-season">Saison</label><select id="member-season" @bind="_memberSeason"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in Data.Seasons) { <option value="@row.Id">@row.Year</option> }</select><label for="member-player">Spieler</label><select id="member-player" @bind="_memberPlayer"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in Data.Players) { <option value="@row.Id">@row.LastName @row.FirstName</option> }</select><label for="member-club">Klub</label><select id="member-club" @bind="_memberClub"><option value="@Guid.Empty">Ohne Klub</option>@foreach (var row in Data.Clubs) { <option value="@row.Id">@row.Name</option> }</select><label for="member-category">Kategorie</label><select id="member-category" @bind="_category">@foreach (var row in Enum.GetValues<PlayerCategory>()) { <option value="@row">@(row == PlayerCategory.Guest ? "Gäste" : row.ToString())</option> }</select><button class="button" disabled="@_busy">Zuordnung speichern</button></form>
+<form @onsubmit="CreateVenueAsync" @onsubmit:preventDefault><h3>Anlage</h3><label for="venue-name">Name</label><input id="venue-name" @bind="_venueName" maxlength="160" required /><label for="venue-address">Adresse</label><input id="venue-address" @bind="_venueAddress" maxlength="300" required /><label for="venue-lanes">Bahnnummern (durch Komma getrennt)</label><input id="venue-lanes" @bind="_lanes" required /><button class="button" disabled="@_busy">Anlage anlegen</button></form>
+<form @onsubmit="CreateAnnualAsync" @onsubmit:preventDefault><h3>Jahresmeisterschaft</h3><label for="annual-season">Saison</label><select id="annual-season" @bind="_annualSeason"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in Data.Seasons) { <option value="@row.Id">@row.Year</option> }</select><label for="annual-name">Name</label><input id="annual-name" @bind="_annualName" maxlength="160" required /><button class="button" disabled="@_busy">Jahresmeisterschaft anlegen</button></form>
+<form @onsubmit="CreateEventAsync" @onsubmit:preventDefault><h3>Einzelmeisterschaft</h3><label for="event-annual">Jahresmeisterschaft</label><select id="event-annual" @bind="_eventAnnual"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in Data.AnnualChampionships) { <option value="@row.Id">@row.Name</option> }</select><label for="event-name">Name</label><input id="event-name" @bind="_eventName" maxlength="160" required /><label for="event-venue">Anlage</label><select id="event-venue" @bind="_eventVenue"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in Data.Venues) { <option value="@row.Id">@row.Name</option> }</select><label for="event-start">Beginn</label><input id="event-start" type="date" @bind="_start" required /><label for="event-end">Ende</label><input id="event-end" type="date" @bind="_end" required /><label for="event-throws">Wurfzahl (optional)</label><input id="event-throws" type="number" min="1" @bind="_throws" /><button class="button" disabled="@_busy">Meisterschaft anlegen</button></form>
+</div>
+</section>
+@code {
+    [Parameter, EditorRequired] public SetupDto Data { get; set; } = default!;
+    [Parameter] public EventCallback Changed { get; set; }
+    private bool _busy;
+    private string? _error, _message;
+    private int _year = DateTime.Today.Year;
+    private string _clubName = "", _clubEmail = "", _clubPhone = "", _firstName = "", _lastName = "", _sfkv = "", _playerEmail = "", _playerPhone = "", _venueName = "", _venueAddress = "", _lanes = "1,2", _annualName = "", _eventName = "";
+    private Guid _editPlayerId, _memberSeason, _memberPlayer, _memberClub, _annualSeason, _eventAnnual, _eventVenue;
+    private PlayerCategory _category = PlayerCategory.Guest;
+    private DateOnly? _birthDate;
+    private DateOnly _start = DateOnly.FromDateTime(DateTime.Today), _end = DateOnly.FromDateTime(DateTime.Today);
+    private int? _throws;
+    private static string? Optional(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    private Task CreateSeasonAsync() => CreateAsync("seasons", new SeasonInput(_year));
+    private Task CreateClubAsync() => CreateAsync("clubs", new ClubInput(_clubName, Optional(_clubEmail), Optional(_clubPhone)));
+    private Task AssignAsync() => CreateAsync("members", new SeasonMemberInput(_memberSeason, _memberPlayer, _memberClub == Guid.Empty ? null : _memberClub, _category));
+    private Task CreateAnnualAsync() => CreateAsync("annual-championships", new AnnualChampionshipInput(_annualSeason, _annualName));
+    private Task CreateEventAsync() => CreateAsync("events", new EventInput(_eventAnnual, _eventName, _eventVenue, _start, _end, _throws));
+    private async Task CreateVenueAsync()
+    {
+        var parts = _lanes.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0 || parts.Any(part => !int.TryParse(part, out var number) || number <= 0)) { _error = "Bahnnummern müssen positive ganze Zahlen sein."; return; }
+        await CreateAsync("venues", new VenueInput(_venueName, _venueAddress, parts.Select(int.Parse).ToArray()));
+    }
+    private Task SavePlayerAsync() => ExecuteAsync(async () =>
+    {
+        var input = new PlayerInput(_firstName, _lastName, Optional(_sfkv), _birthDate, Optional(_playerEmail), Optional(_playerPhone));
+        if (_editPlayerId == Guid.Empty) await Api.PostAsync("setup/players", input);
+        else await Api.PutAsync($"setup/players/{_editPlayerId}", input);
+    });
+    private void ChoosePlayer(ChangeEventArgs args)
+    {
+        _editPlayerId = Guid.TryParse(args.Value?.ToString(), out var id) ? id : Guid.Empty;
+        var player = Data.Players.SingleOrDefault(row => row.Id == _editPlayerId);
+        _firstName = player?.FirstName ?? ""; _lastName = player?.LastName ?? ""; _sfkv = player?.SfkvNumber ?? "";
+        _birthDate = player?.DateOfBirth; _playerEmail = player?.Email ?? ""; _playerPhone = player?.Phone ?? "";
+    }
+    private Task CreateAsync(string path, object input) => ExecuteAsync(() => Api.PostAsync("setup/" + path, input));
+    private async Task ExecuteAsync(Func<Task> action)
+    {
+        _busy = true; _error = null; _message = null;
+        try { await action(); _message = "Gespeichert."; await Changed.InvokeAsync(); }
+        catch (ApiException exception) { _error = exception.Message; }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException) { _error = "Verbindung unterbrochen. Vor erneutem Absenden den gespeicherten Stand prüfen."; }
+        finally { _busy = false; }
+    }
+}

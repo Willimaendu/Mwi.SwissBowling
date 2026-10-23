@@ -1,0 +1,16 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+TestResults/
+playwright-report/
+**/playwright/.auth/
+*.user
+*.suo
+*.pfx
+*.p12
+*.pem
+.env
+.env.*
+!.env.example
+node_modules/

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Aspire.AppHost.Sdk" />
+  <PropertyGroup>
+	<OutputType>Exe</OutputType>
+	<IsAspireHost>true</IsAspireHost>
+	<AspireUseCliBundle>true</AspireUseCliBundle>
+	<UserSecretsId>mwi-swissbowling-apphost-development</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+	<PackageReference Include="Aspire.Hosting.AppHost" />
+	<PackageReference Include="Aspire.Hosting.PostgreSQL" />
+	<ProjectReference Include="../Mwi.SwissBowling.Api/Mwi.SwissBowling.Api.csproj" />
+	<ProjectReference Include="../Mwi.SwissBowling.Web/Mwi.SwissBowling.Web.csproj" />
+  </ItemGroup>
+</Project>

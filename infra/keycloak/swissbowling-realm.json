@@ -1,0 +1,80 @@
+{
+  "realm": "swissbowling",
+  "enabled": true,
+  "displayName": "SwissBowling – Willisau-Sursee",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "bruteForceProtected": true,
+  "passwordPolicy": "length(14) and notUsername and notEmail",
+  "smtpServer": {
+    "host": "${MAIL_HOST}", "port": "${MAIL_PORT}",
+    "from": "noreply@swissbowling.local", "fromDisplayName": "SwissBowling Entwicklung",
+    "auth": "false", "ssl": "false", "starttls": "false"
+  },
+  "roles": { "realm": [
+    { "name": "AdministrativeUser" },
+    { "name": "SystemAdministrator", "composite": true, "composites": { "realm": ["AdministrativeUser"] } },
+    { "name": "SportAdministrator", "composite": true, "composites": { "realm": ["AdministrativeUser"] } },
+    { "name": "ClubRepresentative" }, { "name": "Player" }
+  ] },
+  "browserFlow": "SwissBowling browser",
+  "authenticatorConfig": [
+    { "alias": "require-administrator-otp", "config": { "forceOtpRole": "AdministrativeUser", "defaultOtpOutcome": "skip" } }
+  ],
+  "authenticationFlows": [
+    {
+      "alias": "SwissBowling browser", "providerId": "basic-flow", "topLevel": true, "builtIn": false,
+      "authenticationExecutions": [
+        { "authenticator": "auth-cookie", "requirement": "ALTERNATIVE", "priority": 10, "authenticatorFlow": false },
+        { "flowAlias": "SwissBowling forms", "requirement": "ALTERNATIVE", "priority": 20, "authenticatorFlow": true }
+      ]
+    },
+    {
+      "alias": "SwissBowling forms", "providerId": "basic-flow", "topLevel": false, "builtIn": false,
+      "authenticationExecutions": [
+        { "authenticator": "auth-username-password-form", "requirement": "REQUIRED", "priority": 10, "authenticatorFlow": false },
+        { "authenticator": "auth-conditional-otp-form", "authenticatorConfig": "require-administrator-otp", "requirement": "REQUIRED", "priority": 20, "authenticatorFlow": false }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "swissbowling-web", "protocol": "openid-connect", "publicClient": false,
+      "secret": "${SWISSBOWLING_WEB_SECRET}", "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false, "serviceAccountsEnabled": false,
+      "redirectUris": ["https://localhost:7443/signin-oidc"],
+      "webOrigins": ["https://localhost:7443"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://localhost:7443/signout-callback-oidc"
+      },
+      "defaultClientScopes": ["profile", "email", "roles", "web-origins"],
+      "protocolMappers": [
+        {
+          "name": "api-audience", "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": { "included.custom.audience": "swissbowling-api", "access.token.claim": "true", "id.token.claim": "false" }
+        }
+      ]
+    },
+    { "clientId": "swissbowling-api", "protocol": "openid-connect", "bearerOnly": true }
+  ],
+  "users": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111", "username": "admin@swissbowling.local",
+      "email": "admin@swissbowling.local", "firstName": "Entwicklung", "lastName": "Administration",
+      "enabled": true, "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${SWISSBOWLING_DEV_PASSWORD}", "temporary": false }],
+      "requiredActions": ["CONFIGURE_TOTP"], "realmRoles": ["SystemAdministrator"]
+    },
+    {
+      "id": "22222222-2222-4222-8222-222222222222", "username": "sport@swissbowling.local",
+      "email": "sport@swissbowling.local", "firstName": "Entwicklung", "lastName": "Sportleitung",
+      "enabled": true, "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${SWISSBOWLING_DEV_PASSWORD}", "temporary": false }],
+      "requiredActions": ["CONFIGURE_TOTP"], "realmRoles": ["SportAdministrator"]
+    }
+  ]
+}
