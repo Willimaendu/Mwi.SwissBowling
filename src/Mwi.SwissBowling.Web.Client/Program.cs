@@ -11,7 +11,7 @@ public static class Program
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
         builder.Services.AddMudServices();
         builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-        builder.Services.AddScoped<AdminApi>();
+        builder.Services.AddScoped<IAdminApi, AdminApi>();
         await builder.Build().RunAsync();
     }
 }

@@ -1,5 +1,5 @@
 @page "/meisterschaften/{EventId:guid}"
-@inject IHttpClientFactory Clients
+@inject Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient Events
 @inject IHttpContextAccessor Context
 @inject IConfiguration Configuration
 <PageTitle>@(_event?.Name ?? "Rangliste") · SwissBowling</PageTitle>
@@ -58,15 +58,13 @@ else if (_event is not null)
         _error = false; _notFound = false; _event = null;
         try
         {
-            using var response = await Clients.CreateClient("api").GetAsync($"api/public/events/{EventId}");
-            if (response.StatusCode == HttpStatusCode.NotFound)
+            _event = await Events.ReadAsync(EventId);
+            if (_event is null)
             {
                 _notFound = true;
                 if (Context.HttpContext?.Response.HasStarted == false) Context.HttpContext.Response.StatusCode = 404;
                 return;
             }
-            response.EnsureSuccessStatusCode();
-            _event = await response.Content.ReadFromJsonAsync<PublicEventDto>();
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
         {

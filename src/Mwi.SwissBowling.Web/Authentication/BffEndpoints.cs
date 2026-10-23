@@ -11,7 +11,7 @@ public static class BffEndpoints
     public static void MapBffEndpoints(this WebApplication app)
     {
         app.MapGet("/account/login", (string? returnUrl) => Results.Challenge(
-            new AuthenticationProperties { RedirectUri = IsLocal(returnUrl) ? returnUrl : "/administration" }, [OpenIdConnectDefaults.AuthenticationScheme]));
+            new AuthenticationProperties { RedirectUri = BffRequestPolicy.IsLocalReturnUrl(returnUrl) ? returnUrl : "/administration" }, [OpenIdConnectDefaults.AuthenticationScheme]));
         app.MapPost("/account/logout", async (HttpContext context, IAntiforgery antiforgery) =>
         {
             await antiforgery.ValidateRequestAsync(context);
@@ -25,13 +25,10 @@ public static class BffEndpoints
         app.MapMethods("/bff/api/{**path}", ["GET", "POST", "PUT", "DELETE"], RelayAsync).RequireAuthorization("BffSession");
     }
 
-    private static bool IsLocal(string? value) => value is not null && value.StartsWith('/') && !value.StartsWith("//", StringComparison.Ordinal) && !value.Contains('\\');
-
     private static async Task RelayAsync(string path, HttpContext context, IAntiforgery antiforgery, IHttpClientFactory clients)
     {
         context.Response.Headers.CacheControl = "no-store";
-        var parts = path.Split('/');
-        if (parts.Length == 0 || parts.Any(part => part is "." or ".." || part.Contains('\\')) || parts[0] is not ("identity" or "setup" or "events"))
+        if (!BffRequestPolicy.IsAllowedApiPath(path))
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             return;

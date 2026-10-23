@@ -1,0 +1,30 @@
+@inherits SetupFormBase
+<form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+    <h3>Spieler</h3>
+    <label for="edit-player">Neuer oder bestehender Spieler</label><select id="edit-player" value="@_id" @onchange="ChoosePlayer"><option value="@Guid.Empty">Neuer Spieler</option>@foreach (var player in Data.Players) { <option value="@player.Id">@player.LastName @player.FirstName</option> }</select>
+    <label for="first-name">Vorname</label><input id="first-name" @bind="_firstName" maxlength="100" required />
+    <label for="last-name">Nachname</label><input id="last-name" @bind="_lastName" maxlength="100" required />
+    <label for="sfkv">SFKV-Nummer (für Gäste optional)</label><input id="sfkv" inputmode="numeric" @bind="_sfkv" />
+    <label for="birth-date">Geburtsdatum (optional)</label><input id="birth-date" type="date" @bind="_birthDate" />
+    <label for="player-email">E-Mail (optional)</label><input id="player-email" type="email" @bind="_email" />
+    <label for="player-phone">Telefon (optional)</label><input id="player-phone" type="tel" @bind="_phone" />
+    <button class="button" disabled="@Busy">Spieler speichern</button>
+</form>
+@code {
+    private Guid _id;
+    private string _firstName = "", _lastName = "", _sfkv = "", _email = "", _phone = "";
+    private DateOnly? _birthDate;
+    private Task SaveAsync() => Execute(async () =>
+    {
+        var input = new PlayerInput(_firstName, _lastName, Optional(_sfkv), _birthDate, Optional(_email), Optional(_phone));
+        if (_id == Guid.Empty) await Api.PostAsync("setup/players", input);
+        else await Api.PutAsync($"setup/players/{_id}", input);
+    });
+    private void ChoosePlayer(ChangeEventArgs args)
+    {
+        _id = Guid.TryParse(args.Value?.ToString(), out var id) ? id : Guid.Empty;
+        var player = Data.Players.SingleOrDefault(row => row.Id == _id);
+        _firstName = player?.FirstName ?? ""; _lastName = player?.LastName ?? ""; _sfkv = player?.SfkvNumber ?? "";
+        _birthDate = player?.DateOfBirth; _email = player?.Email ?? ""; _phone = player?.Phone ?? "";
+    }
+}

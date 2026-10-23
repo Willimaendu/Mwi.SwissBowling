@@ -1,4 +1,4 @@
-@inject AdminApi Api
+@inject IAdminApi Api
 <div class="admin-workspace">
     @if (_error is not null) { <div class="notice error" role="alert">@_error <a href="/account/login?returnUrl=/administration" target="_blank" rel="noopener">Erneut anmelden</a></div> }
     @if (_loading) { <p role="status">Arbeitsbereich wird geladen …</p> }

@@ -8,7 +8,6 @@
     <Project Path="src/Mwi.SwissBowling.Web/Mwi.SwissBowling.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Mwi.SwissBowling.BrowserTests/Mwi.SwissBowling.BrowserTests.csproj" />
     <Project Path="tests/Mwi.SwissBowling.IntegrationTests/Mwi.SwissBowling.IntegrationTests.csproj" />
     <Project Path="tests/Mwi.SwissBowling.UnitTests/Mwi.SwissBowling.UnitTests.csproj" />
   </Folder>

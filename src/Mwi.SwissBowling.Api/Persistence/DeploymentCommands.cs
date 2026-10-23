@@ -12,20 +12,24 @@ public static class DeploymentCommands
     public static async Task ExecuteAsync(WebApplication app, string[] args)
     {
         await using var scope = app.Services.CreateAsyncScope();
-        var database = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
         var clock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
         if (args.Contains("--migrate", StringComparer.Ordinal))
+        {
+            await using var database = await factory.CreateDbContextAsync();
             await SchemaDeployment.ApplyAsync(database, typeof(ApplicationDbContext).Assembly, "Mwi.SwissBowling.Api.Persistence.Migrations.");
+        }
         else if (args.Contains("--seed-demo", StringComparer.Ordinal))
         {
             if (!app.Environment.IsDevelopment()) throw new InvalidOperationException("Demo data is allowed only in Development.");
-            await DemoSeeder.SeedAsync(database, clock);
+            await DemoSeeder.SeedAsync(factory, clock);
         }
-        else await BootstrapAsync(app.Configuration, database, args, clock);
+        else await BootstrapAsync(app.Configuration, factory, args, clock);
     }
 
-    private static async Task BootstrapAsync(IConfiguration configuration, ApplicationDbContext database, string[] args, TimeProvider clock)
+    private static async Task BootstrapAsync(IConfiguration configuration, IDbContextFactory<ApplicationDbContext> factory, string[] args, TimeProvider clock)
     {
+        await using var database = await factory.CreateDbContextAsync();
         var index = Array.IndexOf(args, "--bootstrap-admin");
         if (index < 0 || index + 1 >= args.Length) throw new InvalidOperationException("Provide the immutable Keycloak subject after --bootstrap-admin.");
         var subject = args[index + 1];

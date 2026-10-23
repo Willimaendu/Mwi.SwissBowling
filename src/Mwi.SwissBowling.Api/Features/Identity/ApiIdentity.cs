@@ -45,14 +45,15 @@ public static class ApiIdentity
 
 public sealed class ApprovedAdministratorRequirement : IAuthorizationRequirement;
 
-public sealed class ApprovedAdministratorHandler(ApplicationDbContext database) : AuthorizationHandler<ApprovedAdministratorRequirement>
+public sealed class ApprovedAdministratorHandler(IDbContextFactory<ApplicationDbContext> factory) : AuthorizationHandler<ApprovedAdministratorRequirement>
 {
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, ApprovedAdministratorRequirement requirement)
     {
         var subject = context.User.FindFirstValue("sub");
         var issuer = context.User.FindFirstValue("iss");
-        if (subject is not null && issuer is not null && context.User.HasAdministratorRole() &&
-            await database.Accounts.AnyAsync(account => account.Subject == subject && account.Issuer == issuer && account.IsApproved))
+        if (subject is null || issuer is null || !context.User.HasAdministratorRole()) return;
+        await using var database = await factory.CreateDbContextAsync();
+        if (await database.Accounts.AnyAsync(account => account.Subject == subject && account.Issuer == issuer && account.IsApproved))
             context.Succeed(requirement);
     }
 }

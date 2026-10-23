@@ -1,4 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>360a66d9-1dd7-4610-9eb9-79c19023c90c</UserSecretsId>
+  </PropertyGroup>
   <ItemGroup>
 	<ProjectReference Include="../Mwi.SwissBowling.Core/Mwi.SwissBowling.Core.csproj" />
 	<ProjectReference Include="../Mwi.SwissBowling.Contracts/Mwi.SwissBowling.Contracts.csproj" />

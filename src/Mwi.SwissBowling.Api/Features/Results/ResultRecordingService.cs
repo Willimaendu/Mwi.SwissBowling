@@ -9,10 +9,11 @@ using Mwi.SwissBowling.Core.Http;
 
 namespace Mwi.SwissBowling.Api.Features.Results;
 
-public sealed class ResultRecordingService(ApplicationDbContext database, TimeProvider clock, IOptions<EditingLeaseOptions> options)
+public sealed class ResultRecordingService(IDbContextFactory<ApplicationDbContext> factory, TimeProvider clock, IOptions<EditingLeaseOptions> options)
 {
     public async Task<LeaseDto> AcquireAsync(Guid eventId, Guid playerId, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
+        await using var database = await factory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
         var championship = await EventAccess.LockAsync(database, eventId, cancellationToken);
         EventAccess.RequireEditable(championship);
@@ -31,9 +32,10 @@ public sealed class ResultRecordingService(ApplicationDbContext database, TimePr
 
     public async Task<LeaseDto> RenewAsync(Guid eventId, Guid playerId, Guid token, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
+        await using var database = await factory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
         EventAccess.RequireEditable(await EventAccess.LockAsync(database, eventId, cancellationToken));
-        var lease = await RequireOwnedLeaseAsync(eventId, playerId, token, user, cancellationToken);
+        var lease = await RequireOwnedLeaseAsync(database, eventId, playerId, token, user, cancellationToken);
         lease.ExpiresAt = clock.GetUtcNow().AddSeconds(options.Value.DurationSeconds);
         await database.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -42,12 +44,13 @@ public sealed class ResultRecordingService(ApplicationDbContext database, TimePr
 
     public async Task ReleaseAsync(Guid eventId, Guid playerId, Guid token, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
+        await using var database = await factory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
         await EventAccess.LockAsync(database, eventId, cancellationToken);
         var lease = await database.Set<EditingLease>().FindAsync([eventId, playerId], cancellationToken);
         if (lease is not null)
         {
-            if (!Owned(lease, token, user)) throw new RequestRejectedException(409, "Diese Bearbeitungssperre gehört nicht zu Ihrer Sitzung.");
+            if (!EditingLeaseRules.IsOwnedBy(lease, token, user)) throw new RequestRejectedException(409, "Diese Bearbeitungssperre gehört nicht zu Ihrer Sitzung.");
             database.Remove(lease);
             await database.SaveChangesAsync(cancellationToken);
         }
@@ -56,12 +59,13 @@ public sealed class ResultRecordingService(ApplicationDbContext database, TimePr
 
     public async Task<long> SaveAsync(Guid eventId, Guid playerId, ResultInput input, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
+        await using var database = await factory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
         var championship = await EventAccess.LockAsync(database, eventId, cancellationToken);
         EventAccess.RequireEditable(championship);
         var validation = ScoreRules.Validate(input, championship.MaximumThrows);
         if (validation is not null) throw new RequestRejectedException(400, validation);
-        await RequireOwnedLeaseAsync(eventId, playerId, input.LeaseToken, user, cancellationToken);
+        await RequireOwnedLeaseAsync(database, eventId, playerId, input.LeaseToken, user, cancellationToken);
         var seasonId = await EventAccess.SeasonIdAsync(database, championship, cancellationToken);
         var seasons = await database.Seasons.FromSqlInterpolated($"SELECT * FROM \"Seasons\" WHERE \"Id\" = {seasonId} FOR UPDATE").ToListAsync(cancellationToken);
         var season = seasons.Single();
@@ -80,12 +84,10 @@ public sealed class ResultRecordingService(ApplicationDbContext database, TimePr
         return result.Version;
     }
 
-    private async Task<EditingLease> RequireOwnedLeaseAsync(Guid eventId, Guid playerId, Guid token, ClaimsPrincipal user, CancellationToken cancellationToken)
+    private async Task<EditingLease> RequireOwnedLeaseAsync(ApplicationDbContext database, Guid eventId, Guid playerId, Guid token, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
         var lease = await database.Set<EditingLease>().FindAsync([eventId, playerId], cancellationToken);
-        if (lease is null || !Owned(lease, token, user) || lease.ExpiresAt <= clock.GetUtcNow()) throw new RequestRejectedException(409, "Die Bearbeitungssperre ist abgelaufen oder gehört nicht zu Ihrer Sitzung.");
-        return lease;
+        return EditingLeaseRules.RequireActiveOwner(lease, token, user, clock.GetUtcNow());
     }
-    private static bool Owned(EditingLease lease, Guid token, ClaimsPrincipal user) => lease.Token == token && lease.Subject == user.Subject() && lease.Issuer == user.Issuer();
     private LeaseDto ToDto(EditingLease lease) => new(lease.Token, lease.ExpiresAt, options.Value.RenewalSeconds);
 }

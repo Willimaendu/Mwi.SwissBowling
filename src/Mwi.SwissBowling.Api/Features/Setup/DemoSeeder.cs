@@ -6,9 +6,10 @@ namespace Mwi.SwissBowling.Api.Features.Setup;
 
 public static class DemoSeeder
 {
-    public static async Task SeedAsync(ApplicationDbContext database, TimeProvider clock)
+    public static async Task SeedAsync(IDbContextFactory<ApplicationDbContext> factory, TimeProvider clock, CancellationToken cancellationToken = default)
     {
-        if (await database.Seasons.AnyAsync()) throw new InvalidOperationException("Demo data requires an empty application database.");
+        await using var database = await factory.CreateDbContextAsync(cancellationToken);
+        if (await database.Seasons.AnyAsync(cancellationToken)) throw new InvalidOperationException("Demo data requires an empty application database.");
         var season = new Season { Id = Guid.NewGuid(), Year = clock.GetUtcNow().Year };
         var club = new Club { Id = Guid.NewGuid(), Name = "Demoklub Nord" };
         var venue = new Venue { Id = Guid.NewGuid(), Name = "Demoanlage", Address = "Fiktive Beispieladresse" };
@@ -27,6 +28,6 @@ public static class DemoSeeder
             StartDate = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime), EndDate = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime), MaximumThrows = 100
         });
         database.Audit("DevelopmentDemoSeeded", season.Id.ToString(), "development-command", "explicit-demo-seed", clock.GetUtcNow());
-        await database.SaveChangesAsync();
+        await database.SaveChangesAsync(cancellationToken);
     }
 }

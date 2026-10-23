@@ -11,8 +11,7 @@ public sealed class PublicationTests(PostgresFixture fixture)
 {
     private async Task SaveAsync(Scenario scenario, int total, int nines, int eights, long version)
     {
-        await using var database = fixture.CreateContext();
-        var service = fixture.Recording(database);
+        var service = fixture.Recording();
         var actor = PostgresFixture.Actor("editor");
         var lease = await service.AcquireAsync(scenario.EventId, scenario.PlayerIds[0], actor, default);
         await service.SaveAsync(scenario.EventId, scenario.PlayerIds[0], new ResultInput(total, nines, eights, false, version, lease.Token), actor, default);
@@ -22,9 +21,8 @@ public sealed class PublicationTests(PostgresFixture fixture)
     public async Task DraftIsPrivateAndPublishedProjectionExcludesPersonalFields()
     {
         var scenario = await fixture.CreateScenarioAsync();
-        await using var database = fixture.CreateContext();
-        var service = new PublicationService(database, fixture.Clock);
-        Assert.Null(await service.ReadPublicAsync(scenario.EventId, default));
+        var service = new PublicationService(fixture, fixture.Clock);
+        Assert.Null(await new PublicationQueries(fixture).ReadPublicAsync(scenario.EventId, default));
         await SaveAsync(scenario, 782, 30, 24, 0);
         var snapshot = await service.PublishAsync(scenario.EventId, PostgresFixture.Actor("editor"), default);
         var json = JsonSerializer.Serialize(snapshot);
@@ -39,19 +37,15 @@ public sealed class PublicationTests(PostgresFixture fixture)
     {
         var scenario = await fixture.CreateScenarioAsync();
         await SaveAsync(scenario, 782, 30, 24, 0);
-        await using (var database = fixture.CreateContext())
-            await new PublicationService(database, fixture.Clock).PublishAsync(scenario.EventId, PostgresFixture.Actor("editor"), default);
+        await new PublicationService(fixture, fixture.Clock).PublishAsync(scenario.EventId, PostgresFixture.Actor("editor"), default);
         Guid request;
-        await using (var database = fixture.CreateContext())
-            request = await new PublicationService(database, fixture.Clock).RequestCorrectionAsync(scenario.EventId, "Trefferzahl anhand Standblatt korrigieren", PostgresFixture.Actor("editor"), default);
-        await using (var database = fixture.CreateContext())
-            await Assert.ThrowsAsync<RequestRejectedException>(() => new PublicationService(database, fixture.Clock).ApproveCorrectionAsync(scenario.EventId, request, PostgresFixture.Actor("editor"), default));
-        await using (var database = fixture.CreateContext())
-            await new PublicationService(database, fixture.Clock).ApproveCorrectionAsync(scenario.EventId, request, PostgresFixture.Actor("approver"), default);
+        request = await new PublicationService(fixture, fixture.Clock).RequestCorrectionAsync(scenario.EventId, "Trefferzahl anhand Standblatt korrigieren", PostgresFixture.Actor("editor"), default);
+        await Assert.ThrowsAsync<RequestRejectedException>(() => new PublicationService(fixture, fixture.Clock).ApproveCorrectionAsync(scenario.EventId, request, PostgresFixture.Actor("editor"), default));
+        await new PublicationService(fixture, fixture.Clock).ApproveCorrectionAsync(scenario.EventId, request, PostgresFixture.Actor("approver"), default);
         await SaveAsync(scenario, 764, 27, 22, 1);
         await using var verification = fixture.CreateContext();
-        var service = new PublicationService(verification, fixture.Clock);
-        var previous = await service.ReadPublicAsync(scenario.EventId, default);
+        var service = new PublicationService(fixture, fixture.Clock);
+        var previous = await new PublicationQueries(fixture).ReadPublicAsync(scenario.EventId, default);
         Assert.NotNull(previous);
         Assert.True(previous.UnderCorrection);
         Assert.Equal(782, Assert.Single(previous.Standings).Total);
@@ -65,18 +59,12 @@ public sealed class PublicationTests(PostgresFixture fixture)
     public async Task PublishedEventsRejectEditsAndEmptyOrActiveEventsCannotPublish()
     {
         var scenario = await fixture.CreateScenarioAsync();
-        await using (var database = fixture.CreateContext())
-            await Assert.ThrowsAsync<RequestRejectedException>(() => new PublicationService(database, fixture.Clock).PublishAsync(scenario.EventId, PostgresFixture.Actor("a"), default));
+        await Assert.ThrowsAsync<RequestRejectedException>(() => new PublicationService(fixture, fixture.Clock).PublishAsync(scenario.EventId, PostgresFixture.Actor("a"), default));
         await SaveAsync(scenario, 782, 30, 24, 0);
-        await using (var database = fixture.CreateContext())
-        {
-            var lease = await fixture.Recording(database).AcquireAsync(scenario.EventId, scenario.PlayerIds[1], PostgresFixture.Actor("b"), default);
-            await Assert.ThrowsAsync<RequestRejectedException>(() => new PublicationService(database, fixture.Clock).PublishAsync(scenario.EventId, PostgresFixture.Actor("a"), default));
-            await fixture.Recording(database).ReleaseAsync(scenario.EventId, scenario.PlayerIds[1], lease.Token, PostgresFixture.Actor("b"), default);
-        }
-        await using (var database = fixture.CreateContext())
-            await new PublicationService(database, fixture.Clock).PublishAsync(scenario.EventId, PostgresFixture.Actor("a"), default);
-        await using var editor = fixture.CreateContext();
-        await Assert.ThrowsAsync<RequestRejectedException>(() => fixture.Recording(editor).AcquireAsync(scenario.EventId, scenario.PlayerIds[0], PostgresFixture.Actor("a"), default));
+        var lease = await fixture.Recording().AcquireAsync(scenario.EventId, scenario.PlayerIds[1], PostgresFixture.Actor("b"), default);
+        await Assert.ThrowsAsync<RequestRejectedException>(() => new PublicationService(fixture, fixture.Clock).PublishAsync(scenario.EventId, PostgresFixture.Actor("a"), default));
+        await fixture.Recording().ReleaseAsync(scenario.EventId, scenario.PlayerIds[1], lease.Token, PostgresFixture.Actor("b"), default);
+        await new PublicationService(fixture, fixture.Clock).PublishAsync(scenario.EventId, PostgresFixture.Actor("a"), default);
+        await Assert.ThrowsAsync<RequestRejectedException>(() => fixture.Recording().AcquireAsync(scenario.EventId, scenario.PlayerIds[0], PostgresFixture.Actor("a"), default));
     }
 }

@@ -19,6 +19,7 @@ if (args.Contains("--migrate", StringComparer.Ordinal))
 }
 builder.AddWebAuthentication();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient>();
 builder.Services.AddRazorComponents().AddInteractiveWebAssemblyComponents();
 builder.Services.AddMudServices();
 builder.Services.AddHttpClient("api", client =>

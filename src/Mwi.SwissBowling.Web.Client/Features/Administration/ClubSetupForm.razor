@@ -1,0 +1,12 @@
+@inherits SetupFormBase
+<form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+    <h3>Klub</h3>
+    <label for="club-name">Name</label><input id="club-name" @bind="_name" maxlength="160" required />
+    <label for="club-email">E-Mail (optional)</label><input id="club-email" type="email" @bind="_email" />
+    <label for="club-phone">Telefon (optional)</label><input id="club-phone" type="tel" @bind="_phone" />
+    <button class="button" disabled="@Busy">Klub anlegen</button>
+</form>
+@code {
+    private string _name = "", _email = "", _phone = "";
+    private Task SaveAsync() => CreateAsync("clubs", new ClubInput(_name, Optional(_email), Optional(_phone)));
+}

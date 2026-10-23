@@ -1,0 +1,11 @@
+@inherits SetupFormBase
+<form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+    <h3>Saison</h3>
+    <label for="season-year">Jahr</label><input id="season-year" type="number" min="1" max="9999" @bind="_year" required />
+    <button class="button" disabled="@Busy">Saison anlegen</button>
+    <p>@string.Join(", ", Data.Seasons.Select(row => row.Year))</p>
+</form>
+@code {
+    private int _year = DateTime.Today.Year;
+    private Task SaveAsync() => CreateAsync("seasons", new SeasonInput(_year));
+}

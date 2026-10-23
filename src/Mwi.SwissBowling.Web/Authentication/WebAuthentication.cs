@@ -23,6 +23,7 @@ public static class WebAuthentication
             .PersistKeysToDbContext<WebStateDbContext>().ProtectKeysWithCertificate(certificate);
         builder.Services.AddSingleton<PostgresTicketStore>();
         builder.Services.AddScoped<WebSessionValidator>();
+        builder.Services.AddScoped<IdentityTokenRefresher>();
         builder.Services.AddTransient<IClaimsTransformation, KeycloakRoles>();
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(options =>

@@ -9,8 +9,9 @@ namespace Mwi.SwissBowling.Api.Features.Standings;
 public static class StandingEndpoints
 {
     public static void MapStandingEndpoints(this IEndpointRouteBuilder endpoints) => endpoints.MapGet("/api/events/{eventId:guid}/standings",
-        async (Guid eventId, ApplicationDbContext database, CancellationToken cancellationToken) =>
+        async (Guid eventId, IDbContextFactory<ApplicationDbContext> factory, CancellationToken cancellationToken) =>
         {
+            await using var database = await factory.CreateDbContextAsync(cancellationToken);
             if (!await database.Events.AnyAsync(row => row.Id == eventId, cancellationToken)) throw new RequestRejectedException(404, "Die Meisterschaft ist nicht vorhanden.");
             return StandingRules.Calculate(await ResultQueries.ReadAsync(database, eventId, cancellationToken));
         }).RequireAuthorization(ApiIdentity.Administrator);

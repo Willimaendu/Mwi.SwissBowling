@@ -1,0 +1,24 @@
+@inherits SetupFormBase
+<form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+    <h3>Anlage</h3>
+    <label for="venue-name">Name</label><input id="venue-name" @bind="_name" maxlength="160" required />
+    <label for="venue-address">Adresse</label><input id="venue-address" @bind="_address" maxlength="300" required />
+    <label for="venue-lanes">Bahnnummern (durch Komma getrennt)</label><input id="venue-lanes" @bind="_lanes" required />
+    @if (_error is not null) { <p role="alert" class="notice error">@_error</p> }
+    <button class="button" disabled="@Busy">Anlage anlegen</button>
+</form>
+@code {
+    private string _name = "", _address = "", _lanes = "1,2";
+    private string? _error;
+    private async Task SaveAsync()
+    {
+        _error = null;
+        var parts = _lanes.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0 || parts.Any(part => !int.TryParse(part, out var number) || number <= 0))
+        {
+            _error = "Bahnnummern müssen positive ganze Zahlen sein.";
+            return;
+        }
+        await CreateAsync("venues", new VenueInput(_name, _address, parts.Select(int.Parse).ToArray()));
+    }
+}

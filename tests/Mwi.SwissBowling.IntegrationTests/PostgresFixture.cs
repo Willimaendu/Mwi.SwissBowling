@@ -13,7 +13,7 @@ namespace Mwi.SwissBowling.IntegrationTests;
 [CollectionDefinition("PostgreSQL", DisableParallelization = true)]
 public sealed class PostgresCollection : ICollectionFixture<PostgresFixture>;
 
-public sealed class PostgresFixture : IAsyncLifetime
+public sealed class PostgresFixture : IAsyncLifetime, IDbContextFactory<ApplicationDbContext>
 {
     private readonly PostgreSqlContainer container = new PostgreSqlBuilder("postgres:18").Build();
     private int year = 2000;
@@ -21,7 +21,8 @@ public sealed class PostgresFixture : IAsyncLifetime
     public TestClock Clock { get; } = new();
     public string ConnectionString => container.GetConnectionString();
     public ApplicationDbContext CreateContext() => new(new DbContextOptionsBuilder<ApplicationDbContext>().UseNpgsql(ConnectionString).Options);
-    public ResultRecordingService Recording(ApplicationDbContext database) => new(database, Clock, Options.Create(new EditingLeaseOptions()));
+    public ApplicationDbContext CreateDbContext() => CreateContext();
+    public ResultRecordingService Recording() => new(this, Clock, Options.Create(new EditingLeaseOptions()));
     public async Task InitializeAsync()
     {
         await container.StartAsync();

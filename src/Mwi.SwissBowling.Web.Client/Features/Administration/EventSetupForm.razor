@@ -1,0 +1,18 @@
+@inherits SetupFormBase
+<form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+    <h3>Einzelmeisterschaft</h3>
+    <label for="event-annual">Jahresmeisterschaft</label><select id="event-annual" @bind="_annual"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in Data.AnnualChampionships) { <option value="@row.Id">@row.Name</option> }</select>
+    <label for="event-name">Name</label><input id="event-name" @bind="_name" maxlength="160" required />
+    <label for="event-venue">Anlage</label><select id="event-venue" @bind="_venue"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in Data.Venues) { <option value="@row.Id">@row.Name</option> }</select>
+    <label for="event-start">Beginn</label><input id="event-start" type="date" @bind="_start" required />
+    <label for="event-end">Ende</label><input id="event-end" type="date" @bind="_end" required />
+    <label for="event-throws">Wurfzahl (optional)</label><input id="event-throws" type="number" min="1" @bind="_throws" />
+    <button class="button" disabled="@Busy">Meisterschaft anlegen</button>
+</form>
+@code {
+    private Guid _annual, _venue;
+    private string _name = "";
+    private DateOnly _start = DateOnly.FromDateTime(DateTime.Today), _end = DateOnly.FromDateTime(DateTime.Today);
+    private int? _throws;
+    private Task SaveAsync() => CreateAsync("events", new EventInput(_annual, _name, _venue, _start, _end, _throws));
+}

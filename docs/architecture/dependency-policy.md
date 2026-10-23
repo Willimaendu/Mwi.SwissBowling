@@ -3,7 +3,7 @@
 - Target .NET 10 across production and test projects. `global.json`, `Directory.Build.props` and `Directory.Packages.props` are authoritative. Keep package versions out of project files.
 - Use freely available packages. No mapper library: use explicit feature-local mappings and projections. New dependencies require a maintenance, security, licensing and deployment review.
 - Restore audits direct and transitive packages. Do not suppress vulnerability warnings simply to pass a build. Investigate advisories and upgrade compatible dependencies.
-- The current direct dependency families (Microsoft .NET/Aspire, MudBlazor, OpenTelemetry, Npgsql, xUnit, Testcontainers and Playwright) have open-source distributions. This is not a completed legal review: retain license notices and inspect the licenses of exact resolved transitive dependencies and container operating-system packages before distribution. Npgsql/EF version compatibility must be reviewed with each upgrade.
+- The current direct dependency families (Microsoft .NET/Aspire, MudBlazor, OpenTelemetry, Npgsql, xUnit and Testcontainers) have open-source distributions. This is not a completed legal review: retain license notices and inspect the licenses of exact resolved transitive dependencies and container operating-system packages before distribution. Npgsql/EF version compatibility must be reviewed with each upgrade.
 - No project license has been selected. Do not infer permission to redistribute this repository from dependency licenses. Docker Desktop and managed hosting are separate operational products; a free library does not imply a free service or tooling subscription.
 
 ## Renovate

@@ -19,8 +19,9 @@ public static class ResultEndpoints
     public static void MapResultEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/events/{eventId:guid}").RequireAuthorization(ApiIdentity.Administrator);
-        group.MapGet("/results", async (Guid eventId, ApplicationDbContext database, CancellationToken cancellationToken) =>
+        group.MapGet("/results", async (Guid eventId, IDbContextFactory<ApplicationDbContext> factory, CancellationToken cancellationToken) =>
         {
+            await using var database = await factory.CreateDbContextAsync(cancellationToken);
             if (!await database.Events.AnyAsync(row => row.Id == eventId, cancellationToken)) throw new RequestRejectedException(404, "Die Meisterschaft ist nicht vorhanden.");
             return await ResultQueries.ReadAsync(database, eventId, cancellationToken);
         });

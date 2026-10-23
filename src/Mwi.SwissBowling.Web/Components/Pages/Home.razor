@@ -1,6 +1,6 @@
 @page "/"
 @page "/meisterschaften"
-@inject IHttpClientFactory Clients
+@inject Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient Events
 @inject IHttpContextAccessor Context
 <PageTitle>Meisterschaften · SwissBowling</PageTitle>
 <HeadContent><meta name="description" content="Veröffentlichte Meisterschaften und Ranglisten des Unterverbands Willisau-Sursee." /></HeadContent>
@@ -30,7 +30,7 @@ else if (_events is not null)
     private bool _error;
     protected override async Task OnInitializedAsync()
     {
-        try { _events = await Clients.CreateClient("api").GetFromJsonAsync<PublicEventSummary[]>("api/public/events") ?? []; }
+        try { _events = await Events.ListAsync(); }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
         {
             _error = true;

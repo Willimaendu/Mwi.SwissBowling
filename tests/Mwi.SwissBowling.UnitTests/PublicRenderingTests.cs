@@ -74,6 +74,7 @@ public sealed class PublicRenderingTests
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = context });
         services.AddSingleton<IHttpClientFactory>(new ClientFactory(handler));
+        services.AddScoped<Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient>();
         await using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());
         var html = await renderer.Dispatcher.InvokeAsync(async () =>

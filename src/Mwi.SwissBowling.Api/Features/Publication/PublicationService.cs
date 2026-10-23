@@ -11,10 +11,11 @@ using Mwi.SwissBowling.Core.Http;
 
 namespace Mwi.SwissBowling.Api.Features.Publication;
 
-public sealed class PublicationService(ApplicationDbContext database, TimeProvider clock)
+public sealed class PublicationService(IDbContextFactory<ApplicationDbContext> factory, TimeProvider clock)
 {
     public async Task<PublicEventDto> PublishAsync(Guid eventId, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
+        await using var database = await factory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
         var championship = await EventAccess.LockAsync(database, eventId, cancellationToken);
         var results = await ResultQueries.ReadAsync(database, eventId, cancellationToken);
@@ -42,6 +43,7 @@ public sealed class PublicationService(ApplicationDbContext database, TimeProvid
 
     public async Task<Guid> RequestCorrectionAsync(Guid eventId, string reason, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
+        await using var database = await factory.CreateDbContextAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(reason) || reason.Trim().Length > 1000) throw new RequestRejectedException(400, "Bitte einen Korrekturgrund mit höchstens 1000 Zeichen angeben.");
         await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
         var championship = await EventAccess.LockAsync(database, eventId, cancellationToken);
@@ -57,6 +59,7 @@ public sealed class PublicationService(ApplicationDbContext database, TimeProvid
 
     public async Task ApproveCorrectionAsync(Guid eventId, Guid requestId, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
+        await using var database = await factory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
         var championship = await EventAccess.LockAsync(database, eventId, cancellationToken);
         var request = await database.Set<CorrectionRequest>().SingleOrDefaultAsync(row => row.Id == requestId && row.EventId == eventId, cancellationToken)
@@ -70,27 +73,4 @@ public sealed class PublicationService(ApplicationDbContext database, TimeProvid
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public async Task<PublicEventDto?> ReadPublicAsync(Guid eventId, CancellationToken cancellationToken)
-    {
-        var data = await (from snapshot in database.Set<PublishedSnapshot>().AsNoTracking()
-                          join championship in database.Events on new { snapshot.EventId, snapshot.Revision } equals new { EventId = championship.Id, Revision = championship.PublishedRevision }
-                          where snapshot.EventId == eventId
-                          select new { snapshot.Payload, championship.State }).SingleOrDefaultAsync(cancellationToken);
-        if (data is null) return null;
-        var result = JsonSerializer.Deserialize<PublicEventDto>(data.Payload) ?? throw new InvalidOperationException("Published snapshot is invalid.");
-        return result with { UnderCorrection = data.State == EventState.Correcting };
-    }
-
-    public Task<PublicEventSummary[]> ListPublicAsync(CancellationToken cancellationToken) =>
-        (from snapshot in database.Set<PublishedSnapshot>().AsNoTracking()
-         join championship in database.Events on new { snapshot.EventId, snapshot.Revision } equals new { EventId = championship.Id, Revision = championship.PublishedRevision }
-         orderby snapshot.PublishedAt descending, snapshot.EventId
-         select new PublicEventSummary(snapshot.EventId, snapshot.Name, snapshot.Season, snapshot.PublishedAt, snapshot.Revision, championship.State == EventState.Correcting)).ToArrayAsync(cancellationToken);
-
-    public Task<CorrectionDto[]> PendingAsync(CancellationToken cancellationToken) =>
-        (from request in database.Set<CorrectionRequest>().AsNoTracking()
-         join championship in database.Events on request.EventId equals championship.Id
-         where request.ApprovedAt == null
-         orderby request.RequestedAt
-         select new CorrectionDto(request.Id, request.EventId, championship.Name, request.Reason, request.RequestedSubject, request.RequestedAt)).ToArrayAsync(cancellationToken);
 }
