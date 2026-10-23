@@ -1,14 +1,17 @@
 @inherits SetupFormBase
 <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
     <h3>Spieler</h3>
-    <label for="edit-player">Neuer oder bestehender Spieler</label><select id="edit-player" value="@_id" @onchange="ChoosePlayer"><option value="@Guid.Empty">Neuer Spieler</option>@foreach (var player in Data.Players) { <option value="@player.Id">@player.LastName @player.FirstName</option> }</select>
-    <label for="first-name">Vorname</label><input id="first-name" @bind="_firstName" maxlength="100" required />
-    <label for="last-name">Nachname</label><input id="last-name" @bind="_lastName" maxlength="100" required />
-    <label for="sfkv">SFKV-Nummer (für Gäste optional)</label><input id="sfkv" inputmode="numeric" @bind="_sfkv" />
+    <MudSelect T="Guid" Label="Neuer oder bestehender Spieler" Value="_id" ValueChanged="ChoosePlayer" Variant="Variant.Outlined" Disabled="Busy">
+        <MudSelectItem Value="Guid.Empty">Neuer Spieler</MudSelectItem>
+        @foreach (var player in Data.Players) { <MudSelectItem Value="player.Id">@player.LastName @player.FirstName</MudSelectItem> }
+    </MudSelect>
+    <MudTextField T="string" Label="Vorname" @bind-Value="_firstName" MaxLength="100" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudTextField T="string" Label="Nachname" @bind-Value="_lastName" MaxLength="100" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudTextField T="string" Label="SFKV-Nummer (für Gäste optional)" @bind-Value="_sfkv" Variant="Variant.Outlined" Disabled="Busy" />
     <label for="birth-date">Geburtsdatum (optional)</label><input id="birth-date" type="date" @bind="_birthDate" />
-    <label for="player-email">E-Mail (optional)</label><input id="player-email" type="email" @bind="_email" />
-    <label for="player-phone">Telefon (optional)</label><input id="player-phone" type="tel" @bind="_phone" />
-    <button class="button" disabled="@Busy">Spieler speichern</button>
+    <MudTextField T="string" Label="E-Mail (optional)" InputType="InputType.Email" @bind-Value="_email" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudTextField T="string" Label="Telefon (optional)" InputType="InputType.Telephone" @bind-Value="_phone" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || string.IsNullOrWhiteSpace(_firstName) || string.IsNullOrWhiteSpace(_lastName))" Class="mt-4">Spieler speichern</MudButton>
 </form>
 @code {
     private Guid _id;
@@ -20,9 +23,9 @@
         if (_id == Guid.Empty) await Api.PostAsync("setup/players", input);
         else await Api.PutAsync($"setup/players/{_id}", input);
     });
-    private void ChoosePlayer(ChangeEventArgs args)
+    private void ChoosePlayer(Guid id)
     {
-        _id = Guid.TryParse(args.Value?.ToString(), out var id) ? id : Guid.Empty;
+        _id = id;
         var player = Data.Players.SingleOrDefault(row => row.Id == _id);
         _firstName = player?.FirstName ?? ""; _lastName = player?.LastName ?? ""; _sfkv = player?.SfkvNumber ?? "";
         _birthDate = player?.DateOfBirth; _email = player?.Email ?? ""; _phone = player?.Phone ?? "";

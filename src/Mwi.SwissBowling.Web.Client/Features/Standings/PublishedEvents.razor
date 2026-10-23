@@ -1,0 +1,51 @@
+@using System.Net.Http.Json
+@inject NavigationManager Navigation
+<ClubhouseProviders />
+<LiveUpdates Changed="LoadAsync" />
+@if (_error is not null) { <MudAlert Severity="Severity.Warning">@_error</MudAlert> }
+@if (_events.Length == 0 && _error is null)
+{
+    <MudPaper Class="pa-6 my-4" Elevation="0"><MudText Typo="Typo.h5">Noch keine veröffentlichten Ranglisten</MudText><MudText>Nach der Freigabe erscheinen die Resultate automatisch hier.</MudText></MudPaper>
+}
+else
+{
+    <MudGrid Class="my-4">
+        @foreach (var championship in _events)
+        {
+            <MudItem xs="12" md="6" lg="4" @key="championship.Id">
+                <MudCard Elevation="0" Outlined="true">
+                    <MudCardContent>
+                        <MudText Typo="Typo.overline">Saison @championship.Season</MudText>
+                        <MudText Typo="Typo.h5">@championship.Name</MudText>
+                        @if (championship.UnderCorrection) { <MudAlert Severity="Severity.Info" Class="my-2">In Korrektur · letzter veröffentlichter Stand</MudAlert> }
+                        <MudText Typo="Typo.body2">Version @championship.Revision</MudText>
+                    </MudCardContent>
+                    <MudCardActions><MudButton Color="Color.Primary" Href="@($"/meisterschaften/{championship.Id}")">Rangliste ansehen</MudButton></MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    [Parameter] public PublicEventSummary[] InitialEvents { get; set; } = [];
+    [Parameter] public bool InitialUnavailable { get; set; }
+    private PublicEventSummary[] _events = [];
+    private string? _error;
+    protected override void OnInitialized()
+    {
+        _events = InitialEvents;
+        if (InitialUnavailable) _error = "Die Ranglisten sind derzeit nicht erreichbar. Die Verbindung wird automatisch erneut geprüft.";
+    }
+    private async Task LoadAsync()
+    {
+        try
+        {
+            using var client = new HttpClient { BaseAddress = Navigation.ToAbsoluteUri("/") };
+            _events = await client.GetFromJsonAsync<PublicEventSummary[]>("public-api/events") ?? [];
+            _error = null;
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        { _error = "Aktualisierung derzeit nicht möglich. Der letzte Stand bleibt sichtbar; wir versuchen es bei der nächsten Änderung erneut."; }
+    }
+}

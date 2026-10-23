@@ -4,6 +4,7 @@ using Mwi.SwissBowling.Core.Hosting;
 using Mwi.SwissBowling.Core.Persistence;
 using Mwi.SwissBowling.Web.Authentication;
 using Mwi.SwissBowling.Web.Components;
+using Mwi.SwissBowling.Web.Features.LiveUpdates;
 
 namespace Mwi.SwissBowling.Web;
 
@@ -24,6 +25,8 @@ public static class Program
             return;
         }
         builder.AddWebAuthentication();
+        builder.Services.AddSignalR();
+        builder.Services.AddHostedService<PostgresChangeListener>();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient>();
         builder.Services.AddRazorComponents().AddInteractiveWebAssemblyComponents();
@@ -46,6 +49,16 @@ public static class Program
             context.Response.Headers.ContentSecurityPolicy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
             if (context.Request.Path.StartsWithSegments("/bff") || context.Request.Path.StartsWithSegments("/account") || context.Request.Path.StartsWithSegments("/administration"))
                 context.Response.Headers.CacheControl = "no-store";
+            if (context.Request.Path.StartsWithSegments("/live"))
+            {
+                context.Response.Headers.CacheControl = "no-store";
+                var origin = context.Request.Headers.Origin.ToString();
+                if (origin.Length > 0 && !string.Equals(origin, $"{context.Request.Scheme}://{context.Request.Host}", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return;
+                }
+            }
             await next();
         });
         app.UseAuthentication();
@@ -54,6 +67,8 @@ public static class Program
         app.MapStaticAssets();
         app.MapOperationalEndpoints();
         app.MapBffEndpoints();
+        app.MapHub<PublicUpdatesHub>("/live/public");
+        app.MapHub<AdministrationUpdatesHub>("/live/administration", options => options.CloseOnAuthenticationExpiration = true);
         app.MapRazorComponents<App>().AddInteractiveWebAssemblyRenderMode().AddAdditionalAssemblies(typeof(Mwi.SwissBowling.Web.Client.Program).Assembly);
         await app.RunAsync();
     }

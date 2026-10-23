@@ -1,13 +1,13 @@
 @inherits SetupFormBase
 <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
     <h3>Einzelmeisterschaft</h3>
-    <label for="event-annual">Jahresmeisterschaft</label><select id="event-annual" @bind="_annual"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in Data.AnnualChampionships) { <option value="@row.Id">@row.Name</option> }</select>
-    <label for="event-name">Name</label><input id="event-name" @bind="_name" maxlength="160" required />
-    <label for="event-venue">Anlage</label><select id="event-venue" @bind="_venue"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in Data.Venues) { <option value="@row.Id">@row.Name</option> }</select>
+    <MudSelect T="Guid" Label="Jahresmeisterschaft" @bind-Value="_annual" Variant="Variant.Outlined" Disabled="Busy">@foreach (var row in Data.AnnualChampionships) { <MudSelectItem Value="row.Id">@row.Name</MudSelectItem> }</MudSelect>
+    <MudTextField T="string" Label="Name" @bind-Value="_name" MaxLength="160" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudSelect T="Guid" Label="Anlage" @bind-Value="_venue" Variant="Variant.Outlined" Disabled="Busy">@foreach (var row in Data.Venues) { <MudSelectItem Value="row.Id">@row.Name</MudSelectItem> }</MudSelect>
     <label for="event-start">Beginn</label><input id="event-start" type="date" @bind="_start" required />
     <label for="event-end">Ende</label><input id="event-end" type="date" @bind="_end" required />
-    <label for="event-throws">Wurfzahl (optional)</label><input id="event-throws" type="number" min="1" @bind="_throws" />
-    <button class="button" disabled="@Busy">Meisterschaft anlegen</button>
+    <MudNumericField T="int?" Label="Wurfzahl (optional)" Min="1" @bind-Value="_throws" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || _annual == Guid.Empty || _venue == Guid.Empty || string.IsNullOrWhiteSpace(_name) || _end < _start || _throws < 1)" Class="mt-4">Meisterschaft anlegen</MudButton>
 </form>
 @code {
     private Guid _annual, _venue;

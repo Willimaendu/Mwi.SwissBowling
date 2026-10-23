@@ -10,6 +10,10 @@ public static class BffEndpoints
 {
     public static void MapBffEndpoints(this WebApplication app)
     {
+        app.MapGet("/public-api/events", async (IHttpClientFactory clients, CancellationToken cancellationToken) =>
+            Results.Ok(await clients.CreateClient("api").GetFromJsonAsync<Mwi.SwissBowling.Contracts.PublicEventSummary[]>("api/public/events", cancellationToken)));
+        app.MapGet("/public-api/events/{eventId:guid}", async (Guid eventId, Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient events, CancellationToken cancellationToken) =>
+            await events.ReadAsync(eventId, cancellationToken) is { } result ? Results.Ok(result) : Results.NotFound());
         app.MapGet("/account/login", (string? returnUrl) => Results.Challenge(
             new AuthenticationProperties { RedirectUri = BffRequestPolicy.IsLocalReturnUrl(returnUrl) ? returnUrl : "/administration" }, [OpenIdConnectDefaults.AuthenticationScheme]));
         app.MapPost("/account/logout", async (HttpContext context, IAntiforgery antiforgery) =>

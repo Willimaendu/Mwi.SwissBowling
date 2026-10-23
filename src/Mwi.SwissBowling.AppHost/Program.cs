@@ -61,6 +61,7 @@ public static class Program
 
         builder.AddProject<Projects.Mwi_SwissBowling_Web>("web")
             .WithReference(webState)
+            .WithReference(application)
             .WithReference(api)
             .WithEnvironment("Authentication__Authority", "http://localhost:8080/realms/swissbowling")
             .WithEnvironment("Authentication__ClientId", "swissbowling-web")

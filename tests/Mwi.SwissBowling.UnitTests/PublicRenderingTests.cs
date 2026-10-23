@@ -6,8 +6,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
+using MudBlazor.Services;
 using Mwi.SwissBowling.Contracts;
 using Mwi.SwissBowling.Web.Components.Pages;
+using Mwi.SwissBowling.Web.Client.Features.Administration;
+using Mwi.SwissBowling.Web.Client.Infrastructure;
 
 namespace Mwi.SwissBowling.UnitTests;
 
@@ -66,14 +70,55 @@ public sealed class PublicRenderingTests
         Assert.Contains($"href=\"/meisterschaften/{id}\"", html);
         Assert.Contains("Sommermeisterschaft", html);
     }
+    [Fact]
+    public async Task EventListOutageRetainsAutomaticRecoveryInsteadOfClaimingThereAreNoEvents()
+    {
+        using var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+        var (html, status) = await RenderAsync<Home>(handler, []);
+        Assert.Equal(503, status);
+        Assert.Contains("derzeit nicht erreichbar", html);
+        Assert.Contains("live-status", html);
+        Assert.DoesNotContain("Noch keine", html);
+    }
+
+    [Fact]
+    public async Task AdministrationOutageDoesNotMasqueradeAsSignInRequired()
+    {
+        using var handler = new StubHandler(request =>
+        {
+            Assert.Equal("/bff/api/identity/me", request.RequestUri!.AbsolutePath);
+            return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+        });
+        var (html, _) = await RenderAsync<AdminWorkspace>(handler, []);
+        Assert.Contains("nicht erreichbar", html);
+        Assert.Contains("live-status", html);
+        Assert.DoesNotContain("Anmelden / Registrieren", html);
+    }
+
+    [Fact]
+    public async Task ConfirmedUnauthorizedSessionDisplaysSignIn()
+    {
+        using var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        var (html, _) = await RenderAsync<AdminWorkspace>(handler, []);
+        Assert.Contains("Anmelden / Registrieren", html);
+        Assert.Contains("/account/login?returnUrl=/administration", html);
+    }
+
     private static async Task<(string Html, int Status)> RenderAsync<T>(HttpMessageHandler handler, Dictionary<string, object?> parameters) where T : IComponent
     {
         var context = new DefaultHttpContext();
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddMudServices();
+        services.AddSingleton<NavigationManager>(new TestNavigationManager());
+        services.AddSingleton<IJSRuntime>(new NoBrowserJsRuntime());
+        // HtmlRenderer renders the same initial content without a browser activation boundary.
+        if (typeof(T) == typeof(Home) || typeof(T) == typeof(PublicStandings))
+            parameters["LiveRenderMode"] = null;
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = context });
         services.AddSingleton<IHttpClientFactory>(new ClientFactory(handler));
+        services.AddScoped<IAdminApi>(provider => new AdminApi(provider.GetRequiredService<IHttpClientFactory>().CreateClient("bff")));
         services.AddScoped<Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient>();
         await using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());
@@ -83,6 +128,18 @@ public sealed class PublicRenderingTests
             return result.ToHtmlString();
         });
         return (html, context.Response.StatusCode);
+    }
+    private sealed class TestNavigationManager : NavigationManager
+    {
+        public TestNavigationManager() => Initialize("https://web.test/", "https://web.test/");
+        protected override void NavigateToCore(string uri, bool forceLoad) => throw new InvalidOperationException("Static rendering must not navigate.");
+    }
+    private sealed class NoBrowserJsRuntime : IJSRuntime
+    {
+        // MudBlazor performs best-effort JS cleanup when its services are disposed.
+        // Model an unavailable browser using the standard interop exception it handles.
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) => throw new JSDisconnectedException("No browser is connected during static rendering.");
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args) => InvokeAsync<TValue>(identifier, args);
     }
     private sealed class ClientFactory(HttpMessageHandler handler) : IHttpClientFactory
     {

@@ -1,31 +1,14 @@
 @page "/"
 @page "/meisterschaften"
+@using Mwi.SwissBowling.Web.Client.Features.Standings
 @inject Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient Events
 @inject IHttpContextAccessor Context
 <PageTitle>Meisterschaften · SwissBowling</PageTitle>
 <HeadContent><meta name="description" content="Veröffentlichte Meisterschaften und Ranglisten des Unterverbands Willisau-Sursee." /></HeadContent>
 <section class="hero"><p class="eyebrow">Gemeinsam kegeln</p><h1>Unsere Meisterschaften.</h1><p>Resultate entdecken, Ranglisten vergleichen und am Vereinsleben teilhaben.</p></section>
-@if (_error)
-{
-    <div role="alert" class="notice error">Die Ranglisten sind derzeit nicht erreichbar. Bitte laden Sie die Seite später neu.</div>
-}
-else if (_events is { Length: 0 })
-{
-    <section class="panel"><h2>Noch keine veröffentlichten Ranglisten</h2><p>Nach dem Abschluss einer Meisterschaft erscheinen die freigegebenen Resultate hier.</p></section>
-}
-else if (_events is not null)
-{
-    <div class="event-grid">
-        @foreach (var championship in _events)
-        {
-            <article class="panel event-card"><p class="eyebrow">Saison @championship.Season</p><h2>@championship.Name</h2>
-                @if (championship.UnderCorrection) { <p class="status">In Korrektur · letzter veröffentlichter Stand</p> }
-                <p class="muted">Version @championship.Revision</p><a class="button primary" href="@($"/meisterschaften/{championship.Id}")">Rangliste ansehen <span aria-hidden="true">→</span></a>
-            </article>
-        }
-    </div>
-}
+<PublishedEvents InitialEvents="@(_events ?? [])" InitialUnavailable="_error" @rendermode="LiveRenderMode" />
 @code {
+    [Parameter] public IComponentRenderMode? LiveRenderMode { get; set; } = InteractiveWebAssembly;
     private PublicEventSummary[]? _events;
     private bool _error;
     protected override async Task OnInitializedAsync()

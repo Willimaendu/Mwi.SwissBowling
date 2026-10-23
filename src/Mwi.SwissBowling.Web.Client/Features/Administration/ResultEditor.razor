@@ -4,11 +4,11 @@
     <MudText Typo="Typo.h5" HtmlTag="h2">Resultate erfassen</MudText><p class="muted">Holz → 9er → 8er → Speichern. Tabulator wechselt zwischen den Feldern. Ungespeicherte Eingaben bleiben bei Verbindungsfehlern sichtbar.</p>
     @if (_error is not null) { <div role="alert" class="notice error">@_error</div> }
     @if (_message is not null) { <p role="status" class="notice">@_message</p> }
-    <label for="player-search">Spieler suchen</label><input id="player-search" type="search" @bind="_search" @bind:event="oninput" disabled="@(_lease is not null)" />
-    <label for="player-choice">Spieler der Saison</label><select id="player-choice" @bind="_playerId" disabled="@(_lease is not null || _busy)"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var player in EligiblePlayers) { <option value="@player.Id">@player.LastName @player.FirstName</option> }</select>
+    <MudTextField T="string" Label="Spieler suchen" @bind-Value="_search" Immediate="true" Disabled="@(_lease is not null)" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" />
+    <MudSelect T="Guid" Label="Spieler der Saison" @bind-Value="_playerId" Disabled="@(_lease is not null || _busy)" Variant="Variant.Outlined">@foreach (var player in EligiblePlayers) { <MudSelectItem Value="player.Id">@player.LastName @player.FirstName</MudSelectItem> }</MudSelect>
     @if (_lease is null)
     {
-        <button class="button primary" disabled="@(_busy || _playerId == Guid.Empty || Event.State == EventState.Published)" @onclick="AcquireAsync">Bearbeitung starten</button>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_busy || _playerId == Guid.Empty || Event.State == EventState.Published)" OnClick="AcquireAsync" Class="my-4">Bearbeitung starten</MudButton>
     }
     else
     {
@@ -19,13 +19,26 @@
             <div class="actions"><button class="button primary" type="submit" disabled="@(_busy || !_leaseValid)">Speichern und freigeben</button><button class="button" type="button" disabled="@_busy" @onclick="ReleaseAsync">Eingaben verwerfen / freigeben</button></div>
         </form>
     }
-    <button class="button" disabled="@(_busy || _lease is not null)" @onclick="RefreshAsync">Gespeicherte Resultate aktualisieren</button>
-    <div class="table-scroll" role="region" aria-label="Gespeicherte Resultate" tabindex="0"><table><caption>Gespeicherte Resultate (nicht automatisch öffentlich)</caption><thead><tr><th scope="col">Name</th><th scope="col">Kategorie</th><th scope="col">Holz</th><th scope="col">9er</th><th scope="col">8er</th><th scope="col">Status</th></tr></thead><tbody>@foreach (var result in _results.OrderBy(row => row.Name)) { <tr><td>@result.Name</td><td>@result.Category</td><td>@result.Total</td><td>@result.Nines</td><td>@result.Eights</td><td>@(result.Interrupted ? "Abgebrochen" : "Erfasst")</td></tr> }</tbody></table></div>
+    <MudText Typo="Typo.h6" Class="mt-6">Gespeicherte Resultate · noch nicht automatisch öffentlich</MudText>
+    <MudDataGrid T="ResultDto" Items="_results" Filterable="true" SortMode="SortMode.Multiple" Dense="true" Hover="true" ReadOnly="true">
+        <Columns>
+            <PropertyColumn Property="row => row.Name" Title="Name" />
+            <PropertyColumn Property="row => row.Category" Title="Kategorie" />
+            <PropertyColumn Property="row => row.Total" Title="Holz" />
+            <PropertyColumn Property="row => row.Nines" Title="9er" />
+            <PropertyColumn Property="row => row.Eights" Title="8er" />
+            <TemplateColumn Title="Status"><CellTemplate>@(context.Item.Interrupted ? "Abgebrochen" : "Erfasst")</CellTemplate></TemplateColumn>
+        </Columns>
+        <NoRecordsContent><MudText Class="pa-4">Noch keine passenden Resultate erfasst.</MudText></NoRecordsContent>
+        <PagerContent><MudDataGridPager T="ResultDto" /></PagerContent>
+    </MudDataGrid>
 </section>
 @code {
     [Parameter, EditorRequired] public EventDto Event { get; set; } = default!;
     [Parameter, EditorRequired] public SetupDto Data { get; set; } = default!;
     [Parameter] public EventCallback<bool> EditingChanged { get; set; }
+    [Parameter] public long Revision { get; set; }
+    private long _loadedRevision = -1;
     private ResultDto[] _results = [];
     private Guid _playerId;
     private EditingLeaseSession? _session;
@@ -45,7 +58,12 @@
             return Data.Players.Where(row => ids.Contains(row.Id) && $"{row.LastName} {row.FirstName}".Contains(_search, StringComparison.OrdinalIgnoreCase));
         }
     }
-    protected override Task OnInitializedAsync() => RefreshAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedRevision == Revision || _lease is not null || _busy) return;
+        _loadedRevision = Revision;
+        await RefreshAsync();
+    }
     private async Task RefreshAsync()
     {
         try { _results = await Api.GetAsync<ResultDto[]>($"events/{Event.Id}/results"); }

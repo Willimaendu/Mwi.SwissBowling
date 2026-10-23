@@ -1,10 +1,10 @@
 @inherits SetupFormBase
 <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
     <h3>Klub</h3>
-    <label for="club-name">Name</label><input id="club-name" @bind="_name" maxlength="160" required />
-    <label for="club-email">E-Mail (optional)</label><input id="club-email" type="email" @bind="_email" />
-    <label for="club-phone">Telefon (optional)</label><input id="club-phone" type="tel" @bind="_phone" />
-    <button class="button" disabled="@Busy">Klub anlegen</button>
+    <MudTextField T="string" Label="Name" @bind-Value="_name" MaxLength="160" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudTextField T="string" Label="E-Mail (optional)" InputType="InputType.Email" @bind-Value="_email" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudTextField T="string" Label="Telefon (optional)" InputType="InputType.Telephone" @bind-Value="_phone" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || string.IsNullOrWhiteSpace(_name))" Class="mt-4">Klub anlegen</MudButton>
 </form>
 @code {
     private string _name = "", _email = "", _phone = "";

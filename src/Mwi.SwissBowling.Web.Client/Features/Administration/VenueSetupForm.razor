@@ -1,11 +1,11 @@
 @inherits SetupFormBase
 <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
     <h3>Anlage</h3>
-    <label for="venue-name">Name</label><input id="venue-name" @bind="_name" maxlength="160" required />
-    <label for="venue-address">Adresse</label><input id="venue-address" @bind="_address" maxlength="300" required />
-    <label for="venue-lanes">Bahnnummern (durch Komma getrennt)</label><input id="venue-lanes" @bind="_lanes" required />
+    <MudTextField T="string" Label="Name" @bind-Value="_name" MaxLength="160" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudTextField T="string" Label="Adresse" @bind-Value="_address" MaxLength="300" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudTextField T="string" Label="Bahnnummern" HelperText="Positive ganze Zahlen, durch Komma getrennt" @bind-Value="_lanes" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
     @if (_error is not null) { <p role="alert" class="notice error">@_error</p> }
-    <button class="button" disabled="@Busy">Anlage anlegen</button>
+    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_address))" Class="mt-4">Anlage anlegen</MudButton>
 </form>
 @code {
     private string _name = "", _address = "", _lanes = "1,2";

@@ -1,32 +1,57 @@
 @inject IAdminApi Api
+<ClubhouseProviders />
 <div class="admin-workspace">
-    @if (_error is not null) { <div class="notice error" role="alert">@_error <a href="/account/login?returnUrl=/administration" target="_blank" rel="noopener">Erneut anmelden</a></div> }
-    @if (_loading) { <p role="status">Arbeitsbereich wird geladen …</p> }
-    else if (_profile is null)
+    <LiveUpdates @key="(_profile is not null)" Administration="@(_profile is not null)" Changed="SynchronizeAsync" />
+    @if (_error is not null) { <MudAlert Severity="Severity.Error" Class="my-4">@_error</MudAlert> }
+    @if (_loading) { <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="my-4" aria-label="Arbeitsbereich wird geladen" /> }
+    else if (_profile is null && _sessionKnown)
     {
         <section class="panel"><h2>Sicher anmelden</h2><p>Für die Administration ist ein freigegebenes Konto mit entsprechender Rolle erforderlich.</p><a class="button primary" href="/account/login?returnUrl=/administration">Anmelden / Registrieren</a></section>
+    }
+    else if (_profile is null)
+    {
+        <MudAlert Severity="Severity.Warning">Der Arbeitsbereich ist derzeit nicht erreichbar. Die Verbindung wird automatisch erneut geprüft.</MudAlert>
     }
     else if (!_profile.IsAdministrator)
     {
         <section class="panel"><h2>Willkommen, @_profile.DisplayName</h2>
             @if (_profile.AccountId is null) { <p>Beantragen Sie die Freigabe Ihres Kontos. Die Administration prüft Ihre Identität persönlich.</p><button class="button primary" disabled="@_busy" @onclick="RegisterAsync">Kontofreigabe beantragen</button> }
             else { <p>Ihr Konto ist registriert. Für diesen Arbeitsbereich sind Freigabe und administrative Rolle erforderlich.</p> }
-            <button class="button" @onclick="LoadAsync">Status aktualisieren</button>
+            <MudAlert Severity="Severity.Info" Class="my-4">Der Freigabestatus wird automatisch aktualisiert.</MudAlert>
         </section>
     }
     else if (_setup is not null)
     {
         <nav class="workspace-tabs" aria-label="Arbeitsbereich">
-            @foreach (var tab in new[] { "Erfassung", "Stammdaten", "Freigaben" }) { <button class="button @(_tab == tab ? "primary" : "")" aria-pressed="@(_tab == tab)" disabled="@_editing" @onclick="() => _tab = tab">@tab</button> }
+            @foreach (var tab in new[] { "Übersicht", "Erfassung", "Stammdaten", "Freigaben" }) { <MudButton Variant="@(_tab == tab ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" Disabled="@_editing" OnClick="() => _tab = tab">@tab</MudButton> }
         </nav>
-        @if (_tab == "Stammdaten") { <SetupWorkspace Data="_setup" Changed="LoadAsync" /> }
-        else if (_tab == "Freigaben") { <ApprovalWorkspace Data="_setup" /> }
+        @if (_tab == "Übersicht")
+        {
+            <MudGrid Class="my-4">
+                <MudItem xs="12" sm="4"><MudPaper Class="pa-5" Elevation="0"><MudText Typo="Typo.overline">Spieler</MudText><MudText Typo="Typo.h3">@_setup.Players.Length</MudText></MudPaper></MudItem>
+                <MudItem xs="12" sm="4"><MudPaper Class="pa-5" Elevation="0"><MudText Typo="Typo.overline">Klubs</MudText><MudText Typo="Typo.h3">@_setup.Clubs.Length</MudText></MudPaper></MudItem>
+                <MudItem xs="12" sm="4"><MudPaper Class="pa-5" Elevation="0"><MudText Typo="Typo.overline">Meisterschaften</MudText><MudText Typo="Typo.h3">@_setup.Events.Length</MudText></MudPaper></MudItem>
+            </MudGrid>
+            <MudDataGrid T="EventDto" Items="_setup.Events" Filterable="true" Hover="true" ReadOnly="true">
+                <ToolBarContent><MudText Typo="Typo.h6">Meisterschaften im Überblick</MudText></ToolBarContent>
+                <Columns>
+                    <PropertyColumn Property="row => row.Name" Title="Meisterschaft" />
+                    <PropertyColumn Property="row => row.StartDate" Title="Beginn" Format="dd.MM.yyyy" />
+                    <TemplateColumn Title="Status"><CellTemplate>@StateName(context.Item.State)</CellTemplate></TemplateColumn>
+                    <TemplateColumn Title="Aktion"><CellTemplate><MudButton Color="Color.Primary" OnClick="() => OpenEvent(context.Item.Id)">Resultate erfassen</MudButton></CellTemplate></TemplateColumn>
+                </Columns>
+                <NoRecordsContent><MudText Class="pa-4">Noch keine Meisterschaften. Legen Sie die Vorbereitung unter Stammdaten an.</MudText></NoRecordsContent>
+                <PagerContent><MudDataGridPager T="EventDto" /></PagerContent>
+            </MudDataGrid>
+        }
+        else if (_tab == "Stammdaten") { <SetupWorkspace Data="_setup" Changed="ReloadAsync" /> }
+        else if (_tab == "Freigaben") { <ApprovalWorkspace Data="_setup" Revision="_revision" /> }
         else
         {
             <section class="panel"><label for="event-choice">Meisterschaft</label><select id="event-choice" value="@_eventId" @onchange="SelectEventAsync" disabled="@(_editing || _busy)"><option value="@Guid.Empty">Bitte auswählen</option>@foreach (var row in _setup.Events) { <option value="@row.Id">@row.Name · @StateName(row.State)</option> }</select></section>
             @if (SelectedEvent is { } selected)
             {
-                <ResultEditor @key="selected.Id" Event="selected" Data="_setup" EditingChanged="value => _editing = value" />
+                <ResultEditor @key="selected.Id" Event="selected" Data="_setup" Revision="_revision" EditingChanged="EditingChangedAsync" />
                 <section class="panel"><h2>Veröffentlichung</h2><p>Nur freigegebene Resultate werden öffentlich angezeigt. Alle Bearbeitungssperren müssen vor dem Abschluss freigegeben sein.</p>
                     @if (selected.State == EventState.Published)
                     {
@@ -45,23 +70,56 @@
 </div>
 @code {
     private IdentityProfile? _profile;
+    private bool _sessionKnown;
     private SetupDto? _setup;
     private bool _loading = true, _busy, _editing, _confirmed;
     private string? _error, _message;
-    private string _tab = "Erfassung", _reason = "";
+    private string _tab = "Übersicht", _reason = "";
+    private long _revision;
+    private bool _reloadPending, _synchronizing;
     private Guid _eventId;
     private EventDto? SelectedEvent => _setup?.Events.SingleOrDefault(row => row.Id == _eventId);
     protected override Task OnInitializedAsync() => LoadAsync();
-    private static string StateName(EventState state) => state switch { EventState.Published => "Veröffentlicht", EventState.Correcting => "In Korrektur", _ => "Entwurf" };
-    private async Task LoadAsync()
+    private void OpenEvent(Guid id) { _eventId = id; _confirmed = false; _tab = "Erfassung"; }
+    private Task ReloadAsync() => LoadAsync(showLoading: false);
+    private async Task EditingChangedAsync(bool editing)
     {
-        _loading = true; _error = null;
+        _editing = editing;
+        if (!editing && _reloadPending) await SynchronizeAsync();
+    }
+    private async Task SynchronizeAsync()
+    {
+        _reloadPending = true;
+        if (_editing || _busy || _synchronizing) return;
+        _synchronizing = true;
+        try
+        {
+            while (_reloadPending && !_editing && !_busy)
+            {
+                _reloadPending = false;
+                await LoadAsync(showLoading: false);
+                _revision++;
+            }
+        }
+        finally { _synchronizing = false; }
+    }
+    private static string StateName(EventState state) => state switch { EventState.Published => "Veröffentlicht", EventState.Correcting => "In Korrektur", _ => "Entwurf" };
+    private Task LoadAsync() => LoadAsync(showLoading: true);
+    private async Task LoadAsync(bool showLoading)
+    {
+        if (showLoading) _loading = true;
+        _error = null;
         try
         {
             _profile = await Api.GetAsync<IdentityProfile>("identity/me");
+            _sessionKnown = true;
             if (_profile.IsAdministrator) _setup = await Api.GetAsync<SetupDto>("setup");
         }
-        catch (ApiException exception) { _error = exception.StatusCode == System.Net.HttpStatusCode.Unauthorized ? null : exception.Message; }
+        catch (ApiException exception)
+        {
+            if (exception.StatusCode == System.Net.HttpStatusCode.Unauthorized) { _sessionKnown = true; _profile = null; _setup = null; }
+            else _error = exception.Message;
+        }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException) { _error = "Keine Verbindung. Bitte versuchen Sie es erneut."; }
         finally { _loading = false; }
     }
@@ -75,6 +133,6 @@
         try { await action(); }
         catch (ApiException exception) { _error = exception.Message; }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException) { _error = "Verbindung unterbrochen. Der Ausgang ist unklar; bitte vor erneutem Absenden den Stand aktualisieren."; }
-        finally { _busy = false; }
+        finally { _busy = false; if (_reloadPending) await SynchronizeAsync(); }
     }
 }

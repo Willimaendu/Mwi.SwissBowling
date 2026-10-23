@@ -1,9 +1,8 @@
 @inherits SetupFormBase
 <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
     <h3>Saison</h3>
-    <label for="season-year">Jahr</label><input id="season-year" type="number" min="1" max="9999" @bind="_year" required />
-    <button class="button" disabled="@Busy">Saison anlegen</button>
-    <p>@string.Join(", ", Data.Seasons.Select(row => row.Year))</p>
+    <MudNumericField T="int" Label="Jahr" Min="1" Max="9999" @bind-Value="_year" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
+    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || _year < 1 || _year > 9999)" Class="mt-4">Saison anlegen</MudButton>
 </form>
 @code {
     private int _year = DateTime.Today.Year;
