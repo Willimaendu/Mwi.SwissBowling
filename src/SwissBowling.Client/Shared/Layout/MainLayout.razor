@@ -5,23 +5,28 @@
 <MudDialogProvider CloseOnEscapeKey="true" BackdropClick="false" />
 <MudSnackbarProvider />
 
+<div class="site">
 <MudLayout>
-    <MudAppBar Elevation="0" Class="border-b mud-border-lines-default">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" Class="d-md-none" OnClick="@(() => _drawerOpen = !_drawerOpen)" />
-        <MudLink Href="/" Underline="Underline.None" Class="d-flex align-center gap-2">
-            <MudIcon Icon="@Icons.Material.Filled.SportsScore" Color="Color.Primary" />
-            <MudText Typo="Typo.h6" Class="font-weight-bold">Swiss Bowling</MudText>
-        </MudLink>
-        <MudSpacer />
-        <nav class="d-none d-md-flex gap-1">
-            @foreach (var (href, text) in Links)
-            {
-                <MudButton Href="@href" Color="Color.Inherit">@text</MudButton>
-            }
-        </nav>
-        <MudSpacer />
-        <MudIconButton Icon="@(_darkMode ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="@(() => _darkMode = !_darkMode)" />
-        <MudButton Href="/admin" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.AdminPanelSettings" Class="ml-2">Administration</MudButton>
+    <MudAppBar Elevation="0" Class="appbar">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="d-flex align-center px-0">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" Class="d-md-none" OnClick="@(() => _drawerOpen = !_drawerOpen)" />
+            <MudLink Href="/" Underline="Underline.None" Class="brand">
+                <img src="@AppTheme.Logo" alt="SFKV" class="brand-logo" />
+                <span class="brand-text">
+                    <span class="brand-title">Swiss Bowling</span>
+                    <span class="brand-subtitle">Meisterschaften &amp; Ranglisten der SFKV</span>
+                </span>
+            </MudLink>
+            <MudSpacer />
+            <nav class="d-none d-md-flex gap-1">
+                @foreach (var (href, text) in Links)
+                {
+                    <MudButton Href="@href" Color="Color.Inherit" Class="nav-link">@text</MudButton>
+                }
+            </nav>
+            <MudIconButton Icon="@(_darkMode ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" Class="ml-2" OnClick="@(() => _darkMode = !_darkMode)" />
+            <MudButton Href="/admin" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Lock" Class="ml-2 d-none d-sm-flex">Administration</MudButton>
+        </MudContainer>
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" Variant="DrawerVariant.Temporary" Class="d-md-none">
@@ -30,6 +35,8 @@
             {
                 <MudNavLink Href="@href" Match="@(href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)">@text</MudNavLink>
             }
+            <MudDivider Class="my-2" />
+            <MudNavLink Href="/admin" Icon="@Icons.Material.Outlined.Lock">Administration</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 
@@ -37,5 +44,12 @@
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6">
             @Body
         </MudContainer>
+        <footer class="footer">
+            <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-wrap justify-space-between gap-2">
+                <span>© @DateTime.Now.Year Schweizerische Freie Kegler-Vereinigung</span>
+                <span>Daten: <MudLink Href="https://www.sfkv.ch" Target="_blank">sfkv.ch</MudLink> · <MudLink Href="https://www.uvweb.kegler.ch" Target="_blank">UVweb Ranglistenportal</MudLink></span>
+            </MudContainer>
+        </footer>
     </MudMainContent>
 </MudLayout>
+</div>

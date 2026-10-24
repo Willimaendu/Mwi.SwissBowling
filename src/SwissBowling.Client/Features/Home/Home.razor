@@ -2,21 +2,26 @@
 @using SwissBowling.Client.Features.Championships
 @inherits ApiPage
 
-<PageTitle>Swiss Bowling – Resultate & Ranglisten</PageTitle>
+<PageTitle>Swiss Bowling – Resultate & Ranglisten der SFKV</PageTitle>
 
+<div class="home">
 <section class="hero">
-    <MudText Typo="Typo.overline">Schweizer Kegeln</MudText>
-    <MudText Typo="Typo.h3" HtmlTag="h1" Class="font-weight-bold">Resultate &amp; Ranglisten aller Meisterschaften</MudText>
-    <MudText Typo="Typo.body1" Class="mt-3 hero-text">
-        Verfolge laufende Einzelmeisterschaften, Ranglisten pro Kategorie und die Resultate aller Keglerinnen und Kegler.
-    </MudText>
-    <div class="d-flex flex-wrap gap-2 mt-5">
-        <MudButton Href="/meisterschaften" Variant="Variant.Filled" Class="hero-button" StartIcon="@Icons.Material.Outlined.EmojiEvents">Meisterschaften</MudButton>
-        <MudButton Href="/kegler" Variant="Variant.Outlined" Class="hero-button-outlined" StartIcon="@Icons.Material.Outlined.Search">Kegler suchen</MudButton>
+    <img src="@AppTheme.Logo" alt="SFKV" class="hero-logo" />
+    <div>
+        <MudText Typo="Typo.overline" Class="hero-kicker">Schweizerische Freie Kegler-Vereinigung</MudText>
+        <MudText Typo="Typo.h3" HtmlTag="h1">Resultate &amp; Ranglisten aller Meisterschaften</MudText>
+        <MudText Typo="Typo.body1" Class="hero-text">
+            Laufende Meisterschaften der Unterverbände, Ranglisten pro Disziplin und Kategorie sowie die Resultate aller Keglerinnen und Kegler – aktuell und aus dem Archiv.
+        </MudText>
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <MudButton Href="/meisterschaften" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.EmojiEvents">Meisterschaften</MudButton>
+            <MudButton Href="/kegler" Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Outlined.Search">Kegler suchen</MudButton>
+            <MudButton Href="/unterverbaende" Variant="Variant.Text" Color="Color.Secondary">Unterverbände</MudButton>
+        </div>
     </div>
 </section>
 
-<MudText Typo="Typo.h6" Class="mb-3">Laufende Meisterschaften</MudText>
+<MudText Typo="Typo.h5" Class="section-title">Laufende Meisterschaften</MudText>
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="_running.Count == 0" EmptyText="Zurzeit läuft keine Meisterschaft.">
     <MudGrid Spacing="3">
         @foreach (var championship in _running)
@@ -25,3 +30,4 @@
         }
     </MudGrid>
 </LoadingState>
+</div>

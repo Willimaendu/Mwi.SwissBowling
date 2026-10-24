@@ -1,0 +1,54 @@
+::deep .appbar {
+  border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+::deep .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--mud-palette-text-primary);
+}
+
+::deep .brand-logo {
+  height: 52px;
+  width: auto;
+}
+
+::deep .brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+::deep .brand-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+::deep .brand-subtitle {
+  font-size: .8rem;
+  color: var(--mud-palette-text-secondary);
+}
+
+::deep .nav-link {
+  color: var(--mud-palette-text-primary);
+  padding: 6px 12px;
+}
+
+::deep .nav-link:hover {
+  color: var(--mud-palette-primary);
+  background: transparent;
+}
+
+.footer {
+  margin-top: 3rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--mud-palette-lines-default);
+  font-size: .85rem;
+  color: var(--mud-palette-text-secondary);
+}
+
+@media (max-width: 600px) {
+  ::deep .brand-subtitle { display: none; }
+  ::deep .brand-logo { height: 40px; }
+}

@@ -11,6 +11,8 @@ der aktuell auf [www.uvweb.kegler.ch](https://www.uvweb.kegler.ch) publizierten 
 | `SwissBowling.Client` | Blazor WebAssembly: Seiten, Layouts, API-Client, Anmeldung |
 | `SwissBowling.Core.Tests` | xUnit-Tests der Rangierung |
 
+Paketversionen werden zentral und **exakt** in `Directory.Packages.props` gepflegt (Central Package Management, keine Floating Versions).
+
 ## Fachliches Modell (SFKV)
 
 * **Unterverband** (UV, Kürzel + UV-Nr.) mit **Vorstand**, **Kegelbahnen**, **Klubs** (Kurzname, Klubkategorie, Heimbahn, Klub-ID)

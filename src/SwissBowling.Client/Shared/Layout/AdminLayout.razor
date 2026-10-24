@@ -8,10 +8,11 @@
 <AuthorizeView Roles="@($"{Roles.Admin},{Roles.Scorer}")">
     <Authorized>
         <MudLayout>
-            <MudAppBar Elevation="0" Class="border-b mud-border-lines-default">
+            <MudAppBar Elevation="0" Style="border-bottom: 1px solid var(--mud-palette-lines-default);">
                 <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => _drawerOpen = !_drawerOpen)" />
-                <MudText Typo="Typo.h6" Class="font-weight-bold">Swiss Bowling</MudText>
-                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="ml-2">Admin</MudChip>
+                <img src="@AppTheme.Logo" alt="SFKV" style="height: 44px;" class="mr-3" />
+                <MudText Typo="Typo.h6">Swiss Bowling</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="ml-2">Administration</MudChip>
                 <MudSpacer />
                 <MudIconButton Icon="@(_darkMode ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="@(() => _darkMode = !_darkMode)" />
                 <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
