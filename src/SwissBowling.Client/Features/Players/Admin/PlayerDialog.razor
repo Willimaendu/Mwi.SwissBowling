@@ -1,11 +1,12 @@
 @inherits FormDialog
 
-<DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && _model.ClubId != Guid.Empty)" OnSave="SaveAsync" OnCancel="Cancel">
+<DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && _model.AssociationId != Guid.Empty)" OnSave="SaveAsync" OnCancel="Cancel">
     <MudForm @ref="Form" @bind-IsValid="IsValid">
         <MudGrid Spacing="2">
             <MudItem xs="12"><MudTextField @bind-Value="_model.Name" Label="Name (Nachname Vorname)" Required="true" Variant="Variant.Outlined" /></MudItem>
             <MudItem xs="6"><MudTextField @bind-Value="_model.City" Label="Ort" Variant="Variant.Outlined" /></MudItem>
-            <MudItem xs="6"><MudTextField @bind-Value="_model.LicenseNumber" Label="Lizenznummer" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6"><MudTextField @bind-Value="_model.LicenseNumber" Label="Lizenznummer (SFKV-ID)" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6"><MudDatePicker @bind-Date="_model.BirthDate" Label="Geburtsdatum" DateFormat="dd.MM.yyyy" Variant="Variant.Outlined" Clearable="true" /></MudItem>
             <MudItem xs="6">
                 <MudSelect @bind-Value="_model.Category" Label="Kategorie" Variant="Variant.Outlined">
                     @foreach (var category in Enum.GetValues<PlayerCategory>())
@@ -15,10 +16,18 @@
                 </MudSelect>
             </MudItem>
             <MudItem xs="6">
-                <MudSelect @bind-Value="_model.ClubId" Label="Klub" Variant="Variant.Outlined">
-                    @foreach (var club in Clubs)
+                <MudSelect T="Guid" Value="_model.AssociationId" ValueChanged="OnAssociationChanged" Label="Unterverband" Variant="Variant.Outlined">
+                    @foreach (var association in Associations)
                     {
-                        <MudSelectItem Value="@club.Id">@club.Name</MudSelectItem>
+                        <MudSelectItem Value="@association.Id">@association.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect T="Guid?" @bind-Value="_model.ClubId" Label="Klub (leer = Einzelmitglied)" Variant="Variant.Outlined" Clearable="true">
+                    @foreach (var club in Clubs.Where(c => c.AssociationId == _model.AssociationId))
+                    {
+                        <MudSelectItem T="Guid?" Value="@club.Id">@club.Name</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>

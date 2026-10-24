@@ -42,12 +42,12 @@ public static class ChampionshipEndpoints
             return Problems.NotFound("Meisterschaft");
         }
 
-        // Rangierung erfolgt pro Kategorie.
+        // Rangierung erfolgt pro Disziplin und Kategorie.
         var ranking = championship.Results
-            .GroupBy(r => r.Player.Category)
-            .OrderBy(g => g.Key)
+            .GroupBy(r => (r.Discipline, r.Player.Category))
+            .OrderBy(g => g.Key.Discipline).ThenBy(g => g.Key.Category)
             .SelectMany(g => RankingCalculator.Rank(g, r => r.Pins, r => r.Nines)
-                .Select(x => new RankingEntryDto(x.Rank, x.Item.PlayerId, x.Item.Player.Name, x.Item.Player.Club.Name, g.Key, x.Item.Pins, x.Item.Nines, x.Item.Award)))
+                .Select(x => new RankingEntryDto(x.Rank, x.Item.PlayerId, x.Item.Player.Name, x.Item.Player.Club?.Name, g.Key.Discipline, g.Key.Category, x.Item.Pins, x.Item.Nines, x.Item.Award)))
             .ToList();
 
         return TypedResults.Ok(new ChampionshipDetailDto(championship.ToDto(), ranking));

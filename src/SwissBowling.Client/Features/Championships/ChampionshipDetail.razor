@@ -23,14 +23,7 @@
         }
         else
         {
-            <MudTabs Elevation="0" Rounded="true" Outlined="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="rounded-lg">
-                @foreach (var group in detail.Ranking.GroupBy(r => r.Category).OrderBy(g => g.Key))
-                {
-                    <MudTabPanel Text="@group.Key.Label()" BadgeData="@group.Count()" BadgeColor="Color.Primary">
-                        <RankingTable Entries="group.ToList()" />
-                    </MudTabPanel>
-                }
-            </MudTabs>
+            <RankingTabs Ranking="detail.Ranking" />
         }
     }
 </LoadingState>

@@ -7,11 +7,11 @@
     @if (_detail is { } detail)
     {
         <PageHeader Title="@detail.Player.Name"
-                    Subtitle="@($"{detail.Player.ClubName} · {detail.Player.Category.Label()}{(detail.Player.City is { } city ? $" · {city}" : "")}{(detail.Player.LicenseNumber is { } license ? $" · Lizenz {license}" : "")}")"
+                    Subtitle="@($"{detail.Player.ClubName ?? "Einzelmitglied"} · UV {detail.Player.AssociationName} · {detail.Player.Category.Label()}{(detail.Player.City is { } city ? $" · {city}" : "")}")"
                     Breadcrumbs="@([new("Kegler", "/kegler"), new(detail.Player.Name, null, disabled: true)])" />
 
         <MudGrid Spacing="3" Class="mb-6">
-            <MudItem xs="6" md="3"><StatCard Label="Meisterschaften" Value="@detail.Results.Count.ToString()" /></MudItem>
+            <MudItem xs="6" md="3"><StatCard Label="Resultate" Value="@detail.Results.Count.ToString()" /></MudItem>
             <MudItem xs="6" md="3"><StatCard Label="Bestes Resultat" Value="@(detail.Results.Count == 0 ? "–" : detail.Results.Max(r => r.Pins).ToString())" /></MudItem>
             <MudItem xs="6" md="3"><StatCard Label="Durchschnitt" Value="@(detail.Results.Count == 0 ? "–" : detail.Results.Average(r => r.Pins).ToString("0.0"))" /></MudItem>
             <MudItem xs="6" md="3"><StatCard Label="Podestplätze / Auszeichnungen" Value="@($"{detail.Results.Count(r => r.Rank is >= 1 and <= 3)} / {detail.Results.Count(r => r.Award)}")" /></MudItem>
@@ -20,22 +20,24 @@
         <MudTable T="PlayerResultDto" Items="detail.Results" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
                   RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/meisterschaften/{args.Item!.ChampionshipId}"))">
             <HeaderContent>
-                <MudTh Style="width: 110px;">Rang</MudTh>
+                <MudTh Style="width: 140px; white-space: nowrap;">Rang</MudTh>
                 <MudTh>Datum</MudTh>
                 <MudTh>Meisterschaft</MudTh>
+                <MudTh>Disziplin</MudTh>
                 <MudTh Class="text-right">Holz</MudTh>
                 <MudTh Class="text-right">Neuner</MudTh>
                 <MudTh>Auszeichnung</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd>
-                    <div class="d-flex align-center gap-1">
+                <MudTd Style="white-space: nowrap;">
+                    <div class="d-flex align-center flex-nowrap gap-1">
                         <RankBadge Rank="context.Rank" />
                         <span class="mud-text-secondary">von @context.Participants</span>
                     </div>
                 </MudTd>
                 <MudTd>@(context.Date?.ToString("dd.MM.yyyy") ?? "–")</MudTd>
                 <MudTd>@context.ChampionshipName</MudTd>
+                <MudTd>@context.Discipline.Label()</MudTd>
                 <MudTd Class="text-right font-weight-bold">@context.Pins</MudTd>
                 <MudTd Class="text-right">@context.Nines</MudTd>
                 <MudTd>@(context.Award ? "Ja" : "–")</MudTd>

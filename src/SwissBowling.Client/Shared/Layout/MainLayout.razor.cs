@@ -7,7 +7,8 @@ public partial class MainLayout
         ("/", "Start"),
         ("/meisterschaften", "Meisterschaften"),
         ("/kegler", "Kegler"),
-        ("/klubs", "Klubs")
+        ("/klubs", "Klubs"),
+        ("/unterverbaende", "Unterverbände")
     ];
 
     private bool _drawerOpen;

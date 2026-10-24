@@ -23,14 +23,16 @@
         </ToolBarContent>
         <HeaderContent>
             <MudTh>Name</MudTh>
-            <MudTh>Ort</MudTh>
+            <MudTh>Kat.</MudTh>
+            <MudTh>Heimbahn</MudTh>
             <MudTh>Unterverband</MudTh>
             <MudTh Class="text-right">Aktive Kegler</MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd Class="font-weight-medium">@context.Name</MudTd>
-            <MudTd>@(context.City ?? "–")</MudTd>
+            <MudTd>@context.Category</MudTd>
+            <MudTd>@(context.HomeVenue ?? "–")</MudTd>
             <MudTd>@context.AssociationName</MudTd>
             <MudTd Class="text-right">@context.PlayerCount</MudTd>
             <MudTd Class="text-right">

@@ -13,10 +13,13 @@ der aktuell auf [www.uvweb.kegler.ch](https://www.uvweb.kegler.ch) publizierten 
 
 ## Fachliches Modell (SFKV)
 
-* **Unterverband** (UV) → **Klub** → **Kegler** (Name «Nachname Vorname», Ort, **Lizenznummer**, Kategorie **A / B / C / G**).
+* **Unterverband** (UV, Kürzel + UV-Nr.) mit **Vorstand**, **Kegelbahnen**, **Klubs** (Kurzname, Klubkategorie, Heimbahn, Klub-ID)
+  und **Keglern** (Name «Nachname Vorname», Ort, **Lizenznummer** = SFKV-Mitglieder-ID, Geburtsdatum, Kategorie **A / B / C / G**).
+  Kegler ohne Klub sind **Einzelmitglieder** ihres Unterverbands.
 * Eine **Meisterschaft** ist ein Anlass (Durchführer, Lokal, Ort, Beginn/Ende, Anzahl Würfe). Status wird aus den Daten abgeleitet.
-* Jeder Kegler erzielt pro Meisterschaft **ein Resultat**: Holz, **Neuner**, **Auszeichnung**, Matchdatum.
-* **Rangliste pro Kategorie**: Holz absteigend, dann Neuner; bei Gleichstand geteilter Rang.
+* **Disziplinen**: Meisterschaft und MS Damen. Pro Disziplin erzielt ein Kegler **ein Resultat**: Holz, **Neuner**, **Auszeichnung**, Matchdatum.
+  Sport, Americaine, Sport Spezial, Kombination und Klubwertung werden nicht erfasst.
+* **Rangliste pro Disziplin und Kategorie**: Holz absteigend, dann Neuner; bei Gleichstand geteilter Rang.
 * Rollen: **Admin** (alles) und **Erfasser** (Resultate erfassen, solange die Meisterschaft läuft).
 
 ## Feature Slices
@@ -30,22 +33,25 @@ Server/Features/Results/ResultEndpoints.cs  Endpunkte (lesen, Batch-Speichern, l
 Client/Features/Results/Admin/ResultEntry.* Resultaterfassung
 ```
 
-Slices: `Associations`, `Clubs`, `Players`, `Championships` (inkl. Rangliste), `Results`, `Import` (UVweb), `Auth`, `Home` (nur Client).
+Slices: `Associations` (inkl. Vorstand), `Venues` (Kegelbahnen), `Clubs`, `Players`, `Championships` (inkl. Rangliste), `Results`, `Import`, `Auth`, `Home` (nur Client).
 Razor-Komponenten bestehen aus `.razor` (Markup), `.razor.cs` (Code-Behind) und bei Bedarf `.razor.css`.
 Querschnittliches: `Client/Shared` (Layouts, `ApiPage`/`FormDialog`, Komponenten, Dienste), `Server/Infrastructure`, `Server/Data`.
 
-## Import von UVweb
+## Import (`Server/Features/Import`)
 
-`Server/Features/Import`: `UvwebScraper` liest die öffentlichen HTML-Seiten (Übersicht «Aktuelle Ranglisten», MS-Angaben, Navigation mit
-Kategorien, Rangliste pro Kategorie, Klubresultate inkl. Mitglieder), `UvwebImporter` übernimmt sie idempotent:
-Unterverband über `uvID`, Klub über `klubID`, Kegler über Lizenznummer, Meisterschaft über `msID`. Admin-Seite: `/admin/import`.
+**Stammdaten – Master: www.sfkv.ch/unterverbaende/uvXX.** `SfkvScraper` liest pro Unterverband Kopfdaten (Kürzel, UV-Nr., Homepage),
+Vorstand, Mitglieder, Klubs und Kegelbahnen; `MasterDataImporter` übernimmt sie idempotent (UV-Nr., Klub-ID, Mitglieder-ID, Bahn-Name).
+Nicht mehr gelistete Mitglieder werden deaktiviert. Admin: `/admin/import` → «Stammdaten» – **zuerst ausführen**.
 
-**Archiv (seit 2005):** Die archivierten Ranglisten liegen als textbasierte PDFs auf `ftp.sfkv.net`. `UvwebPdfParser` (PdfPig) liest
-Kategorie-Blöcke und Zeilen wie `1. Wicki Fridolin, River Boys 795 / 38`, die Stammdaten kommen weiterhin aus `msangaben.aspx`.
-Da PDFs keine Lizenznummern enthalten, werden Kegler über den Namen (bei Mehrdeutigkeit über den Klub) zugeordnet und Klubs über
-den Kurznamen («Lüderenblick» ↔ «KK Lüderenblick»). Ein späterer HTML-Import ergänzt bei solchen Keglern die Lizenznummer.
+**Resultate – www.uvweb.kegler.ch.** `UvwebScraper` liest MS-Angaben, Navigation und die Ranglisten der Disziplinen 1 (Meisterschaft)
+und 2 (MS Damen) pro Kategorie; `UvwebImporter` ordnet Kegler über die Lizenznummer und Klubs über die klubID (= SFKV Klub-ID) zu.
+Unbekannte Kegler (z.B. Gäste) werden minimal angelegt.
 
-**Automatischer Abgleich:** `UvwebSyncService` importiert die aktuellen Ranglisten periodisch (`Import:SyncIntervalHours`, Standard 6, 0 = aus).
+**Archiv (seit 2005).** PDFs auf `ftp.sfkv.net`: `UvwebPdfParser` (PdfPig) erkennt die Disziplin-Abschnitte («MS», «MSD»; andere werden
+übersprungen), Kategorie-Blöcke und Zeilen wie `1. Wicki Fridolin, River Boys 795 / 38`. Kegler werden über den Namen (bei Mehrdeutigkeit
+Klub, dann Unterverband) zugeordnet, Klubs über den SFKV-Kurznamen – der stimmt mit den Stammdaten überein.
+
+**Automatischer Abgleich:** `UvwebSyncService` importiert periodisch Stammdaten und aktuelle Ranglisten (`Import:SyncIntervalHours`, Standard 6, 0 = aus).
 
 Die Nutzung der Daten ist mit dem Betreiber (Martin Schumacher) abgesprochen.
 

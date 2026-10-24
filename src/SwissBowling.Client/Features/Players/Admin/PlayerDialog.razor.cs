@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using SwissBowling.Core.Associations;
 using SwissBowling.Core.Clubs;
 using SwissBowling.Core.Players;
 
@@ -10,25 +11,36 @@ public partial class PlayerDialog
 
     [Parameter] public List<ClubDto> Clubs { get; set; } = [];
 
+    [Parameter] public List<AssociationDto> Associations { get; set; } = [];
+
     private readonly Model _model = new();
 
     protected override void OnInitialized()
     {
         if (Player is { } p)
         {
-            (_model.Name, _model.City, _model.LicenseNumber, _model.Category, _model.ClubId, _model.IsActive) =
-                (p.Name, p.City, p.LicenseNumber, p.Category, p.ClubId, p.IsActive);
+            (_model.Name, _model.City, _model.LicenseNumber, _model.Category, _model.ClubId, _model.AssociationId, _model.IsActive) =
+                (p.Name, p.City, p.LicenseNumber, p.Category, p.ClubId, p.AssociationId, p.IsActive);
+            _model.BirthDate = p.BirthDate?.ToDateTime(TimeOnly.MinValue);
         }
         else
         {
-            _model.ClubId = Clubs.FirstOrDefault()?.Id ?? Guid.Empty;
+            _model.AssociationId = Associations.FirstOrDefault()?.Id ?? Guid.Empty;
         }
+    }
+
+    private void OnAssociationChanged(Guid associationId)
+    {
+        _model.AssociationId = associationId;
+        _model.ClubId = null;
     }
 
     private Task SaveAsync() => SubmitAsync(
         () =>
         {
-            var request = new SavePlayerRequest(_model.Name, _model.City, _model.LicenseNumber, _model.Category, _model.ClubId, _model.IsActive);
+            var request = new SavePlayerRequest(_model.Name, _model.City, _model.LicenseNumber,
+                _model.BirthDate is { } birth ? DateOnly.FromDateTime(birth) : null,
+                _model.Category, _model.ClubId, _model.AssociationId, _model.IsActive);
             return Player is { } p
                 ? Api.PutAsync<PlayerDto>(PlayerRoutes.ById(p.Id), request)
                 : Api.PostAsync<PlayerDto>(PlayerRoutes.Base, request);
@@ -43,9 +55,13 @@ public partial class PlayerDialog
 
         public string? LicenseNumber { get; set; }
 
-        public PlayerCategory Category { get; set; } = PlayerCategory.A;
+        public DateTime? BirthDate { get; set; }
 
-        public Guid ClubId { get; set; }
+        public PlayerCategory Category { get; set; } = PlayerCategory.C;
+
+        public Guid? ClubId { get; set; }
+
+        public Guid AssociationId { get; set; }
 
         public bool IsActive { get; set; } = true;
     }

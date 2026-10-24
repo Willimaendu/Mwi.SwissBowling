@@ -1,12 +1,15 @@
 using SwissBowling.Client.Shared.Services;
+using SwissBowling.Core.Associations;
 using SwissBowling.Core.Import;
 
 namespace SwissBowling.Client.Features.Import.Admin;
 
 public partial class UvwebImport
 {
+    private const int MasterDataBusy = -1;
+
     private List<UvwebChampionshipDto> _current = [];
-    private List<UvwebAssociationDto> _associations = [];
+    private List<AssociationDto> _associations = [];
     private List<UvwebArchiveEntryDto> _archive = [];
     private readonly List<ImportSummaryDto> _summaries = [];
     private int? _archiveUvId;
@@ -16,11 +19,29 @@ public partial class UvwebImport
 
     protected override Task OnInitializedAsync() => LoadAsync(async () =>
     {
-        _current = await Api.GetAsync<List<UvwebChampionshipDto>>(ImportRoutes.Available);
-        _associations = await Api.GetAsync<List<UvwebAssociationDto>>(ImportRoutes.Associations);
+        _current = await Api.GetAsync<List<UvwebChampionshipDto>>(ImportRoutes.Current);
+        _associations = (await Api.GetAsync<List<AssociationDto>>(AssociationRoutes.Base)).Where(a => a.ExternalId is not null).ToList();
     });
 
-    private Task ReloadCurrentAsync() => LoadAsync(async () => _current = await Api.GetAsync<List<UvwebChampionshipDto>>(ImportRoutes.Available));
+    private Task ReloadCurrentAsync() => LoadAsync(async () => _current = await Api.GetAsync<List<UvwebChampionshipDto>>(ImportRoutes.Current));
+
+    private async Task ImportMasterDataAsync()
+    {
+        _busy = MasterDataBusy;
+        try
+        {
+            await TryAsync(async () =>
+            {
+                var summaries = await Api.PostAsync<List<ImportSummaryDto>>(ImportRoutes.MasterData, null);
+                _summaries.InsertRange(0, summaries);
+                _associations = (await Api.GetAsync<List<AssociationDto>>(AssociationRoutes.Base)).Where(a => a.ExternalId is not null).ToList();
+            }, "Stammdaten importiert.");
+        }
+        finally
+        {
+            _busy = null;
+        }
+    }
 
     private async Task LoadArchiveAsync(int? uvId)
     {

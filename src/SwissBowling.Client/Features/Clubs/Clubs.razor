@@ -14,15 +14,17 @@
         </ToolBarContent>
         <HeaderContent>
             <MudTh>Klub</MudTh>
-            <MudTh>Ort</MudTh>
+            <MudTh>Kat.</MudTh>
+            <MudTh>Heimbahn</MudTh>
             <MudTh Class="text-right">Aktive Kegler</MudTh>
         </HeaderContent>
         <GroupHeaderTemplate>
-            <MudTh colspan="3" Class="font-weight-bold">@context.Key</MudTh>
+            <MudTh colspan="4" Class="font-weight-bold">@context.Key</MudTh>
         </GroupHeaderTemplate>
         <RowTemplate>
             <MudTd Class="font-weight-medium">@context.Name</MudTd>
-            <MudTd>@(context.City ?? "–")</MudTd>
+            <MudTd>@context.Category</MudTd>
+            <MudTd>@(context.HomeVenue ?? "–")</MudTd>
             <MudTd Class="text-right">@context.PlayerCount</MudTd>
         </RowTemplate>
     </MudTable>

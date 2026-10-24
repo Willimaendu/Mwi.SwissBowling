@@ -1,0 +1,94 @@
+@page "/unterverbaende/{Id:guid}"
+@inherits ApiPage
+
+<PageTitle>@(_detail?.Association.Name ?? "Unterverband") – Swiss Bowling</PageTitle>
+
+<LoadingState Loading="Loading" Error="@Error">
+    @if (_detail is { } detail)
+    {
+        <PageHeader Title="@($"UV {detail.Association.Name}")"
+                    Subtitle="@($"{detail.Association.ShortCode} · {detail.Association.ClubCount} Klubs · {detail.Association.PlayerCount} Mitglieder")"
+                    Breadcrumbs="@([new("Unterverbände", "/unterverbaende"), new(detail.Association.Name, null, disabled: true)])">
+            <Actions>
+                @if (detail.Association.Website is { } website)
+                {
+                    <MudButton Href="@website" Target="_blank" Variant="Variant.Outlined" EndIcon="@Icons.Material.Outlined.OpenInNew">Webseite</MudButton>
+                }
+                <MudButton Href="@($"/kegler?association={Id}")" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.People">Mitglieder</MudButton>
+            </Actions>
+        </PageHeader>
+
+        <MudTabs Elevation="0" Rounded="true" Outlined="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="rounded-lg">
+            <MudTabPanel Text="Klubs" Icon="@Icons.Material.Outlined.Groups" BadgeData="@detail.Clubs.Count">
+                <MudTable T="ClubDto" Items="detail.Clubs" Hover="true" Dense="true" Elevation="0" RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler?club={args.Item!.Id}"))">
+                    <HeaderContent>
+                        <MudTh>Klub</MudTh>
+                        <MudTh>Kat.</MudTh>
+                        <MudTh>Heimbahn</MudTh>
+                        <MudTh Class="text-right">Aktive Kegler</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd Class="font-weight-medium">@context.Name</MudTd>
+                        <MudTd>@context.Category</MudTd>
+                        <MudTd>@context.HomeVenue</MudTd>
+                        <MudTd Class="text-right">@context.PlayerCount</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+            <MudTabPanel Text="Kegelbahnen" Icon="@Icons.Material.Outlined.Place" BadgeData="@detail.Venues.Count">
+                <MudTable T="VenueDto" Items="detail.Venues" Hover="true" Dense="true" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Lokal</MudTh>
+                        <MudTh>Ort</MudTh>
+                        <MudTh Class="text-right">Bahnen</MudTh>
+                        <MudTh>Ruhetag</MudTh>
+                        <MudTh>Telefon</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd Class="font-weight-medium">
+                            @if (context.Website is { } website)
+                            {
+                                <MudLink Href="@website" Target="_blank">@context.Name</MudLink>
+                            }
+                            else
+                            {
+                                @context.Name
+                            }
+                        </MudTd>
+                        <MudTd>@context.Zip @context.City</MudTd>
+                        <MudTd Class="text-right">@context.Lanes</MudTd>
+                        <MudTd>@context.RestDay</MudTd>
+                        <MudTd>@context.Phone</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+            <MudTabPanel Text="Vorstand" Icon="@Icons.Material.Outlined.Badge" BadgeData="@detail.Board.Count">
+                <MudTable T="BoardMemberDto" Items="detail.Board" Dense="true" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Funktion</MudTh>
+                        <MudTh>Name</MudTh>
+                        <MudTh>Ort</MudTh>
+                        <MudTh>Seit</MudTh>
+                        <MudTh>Kontakt</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd Class="font-weight-medium">@context.Function</MudTd>
+                        <MudTd>@context.Name</MudTd>
+                        <MudTd>@context.City</MudTd>
+                        <MudTd>@context.Since?.ToString("dd.MM.yyyy")</MudTd>
+                        <MudTd>
+                            @if (context.Email is { } email)
+                            {
+                                <MudLink Href="@($"mailto:{email}")">@email</MudLink>
+                            }
+                            @if (context.Phone is { } phone)
+                            {
+                                <span class="mud-text-secondary ml-2">@phone</span>
+                            }
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudTabPanel>
+        </MudTabs>
+    }
+</LoadingState>

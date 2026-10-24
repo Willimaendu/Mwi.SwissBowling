@@ -22,7 +22,7 @@ public partial class ClubsAdmin
         string.IsNullOrWhiteSpace(_search)
         || club.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
         || club.AssociationName.Contains(_search, StringComparison.OrdinalIgnoreCase)
-        || (club.City?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false);
+        || (club.HomeVenue?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false);
 
     private async Task EditAsync(ClubDto? club)
     {

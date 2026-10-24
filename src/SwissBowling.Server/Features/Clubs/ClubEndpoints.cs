@@ -32,7 +32,8 @@ public static class ClubEndpoints
             return Problems.Invalid("Der gewählte Unterverband existiert nicht.");
         }
 
-        var club = new Club { Name = request.Name.Trim(), City = request.City?.Trim(), Association = association };
+        var club = new Club { Name = request.Name, Association = association };
+        club.Apply(request);
         db.Clubs.Add(club);
         await db.SaveChangesAsync(ct);
         return TypedResults.Created(ClubRoutes.ById(club.Id), club.ToDto());
@@ -57,8 +58,7 @@ public static class ClubEndpoints
             club.Association = association;
         }
 
-        club.Name = request.Name.Trim();
-        club.City = request.City?.Trim();
+        club.Apply(request);
         await db.SaveChangesAsync(ct);
         return TypedResults.Ok(club.ToDto());
     }

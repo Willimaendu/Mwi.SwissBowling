@@ -25,13 +25,13 @@ public static class ResultEndpoints
         var results = await db.Results.AsNoTracking()
             .Include(r => r.Player).ThenInclude(p => p.Club)
             .Where(r => r.ChampionshipId == championshipId)
-            .OrderByDescending(r => r.Pins).ThenByDescending(r => r.Nines)
+            .OrderBy(r => r.Discipline).ThenByDescending(r => r.Pins).ThenByDescending(r => r.Nines)
             .ToListAsync(ct);
 
         return TypedResults.Ok(results.Select(r => r.ToDto()));
     }
 
-    /// <summary>Speichert alle übermittelten Resultate (Upsert pro Kegler).</summary>
+    /// <summary>Speichert alle übermittelten Resultate (Upsert pro Kegler und Disziplin).</summary>
     private static async Task<IResult> Save(Guid championshipId, SaveResultsRequest request, ClaimsPrincipal user, AppDbContext db, CancellationToken ct)
     {
         var championship = await db.Championships.Include(c => c.Results).FirstOrDefaultAsync(c => c.Id == championshipId, ct);
@@ -50,12 +50,12 @@ public static class ResultEndpoints
             return Problems.Invalid($"Ein Resultat darf höchstens {championship.MaxPins} Holz betragen.");
         }
 
-        if (request.Results.Select(r => r.PlayerId).Distinct().Count() != request.Results.Count)
+        if (request.Results.Select(r => (r.PlayerId, r.Discipline)).Distinct().Count() != request.Results.Count)
         {
-            return Problems.Invalid("Ein Kegler darf pro Meisterschaft nur ein Resultat haben.");
+            return Problems.Invalid("Ein Kegler darf pro Meisterschaft und Disziplin nur ein Resultat haben.");
         }
 
-        var playerIds = request.Results.Select(r => r.PlayerId).ToList();
+        var playerIds = request.Results.Select(r => r.PlayerId).Distinct().ToList();
         var players = await db.Players.Include(p => p.Club).Where(p => playerIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
         if (players.Count != playerIds.Count)
         {
@@ -64,10 +64,10 @@ public static class ResultEndpoints
 
         foreach (var input in request.Results)
         {
-            var result = championship.Results.FirstOrDefault(r => r.PlayerId == input.PlayerId);
+            var result = championship.Results.FirstOrDefault(r => r.PlayerId == input.PlayerId && r.Discipline == input.Discipline);
             if (result is null)
             {
-                result = new Result { Championship = championship, Player = players[input.PlayerId] };
+                result = new Result { Championship = championship, Player = players[input.PlayerId], Discipline = input.Discipline };
                 championship.Results.Add(result);
             }
 

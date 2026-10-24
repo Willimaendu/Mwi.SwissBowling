@@ -4,14 +4,25 @@
 
 <PageTitle>Import UVweb – Administration</PageTitle>
 
-<PageHeader Title="Import von UVweb" Subtitle="Ranglisten von www.uvweb.kegler.ch übernehmen – aktuelle (HTML) und archivierte (PDF)" />
+<PageHeader Title="Import" Subtitle="Stammdaten von www.sfkv.ch (Master), Resultate von www.uvweb.kegler.ch – Disziplinen Meisterschaft und MS Damen" />
 
 <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-    Daten der SFKV-Unterverbände (© Martin Schumacher / UVweb, Nutzung freigegeben). Der Import ist idempotent: bestehende Einträge werden
-    anhand von UVweb-ID bzw. Lizenznummer aktualisiert. Die aktuellen Ranglisten werden zusätzlich automatisch abgeglichen (Konfiguration <code>Import:SyncIntervalHours</code>).
+    Daten der SFKV und ihrer Unterverbände (Nutzung mit dem Betreiber abgesprochen). Alle Importe sind idempotent: bestehende Einträge werden anhand von
+    UV-Nr., Klub-ID, Lizenznummer bzw. MS-Nr. aktualisiert. Stammdaten und aktuelle Ranglisten werden zusätzlich automatisch abgeglichen (<code>Import:SyncIntervalHours</code>).
 </MudAlert>
 
 <MudTabs Elevation="0" Rounded="true" Outlined="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="rounded-lg">
+    <MudTabPanel Text="Stammdaten (sfkv.ch)" Icon="@Icons.Material.Outlined.AccountTree">
+        <MudText Class="mb-3">Unterverbände mit Vorstand, Mitgliedern, Klubs und Kegelbahnen. Zuerst ausführen – die Resultat-Importe ordnen Kegler und Klubs darüber zu.</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.CloudDownload" OnClick="ImportMasterDataAsync" Disabled="@(_busy is not null)">
+            @if (_busy == MasterDataBusy)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Stammdaten aller Unterverbände importieren
+        </MudButton>
+    </MudTabPanel>
+
     <MudTabPanel Text="Aktuelle Ranglisten" Icon="@Icons.Material.Outlined.Public">
         <div class="d-flex gap-2 mb-3">
             <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Refresh" OnClick="ReloadCurrentAsync" Disabled="@(_busy is not null)">Aktualisieren</MudButton>
@@ -46,7 +57,7 @@
             <MudSelect T="int?" Value="_archiveUvId" ValueChanged="LoadArchiveAsync" Label="Unterverband" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 260px;">
                 @foreach (var association in _associations)
                 {
-                    <MudSelectItem T="int?" Value="@association.UvId">@association.Name</MudSelectItem>
+                    <MudSelectItem T="int?" Value="@association.ExternalId">@association.Name</MudSelectItem>
                 }
             </MudSelect>
             <MudSpacer />
@@ -88,12 +99,12 @@
     <MudText Typo="Typo.h6" Class="mt-6 mb-2">Protokoll</MudText>
     <MudSimpleTable Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
         <thead>
-            <tr><th>Meisterschaft</th><th class="text-right">Neue Klubs</th><th class="text-right">Neue Kegler</th><th class="text-right">Resultate</th></tr>
+            <tr><th>Quelle</th><th class="text-right">Klubs</th><th class="text-right">Kegler</th><th class="text-right">Resultate</th></tr>
         </thead>
         <tbody>
             @foreach (var summary in _summaries)
             {
-                <tr><td>@summary.Championship</td><td class="text-right">@summary.Clubs</td><td class="text-right">@summary.Players</td><td class="text-right">@summary.Results</td></tr>
+                <tr><td>@summary.Source</td><td class="text-right">@summary.Clubs</td><td class="text-right">@summary.Players</td><td class="text-right">@summary.Results</td></tr>
             }
         </tbody>
     </MudSimpleTable>

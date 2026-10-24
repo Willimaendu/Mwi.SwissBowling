@@ -15,7 +15,7 @@ public partial class RankingTable
     private bool Matches(RankingEntryDto entry) =>
         string.IsNullOrWhiteSpace(_search)
         || entry.PlayerName.Contains(_search, StringComparison.OrdinalIgnoreCase)
-        || entry.ClubName.Contains(_search, StringComparison.OrdinalIgnoreCase);
+        || (entry.ClubName?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false);
 
     private void OnRowClick(TableRowClickEventArgs<RankingEntryDto> args)
     {

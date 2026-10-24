@@ -3,7 +3,7 @@
 
 <PageTitle>Kegler – Swiss Bowling</PageTitle>
 
-<PageHeader Title="Keglerinnen & Kegler" Subtitle="Alle aktiven Kegler mit Klub und Kategorie" />
+<PageHeader Title="Keglerinnen & Kegler" Subtitle="Alle aktiven Mitglieder mit Klub und Kategorie" />
 
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="_players.Count == 0" EmptyText="Noch keine Kegler erfasst.">
     <MudTable T="PlayerDto" Items="_players" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches"
@@ -22,15 +22,15 @@
             <MudTh><MudTableSortLabel SortBy="new Func<PlayerDto, object>(p => p.Name)" InitialDirection="SortDirection.Ascending">Name</MudTableSortLabel></MudTh>
             <MudTh Class="d-none d-sm-table-cell">Ort</MudTh>
             <MudTh>Klub</MudTh>
+            <MudTh Class="d-none d-md-table-cell">Unterverband</MudTh>
             <MudTh Class="d-none d-sm-table-cell">Kategorie</MudTh>
-            <MudTh Class="d-none d-md-table-cell">Lizenz</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd Class="font-weight-medium">@context.Name</MudTd>
             <MudTd Class="d-none d-sm-table-cell">@context.City</MudTd>
-            <MudTd>@context.ClubName</MudTd>
+            <MudTd>@(context.ClubName ?? "Einzelmitglied")</MudTd>
+            <MudTd Class="d-none d-md-table-cell mud-text-secondary">@context.AssociationName</MudTd>
             <MudTd Class="d-none d-sm-table-cell">@context.Category.Label()</MudTd>
-            <MudTd Class="d-none d-md-table-cell mud-text-secondary">@(context.LicenseNumber ?? "–")</MudTd>
         </RowTemplate>
     </MudTable>
 </LoadingState>

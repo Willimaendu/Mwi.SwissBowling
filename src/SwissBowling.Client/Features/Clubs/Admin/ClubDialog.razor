@@ -1,14 +1,28 @@
 @inherits FormDialog
 
-<DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && _associationId != Guid.Empty)" OnSave="SaveAsync" OnCancel="Cancel">
+<DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && _model.AssociationId != Guid.Empty)" OnSave="SaveAsync" OnCancel="Cancel">
     <MudForm @ref="Form" @bind-IsValid="IsValid">
-        <MudTextField @bind-Value="_name" Label="Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
-        <MudTextField @bind-Value="_city" Label="Ort" Variant="Variant.Outlined" Class="mb-3" />
-        <MudSelect @bind-Value="_associationId" Label="Unterverband" Variant="Variant.Outlined">
-            @foreach (var association in Associations)
-            {
-                <MudSelectItem Value="@association.Id">@association.Name</MudSelectItem>
-            }
-        </MudSelect>
+        <MudGrid Spacing="2">
+            <MudItem xs="8"><MudTextField @bind-Value="_model.Name" Label="Name (Kurzname)" Required="true" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="4">
+                <MudSelect @bind-Value="_model.Category" Label="Klubkategorie" Variant="Variant.Outlined" Clearable="true">
+                    @foreach (var category in new[] { PlayerCategory.A, PlayerCategory.B, PlayerCategory.C })
+                    {
+                        <MudSelectItem T="PlayerCategory?" Value="@category">@category</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudSelect @bind-Value="_model.AssociationId" Label="Unterverband" Variant="Variant.Outlined">
+                    @foreach (var association in Associations)
+                    {
+                        <MudSelectItem Value="@association.Id">@association.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12"><MudTextField @bind-Value="_model.HomeVenue" Label="Heimbahn" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6"><MudTextField @bind-Value="_model.Email" Label="E-Mail" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6"><MudTextField @bind-Value="_model.Website" Label="Webseite" Variant="Variant.Outlined" /></MudItem>
+        </MudGrid>
     </MudForm>
 </DialogFrame>

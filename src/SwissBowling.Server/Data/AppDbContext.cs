@@ -7,12 +7,17 @@ using SwissBowling.Server.Features.Championships;
 using SwissBowling.Server.Features.Clubs;
 using SwissBowling.Server.Features.Players;
 using SwissBowling.Server.Features.Results;
+using SwissBowling.Server.Features.Venues;
 
 namespace SwissBowling.Server.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<Association> Associations => Set<Association>();
+
+    public DbSet<BoardMember> BoardMembers => Set<BoardMember>();
+
+    public DbSet<Venue> Venues => Set<Venue>();
 
     public DbSet<Club> Clubs => Set<Club>();
 
@@ -28,9 +33,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
         builder.Entity<Association>().HasIndex(a => a.ExternalId).IsUnique();
         builder.Entity<Association>().HasMany(a => a.Clubs).WithOne(c => c.Association).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<Association>().HasMany(a => a.Players).WithOne(p => p.Association).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<Association>().HasMany(a => a.Venues).WithOne(v => v.Association).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<Association>().HasMany(a => a.Board).WithOne(b => b.Association).OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Club>().HasIndex(c => c.ExternalId).IsUnique();
-        builder.Entity<Club>().HasMany(c => c.Players).WithOne(p => p.Club).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<Club>().HasMany(c => c.Players).WithOne(p => p.Club).OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<Player>().HasIndex(p => p.LicenseNumber).IsUnique();
         builder.Entity<Player>().HasMany(p => p.Results).WithOne(r => r.Player).OnDelete(DeleteBehavior.Restrict);
@@ -40,6 +48,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<Championship>().HasOne(c => c.Association).WithMany().OnDelete(DeleteBehavior.Restrict);
         builder.Entity<Championship>().HasMany(c => c.Results).WithOne(r => r.Championship).OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<Result>().HasIndex(r => new { r.ChampionshipId, r.PlayerId }).IsUnique();
+        builder.Entity<Result>().HasIndex(r => new { r.ChampionshipId, r.PlayerId, r.Discipline }).IsUnique();
     }
 }

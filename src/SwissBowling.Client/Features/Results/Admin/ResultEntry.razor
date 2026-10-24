@@ -21,8 +21,15 @@
         <MudTable T="Row" Items="_rows" Dense="true" Hover="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches" FixedHeader="true" Height="calc(100vh - 300px)"
                   RowClassFunc="@((row, _) => row.IsDirty ? "dirty" : string.Empty)">
             <ToolBarContent>
+                <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">
+                    @foreach (var discipline in Enum.GetValues<Discipline>())
+                    {
+                        var current = discipline;
+                        <MudButton Variant="@(_discipline == current ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SwitchDisciplineAsync(current))" Disabled="@(DirtyCount > 0)">@current.Label()</MudButton>
+                    }
+                </MudButtonGroup>
                 <MudTextField @bind-Value="_search" Placeholder="Kegler oder Klub filtern" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                              Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0" Style="max-width: 320px;" />
+                              Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0 ml-4" Style="max-width: 320px;" />
                 <MudSpacer />
                 <MudSwitch T="bool" @bind-Value="_onlyWithResult" Label="Nur mit Resultat" Color="Color.Primary" />
             </ToolBarContent>
@@ -37,7 +44,7 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd Class="font-weight-medium">@context.Player.Name</MudTd>
-                <MudTd>@context.Player.ClubName</MudTd>
+                <MudTd>@(context.Player.ClubName ?? "Einzelmitglied")</MudTd>
                 <MudTd>@context.Player.Category</MudTd>
                 <MudTd><MudNumericField T="int?" @bind-Value="context.Pins" Min="0" Max="championship.MaxPins" HideSpinButtons="true" Immediate="true" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="–" Class="pins" /></MudTd>
                 <MudTd><MudNumericField T="int" @bind-Value="context.Nines" Min="0" Max="championship.Throws" HideSpinButtons="true" Immediate="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="pins" /></MudTd>

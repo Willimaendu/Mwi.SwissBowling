@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using SwissBowling.Core.Players;
+using SwissBowling.Core.Results;
 
 namespace SwissBowling.Core.Championships;
 
@@ -19,7 +20,7 @@ public enum ChampionshipStatus
     Completed
 }
 
-/// <summary>Eine Meisterschaft ist ein Anlass (typisch 1–2 Wochen auf einer Kegelbahn), bei dem jeder Kegler ein Resultat erzielt.</summary>
+/// <summary>Eine Meisterschaft ist ein Anlass (typisch 1–2 Wochen auf einer Kegelbahn), bei dem jeder Kegler ein Resultat pro Disziplin erzielt.</summary>
 public sealed record ChampionshipDto(
     Guid Id,
     string Name,
@@ -53,6 +54,6 @@ public sealed record SaveChampionshipRequest(
     DateOnly EndDate,
     [property: Range(1, 1000)] int Throws);
 
-public sealed record RankingEntryDto(int Rank, Guid PlayerId, string PlayerName, string ClubName, PlayerCategory Category, int Pins, int Nines, bool Award);
+public sealed record RankingEntryDto(int Rank, Guid PlayerId, string PlayerName, string? ClubName, Discipline Discipline, PlayerCategory Category, int Pins, int Nines, bool Award);
 
 public sealed record ChampionshipDetailDto(ChampionshipDto Championship, IReadOnlyList<RankingEntryDto> Ranking);

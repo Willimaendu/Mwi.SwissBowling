@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SwissBowling.Core.Results;
 
 namespace SwissBowling.Core.Players;
 
@@ -20,26 +21,39 @@ public enum PlayerCategory
     G = 4
 }
 
-/// <summary>Name im SFKV-Format «Nachname Vorname».</summary>
+/// <summary>Name im SFKV-Format «Nachname Vorname». Kegler ohne Klub sind Einzelmitglieder ihres Unterverbands.</summary>
 public sealed record PlayerDto(
     Guid Id,
     string Name,
     string? City,
     string? LicenseNumber,
+    DateOnly? BirthDate,
     PlayerCategory Category,
     bool IsActive,
-    Guid ClubId,
-    string ClubName);
+    Guid? ClubId,
+    string? ClubName,
+    Guid AssociationId,
+    string AssociationName);
 
 public sealed record SavePlayerRequest(
     [property: Required, MaxLength(200)] string Name,
     [property: MaxLength(100)] string? City,
     [property: MaxLength(20)] string? LicenseNumber,
+    DateOnly? BirthDate,
     PlayerCategory Category,
-    [property: Required] Guid ClubId,
+    Guid? ClubId,
+    [property: Required] Guid AssociationId,
     bool IsActive = true);
 
-/// <summary>Resultat inkl. Platzierung innerhalb der Kategorie (Rank von Participants).</summary>
-public sealed record PlayerResultDto(Guid ChampionshipId, string ChampionshipName, DateOnly? Date, int Pins, int Nines, bool Award, int Rank, int Participants);
+public sealed record PlayerResultDto(
+    Guid ChampionshipId,
+    string ChampionshipName,
+    Discipline Discipline,
+    DateOnly? Date,
+    int Pins,
+    int Nines,
+    bool Award,
+    int Rank,
+    int Participants);
 
 public sealed record PlayerDetailDto(PlayerDto Player, IReadOnlyList<PlayerResultDto> Results);

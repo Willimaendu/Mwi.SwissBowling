@@ -11,6 +11,7 @@ using SwissBowling.Server.Features.Clubs;
 using SwissBowling.Server.Features.Import;
 using SwissBowling.Server.Features.Players;
 using SwissBowling.Server.Features.Results;
+using SwissBowling.Server.Features.Venues;
 using SwissBowling.Server.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,8 +23,10 @@ builder.Services.AddJwtIdentity();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
-// Import von www.uvweb.kegler.ch
+// Import: Stammdaten von www.sfkv.ch, Resultate von www.uvweb.kegler.ch
+builder.Services.AddHttpClient<SfkvScraper>(client => client.BaseAddress = new Uri("https://www.sfkv.ch/"));
 builder.Services.AddHttpClient<UvwebScraper>(client => client.BaseAddress = new Uri("https://www.uvweb.kegler.ch/"));
+builder.Services.AddScoped<MasterDataImporter>();
 builder.Services.AddScoped<UvwebImporter>();
 builder.Services.AddHostedService<UvwebSyncService>();
 
@@ -62,6 +65,7 @@ api.MapClubs();
 api.MapPlayers();
 api.MapChampionships();
 api.MapResults();
+api.MapVenues();
 api.MapImport();
 
 app.MapStaticAssets();

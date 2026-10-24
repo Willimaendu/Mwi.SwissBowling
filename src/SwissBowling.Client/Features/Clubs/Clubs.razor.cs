@@ -21,5 +21,5 @@ public partial class Clubs
     private bool Matches(ClubDto club) =>
         string.IsNullOrWhiteSpace(_search)
         || club.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
-        || (club.City?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false);
+        || (club.HomeVenue?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false);
 }

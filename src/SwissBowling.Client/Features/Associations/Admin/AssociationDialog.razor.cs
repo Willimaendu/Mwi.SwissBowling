@@ -8,12 +8,18 @@ public partial class AssociationDialog
     [Parameter] public AssociationDto? Association { get; set; }
 
     private string _name = string.Empty;
+    private string? _shortCode;
+    private string? _website;
 
-    protected override void OnInitialized() => _name = Association?.Name ?? string.Empty;
+    protected override void OnInitialized() => (_name, _shortCode, _website) = (Association?.Name ?? string.Empty, Association?.ShortCode, Association?.Website);
 
     private Task SaveAsync() => SubmitAsync(
-        () => Association is { } a
-            ? Api.PutAsync<AssociationDto>(AssociationRoutes.ById(a.Id), new SaveAssociationRequest(_name))
-            : Api.PostAsync<AssociationDto>(AssociationRoutes.Base, new SaveAssociationRequest(_name)),
+        () =>
+        {
+            var request = new SaveAssociationRequest(_name, _shortCode, _website);
+            return Association is { } a
+                ? Api.PutAsync<AssociationDto>(AssociationRoutes.ById(a.Id), request)
+                : Api.PostAsync<AssociationDto>(AssociationRoutes.Base, request);
+        },
         "Unterverband gespeichert.");
 }

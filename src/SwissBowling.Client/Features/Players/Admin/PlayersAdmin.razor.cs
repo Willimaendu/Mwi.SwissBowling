@@ -1,4 +1,5 @@
 using MudBlazor;
+using SwissBowling.Core.Associations;
 using SwissBowling.Core.Clubs;
 using SwissBowling.Core.Players;
 
@@ -8,11 +9,13 @@ public partial class PlayersAdmin
 {
     private List<PlayerDto> _players = [];
     private List<ClubDto> _clubs = [];
+    private List<AssociationDto> _associations = [];
     private string _search = string.Empty;
     private bool _showInactive;
 
     protected override Task OnInitializedAsync() => LoadAsync(async () =>
     {
+        _associations = await Api.GetAsync<List<AssociationDto>>(AssociationRoutes.Base);
         _clubs = await Api.GetAsync<List<ClubDto>>(ClubRoutes.Base);
         await ReloadPlayersAsync();
     });
@@ -23,12 +26,18 @@ public partial class PlayersAdmin
         (_showInactive || player.IsActive)
         && (string.IsNullOrWhiteSpace(_search)
             || player.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
-            || player.ClubName.Contains(_search, StringComparison.OrdinalIgnoreCase)
+            || (player.ClubName?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false)
             || (player.LicenseNumber?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false));
 
     private async Task EditAsync(PlayerDto? player)
     {
-        var parameters = new DialogParameters<PlayerDialog> { { d => d.Player, player }, { d => d.Clubs, _clubs } };
+        var parameters = new DialogParameters<PlayerDialog>
+        {
+            { d => d.Player, player },
+            { d => d.Clubs, _clubs },
+            { d => d.Associations, _associations }
+        };
+
         if (await ShowDialogAsync<PlayerDialog, PlayerDto>(player is null ? "Neuer Kegler" : "Kegler bearbeiten", parameters) is not null)
         {
             await TryAsync(ReloadPlayersAsync);

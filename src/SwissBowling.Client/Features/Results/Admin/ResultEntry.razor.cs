@@ -10,8 +10,10 @@ public partial class ResultEntry
     [Parameter] public Guid Id { get; set; }
 
     private ChampionshipDto? _championship;
+    private List<PlayerDto> _players = [];
     private List<ResultDto> _saved = [];
     private List<Row> _rows = [];
+    private Discipline _discipline = Discipline.Championship;
     private string _search = string.Empty;
     private bool _onlyWithResult;
 
@@ -21,22 +23,34 @@ public partial class ResultEntry
     {
         _championship = (await Api.GetAsync<ChampionshipDetailDto>(ChampionshipRoutes.ById(Id))).Championship;
         _saved = await Api.GetAsync<List<ResultDto>>(ResultRoutes.ForChampionship(Id));
-        var players = await Api.GetAsync<List<PlayerDto>>(PlayerRoutes.All(includeInactive: false));
-        var byPlayer = _saved.ToDictionary(r => r.PlayerId);
-        _rows = players.Select(p => new Row(p, byPlayer.GetValueOrDefault(p.Id))).ToList();
+        _players = await Api.GetAsync<List<PlayerDto>>(PlayerRoutes.All(includeInactive: false));
+        BuildRows();
     });
+
+    private void BuildRows()
+    {
+        var byPlayer = _saved.Where(r => r.Discipline == _discipline).ToDictionary(r => r.PlayerId);
+        _rows = _players.Select(p => new Row(p, byPlayer.GetValueOrDefault(p.Id))).ToList();
+    }
+
+    private Task SwitchDisciplineAsync(Discipline discipline)
+    {
+        _discipline = discipline;
+        BuildRows();
+        return Task.CompletedTask;
+    }
 
     private bool Matches(Row row) =>
         (!_onlyWithResult || row.Pins is not null)
         && (string.IsNullOrWhiteSpace(_search)
             || row.Player.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
-            || row.Player.ClubName.Contains(_search, StringComparison.OrdinalIgnoreCase));
+            || (row.Player.ClubName?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false));
 
     private async Task SaveAsync()
     {
         var changed = _rows.Where(r => r.IsDirty).ToList();
         var inputs = changed.Where(r => r.Pins is not null)
-            .Select(r => new ResultInput(r.Player.Id, r.Pins!.Value, r.Nines, r.Award, r.Date is { } d ? DateOnly.FromDateTime(d) : null))
+            .Select(r => new ResultInput(r.Player.Id, _discipline, r.Pins!.Value, r.Nines, r.Award, r.Date is { } d ? DateOnly.FromDateTime(d) : null))
             .ToList();
         var removed = changed.Where(r => r.Pins is null && r.Saved is not null).ToList();
 
@@ -51,7 +65,7 @@ public partial class ResultEntry
                 ? await Api.PutAsync<List<ResultDto>>(ResultRoutes.ForChampionship(Id), new SaveResultsRequest(inputs))
                 : await Api.GetAsync<List<ResultDto>>(ResultRoutes.ForChampionship(Id));
 
-            var byPlayer = _saved.ToDictionary(r => r.PlayerId);
+            var byPlayer = _saved.Where(r => r.Discipline == _discipline).ToDictionary(r => r.PlayerId);
             foreach (var row in changed)
             {
                 row.MarkSaved(byPlayer.GetValueOrDefault(row.Player.Id));

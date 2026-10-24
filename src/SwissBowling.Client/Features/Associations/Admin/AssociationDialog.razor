@@ -2,6 +2,8 @@
 
 <DialogFrame Error="@Error" Busy="Busy" CanSave="IsValid" OnSave="SaveAsync" OnCancel="Cancel">
     <MudForm @ref="Form" @bind-IsValid="IsValid">
-        <MudTextField @bind-Value="_name" Label="Name" Required="true" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="_name" Label="Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_shortCode" Label="Kürzel (z.B. uvem)" MaxLength="10" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_website" Label="Webseite" Variant="Variant.Outlined" />
     </MudForm>
 </DialogFrame>

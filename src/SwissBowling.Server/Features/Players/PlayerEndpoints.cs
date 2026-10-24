@@ -22,8 +22,7 @@ public static class PlayerEndpoints
 
     private static async Task<IResult> GetAll(bool? includeInactive, AppDbContext db, CancellationToken ct)
     {
-        var players = await db.Players.AsNoTracking()
-            .Include(p => p.Club)
+        var players = await Query(db)
             .Where(p => includeInactive == true || p.IsActive)
             .OrderBy(p => p.Name)
             .ToListAsync(ct);
@@ -33,7 +32,7 @@ public static class PlayerEndpoints
 
     private static async Task<IResult> GetDetail(Guid id, AppDbContext db, CancellationToken ct)
     {
-        var player = await db.Players.AsNoTracking().Include(p => p.Club).FirstOrDefaultAsync(p => p.Id == id, ct);
+        var player = await Query(db).FirstOrDefaultAsync(p => p.Id == id, ct);
         if (player is null)
         {
             return Problems.NotFound("Kegler");
@@ -42,25 +41,25 @@ public static class PlayerEndpoints
         var own = await db.Results.AsNoTracking()
             .Where(r => r.PlayerId == id)
             .OrderByDescending(r => r.Championship.StartDate)
-            .Select(r => new { r.ChampionshipId, r.Championship.Name, r.Date, r.Pins, r.Nines, r.Award })
+            .Select(r => new { r.ChampionshipId, r.Championship.Name, r.Discipline, r.Date, r.Pins, r.Nines, r.Award })
             .ToListAsync(ct);
 
-        // Platzierung innerhalb der Kategorie: alle Resultate derselben Kategorie in diesen Meisterschaften rangieren.
+        // Platzierung innerhalb von Disziplin und Kategorie: alle entsprechenden Resultate dieser Meisterschaften rangieren.
         var championshipIds = own.Select(r => r.ChampionshipId).ToList();
         var field = await db.Results.AsNoTracking()
             .Where(r => championshipIds.Contains(r.ChampionshipId) && r.Player.Category == player.Category)
-            .Select(r => new { r.ChampionshipId, r.PlayerId, r.Pins, r.Nines })
+            .Select(r => new { r.ChampionshipId, r.Discipline, r.PlayerId, r.Pins, r.Nines })
             .ToListAsync(ct);
 
-        var rankings = field.GroupBy(r => r.ChampionshipId).ToDictionary(
+        var rankings = field.GroupBy(r => (r.ChampionshipId, r.Discipline)).ToDictionary(
             g => g.Key,
             g => RankingCalculator.Rank(g, r => r.Pins, r => r.Nines));
 
         var results = own.Select(r =>
         {
-            var ranking = rankings[r.ChampionshipId];
+            var ranking = rankings[(r.ChampionshipId, r.Discipline)];
             var rank = ranking.FirstOrDefault(x => x.Item.PlayerId == id).Rank;
-            return new PlayerResultDto(r.ChampionshipId, r.Name, r.Date, r.Pins, r.Nines, r.Award, rank, ranking.Count);
+            return new PlayerResultDto(r.ChampionshipId, r.Name, r.Discipline, r.Date, r.Pins, r.Nines, r.Award, rank, ranking.Count);
         }).ToList();
 
         return TypedResults.Ok(new PlayerDetailDto(player.ToDto(), results));
@@ -68,10 +67,10 @@ public static class PlayerEndpoints
 
     private static async Task<IResult> Create(SavePlayerRequest request, AppDbContext db, CancellationToken ct)
     {
-        var club = await db.Clubs.FindAsync([request.ClubId], ct);
-        if (club is null)
+        var (association, club, problem) = await ResolveAsync(request, db, ct);
+        if (problem is not null)
         {
-            return Problems.Invalid("Der gewählte Klub existiert nicht.");
+            return problem;
         }
 
         if (await LicenseTaken(db, request.LicenseNumber, null, ct))
@@ -79,7 +78,7 @@ public static class PlayerEndpoints
             return Problems.Conflict("Diese Lizenznummer ist bereits vergeben.");
         }
 
-        var player = new Player { Name = request.Name, Club = club };
+        var player = new Player { Name = request.Name, Association = association!, Club = club };
         player.Apply(request);
         db.Players.Add(player);
         await db.SaveChangesAsync(ct);
@@ -88,7 +87,7 @@ public static class PlayerEndpoints
 
     private static async Task<IResult> Update(Guid id, SavePlayerRequest request, AppDbContext db, CancellationToken ct)
     {
-        var player = await db.Players.Include(p => p.Club).FirstOrDefaultAsync(p => p.Id == id, ct);
+        var player = await Query(db, tracking: true).FirstOrDefaultAsync(p => p.Id == id, ct);
         if (player is null)
         {
             return Problems.NotFound("Kegler");
@@ -99,17 +98,15 @@ public static class PlayerEndpoints
             return Problems.Conflict("Diese Lizenznummer ist bereits vergeben.");
         }
 
-        if (player.ClubId != request.ClubId)
+        var (association, club, problem) = await ResolveAsync(request, db, ct);
+        if (problem is not null)
         {
-            var club = await db.Clubs.FindAsync([request.ClubId], ct);
-            if (club is null)
-            {
-                return Problems.Invalid("Der gewählte Klub existiert nicht.");
-            }
-
-            player.Club = club;
+            return problem;
         }
 
+        player.Association = association!;
+        player.Club = club;
+        player.ClubId = club?.Id;
         player.Apply(request);
         await db.SaveChangesAsync(ct);
         return TypedResults.Ok(player.ToDto());
@@ -131,6 +128,32 @@ public static class PlayerEndpoints
         db.Players.Remove(player);
         await db.SaveChangesAsync(ct);
         return TypedResults.NoContent();
+    }
+
+    private static IQueryable<Player> Query(AppDbContext db, bool tracking = false)
+    {
+        var query = db.Players.Include(p => p.Club).Include(p => p.Association);
+        return tracking ? query : query.AsNoTracking();
+    }
+
+    /// <summary>Unterverband und (optional) Klub des Requests laden; der Klub muss zum Unterverband gehören.</summary>
+    private static async Task<(Associations.Association? Association, Clubs.Club? Club, IResult? Problem)> ResolveAsync(SavePlayerRequest request, AppDbContext db, CancellationToken ct)
+    {
+        var association = await db.Associations.FindAsync([request.AssociationId], ct);
+        if (association is null)
+        {
+            return (null, null, Problems.Invalid("Der gewählte Unterverband existiert nicht."));
+        }
+
+        if (request.ClubId is null)
+        {
+            return (association, null, null);
+        }
+
+        var club = await db.Clubs.FindAsync([request.ClubId.Value], ct);
+        return club is null || club.AssociationId != association.Id
+            ? (null, null, Problems.Invalid("Der gewählte Klub existiert nicht oder gehört nicht zum Unterverband."))
+            : (association, club, null);
     }
 
     private static Task<bool> LicenseTaken(AppDbContext db, string? license, Guid? exceptId, CancellationToken ct)

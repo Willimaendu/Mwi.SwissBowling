@@ -4,7 +4,7 @@ using SwissBowling.Server.Features.Players;
 
 namespace SwissBowling.Server.Features.Results;
 
-/// <summary>Resultat eines Keglers an einer Meisterschaft.</summary>
+/// <summary>Resultat eines Keglers an einer Meisterschaft in einer Disziplin (Meisterschaft oder MS Damen).</summary>
 public class Result
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
@@ -16,6 +16,8 @@ public class Result
     public Guid PlayerId { get; set; }
 
     public Player Player { get; set; } = null!;
+
+    public Discipline Discipline { get; set; } = Discipline.Championship;
 
     /// <summary>Total Holz.</summary>
     public int Pins { get; set; }
@@ -29,5 +31,5 @@ public class Result
     /// <summary>Matchdatum.</summary>
     public DateOnly? Date { get; set; }
 
-    public ResultDto ToDto() => new(Id, PlayerId, Player.Name, Player.Club.Name, Player.Category, Pins, Nines, Award, Date);
+    public ResultDto ToDto() => new(Id, PlayerId, Player.Name, Player.Club?.Name, Player.Category, Discipline, Pins, Nines, Award, Date);
 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using SwissBowling.Core.Associations;
 using SwissBowling.Core.Clubs;
+using SwissBowling.Core.Players;
 
 namespace SwissBowling.Client.Features.Clubs.Admin;
 
@@ -10,20 +11,43 @@ public partial class ClubDialog
 
     [Parameter] public List<AssociationDto> Associations { get; set; } = [];
 
-    private string _name = string.Empty;
-    private string? _city;
-    private Guid _associationId;
+    private readonly Model _model = new();
 
-    protected override void OnInitialized() =>
-        (_name, _city, _associationId) = (Club?.Name ?? string.Empty, Club?.City, Club?.AssociationId ?? Associations.FirstOrDefault()?.Id ?? Guid.Empty);
+    protected override void OnInitialized()
+    {
+        if (Club is { } c)
+        {
+            (_model.Name, _model.Category, _model.AssociationId, _model.HomeVenue, _model.Email, _model.Website) =
+                (c.Name, c.Category, c.AssociationId, c.HomeVenue, c.Email, c.Website);
+        }
+        else
+        {
+            _model.AssociationId = Associations.FirstOrDefault()?.Id ?? Guid.Empty;
+        }
+    }
 
     private Task SaveAsync() => SubmitAsync(
         () =>
         {
-            var request = new SaveClubRequest(_name, _city, _associationId);
+            var request = new SaveClubRequest(_model.Name, _model.Category, _model.HomeVenue, _model.Email, _model.Website, _model.AssociationId);
             return Club is { } c
                 ? Api.PutAsync<ClubDto>(ClubRoutes.ById(c.Id), request)
                 : Api.PostAsync<ClubDto>(ClubRoutes.Base, request);
         },
         "Klub gespeichert.");
+
+    private sealed class Model
+    {
+        public string Name { get; set; } = string.Empty;
+
+        public PlayerCategory? Category { get; set; }
+
+        public Guid AssociationId { get; set; }
+
+        public string? HomeVenue { get; set; }
+
+        public string? Email { get; set; }
+
+        public string? Website { get; set; }
+    }
 }

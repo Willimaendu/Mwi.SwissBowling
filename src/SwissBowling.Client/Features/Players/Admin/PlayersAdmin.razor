@@ -6,13 +6,13 @@
 
 <PageHeader Title="Kegler" Subtitle="Keglerinnen und Kegler verwalten">
     <Actions>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => EditAsync(null))" Disabled="@(_clubs.Count == 0)">Neuer Kegler</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => EditAsync(null))" Disabled="@(_associations.Count == 0)">Neuer Kegler</MudButton>
     </Actions>
 </PageHeader>
 
-@if (!Loading && _clubs.Count == 0)
+@if (!Loading && _associations.Count == 0)
 {
-    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">Bitte zuerst einen <MudLink Href="/admin/klubs">Klub</MudLink> anlegen.</MudAlert>
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">Bitte zuerst einen <MudLink Href="/admin/unterverbaende">Unterverband</MudLink> anlegen.</MudAlert>
 }
 
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="_players.Count == 0" EmptyText="Noch keine Kegler erfasst.">
@@ -27,6 +27,7 @@
             <MudTh>Name</MudTh>
             <MudTh>Ort</MudTh>
             <MudTh>Klub</MudTh>
+            <MudTh>Unterverband</MudTh>
             <MudTh>Kategorie</MudTh>
             <MudTh>Lizenz</MudTh>
             <MudTh></MudTh>
@@ -34,7 +35,8 @@
         <RowTemplate>
             <MudTd Class="@(context.IsActive ? "font-weight-medium" : "mud-text-secondary")">@context.Name @(context.IsActive ? "" : "(inaktiv)")</MudTd>
             <MudTd>@context.City</MudTd>
-            <MudTd>@context.ClubName</MudTd>
+            <MudTd>@(context.ClubName ?? "Einzelmitglied")</MudTd>
+            <MudTd>@context.AssociationName</MudTd>
             <MudTd>@context.Category.Label()</MudTd>
             <MudTd>@(context.LicenseNumber ?? "–")</MudTd>
             <MudTd Class="text-right">
