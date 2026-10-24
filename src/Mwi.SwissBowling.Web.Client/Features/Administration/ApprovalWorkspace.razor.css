@@ -1,4 +1,0 @@
-.panel { min-width: 0; }
-.panel > p { max-width: 80ch; color: var(--muted); }
-.panel ::deep .mud-table-container { overflow-x: auto; }
-.panel ::deep .mud-select { min-width: 12rem; }

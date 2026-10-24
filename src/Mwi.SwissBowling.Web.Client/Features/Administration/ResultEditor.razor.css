@@ -1,5 +1,0 @@
-.result-editor { min-width: 0; }
-.score-inputs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; max-width: 36rem; }
-.score-inputs input { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
-.actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: .75rem; }
-@media (max-width: 600px) { .score-inputs { gap: .5rem; } }

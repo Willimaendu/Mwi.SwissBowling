@@ -1,4 +1,0 @@
-.page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
-.page-heading p:last-child { color: var(--muted); margin-bottom: 0; }
-.page-heading form { flex-shrink: 0; }
-@media (max-width: 640px) { .page-heading { flex-direction: column; gap: .75rem; } }

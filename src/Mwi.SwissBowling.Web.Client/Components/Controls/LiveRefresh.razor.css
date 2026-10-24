@@ -1,4 +1,0 @@
-.connection-status { display: flex; align-items: center; justify-content: flex-end; gap: .4rem; font-size: 11px; color: var(--dashboard-muted); margin-block: .5rem; }
-.connection-dot { width: 6px; height: 6px; border-radius: 50%; background: #8a8886; }
-.connection-status[data-connected="true"] .connection-dot { background: #107c10; }
-@media print { .connection-status { display: none; } }

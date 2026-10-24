@@ -1,14 +1,1 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Mwi.SwissBowling.Api/Mwi.SwissBowling.Api.csproj" />
-    <Project Path="src/Mwi.SwissBowling.AppHost/Mwi.SwissBowling.AppHost.csproj" />
-    <Project Path="src/Mwi.SwissBowling.Contracts/Mwi.SwissBowling.Contracts.csproj" />
-    <Project Path="src/Mwi.SwissBowling.Core/Mwi.SwissBowling.Core.csproj" />
-    <Project Path="src/Mwi.SwissBowling.Web.Client/Mwi.SwissBowling.Web.Client.csproj" />
-    <Project Path="src/Mwi.SwissBowling.Web/Mwi.SwissBowling.Web.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/Mwi.SwissBowling.IntegrationTests/Mwi.SwissBowling.IntegrationTests.csproj" />
-    <Project Path="tests/Mwi.SwissBowling.UnitTests/Mwi.SwissBowling.UnitTests.csproj" />
-  </Folder>
-</Solution>
+<Solution />

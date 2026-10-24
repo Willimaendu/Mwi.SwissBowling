@@ -1,6 +1,0 @@
-.master-data-grid { min-width: 0; }
-.master-data-grid ::deep .mud-table-toolbar .mud-input-control { max-width: 24rem; }
-@media (max-width: 600px) {
-    .master-data-grid ::deep .mud-table-toolbar { height: auto; min-height: 64px; flex-wrap: wrap; gap: .5rem; padding: .75rem; }
-    .master-data-grid ::deep .mud-table-toolbar .mud-input-control { flex-basis: 100%; max-width: none; }
-}

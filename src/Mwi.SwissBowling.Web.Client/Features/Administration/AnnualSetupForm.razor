@@ -1,9 +1,0 @@
-@inherits SetupFormBase
-<form class="setup-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
-    <h3>Jahresmeisterschaft</h3>
-    <MudSelect T="Guid" Label="Saison" @bind-Value="_season" Variant="Variant.Outlined" Disabled="Busy">
-        @foreach (var row in Data.Seasons) { <MudSelectItem Value="row.Id">@row.Year</MudSelectItem> }
-    </MudSelect>
-    <MudTextField T="string" Label="Name" @bind-Value="_name" MaxLength="160" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
-    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || _season == Guid.Empty || string.IsNullOrWhiteSpace(_name))" Class="mt-4">Jahresmeisterschaft anlegen</MudButton>
-</form>

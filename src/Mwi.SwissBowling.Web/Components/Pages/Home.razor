@@ -1,7 +1,0 @@
-@page "/"
-@page "/meisterschaften"
-@using Mwi.SwissBowling.Web.Client.Features.Standings
-<PageTitle>Meisterschaften · SwissBowling</PageTitle>
-<HeadContent><meta name="description" content="Veröffentlichte Meisterschaften und Ranglisten des Unterverbands Willisau-Sursee." /></HeadContent>
-<section class="hero"><p class="eyebrow">Gemeinsam kegeln</p><h1>Unsere Meisterschaften.</h1><p>Resultate entdecken, Ranglisten vergleichen und am Vereinsleben teilhaben.</p></section>
-<PublishedEvents InitialEvents="@(_events ?? [])" InitialUnavailable="_error" @rendermode="LiveRenderMode" />

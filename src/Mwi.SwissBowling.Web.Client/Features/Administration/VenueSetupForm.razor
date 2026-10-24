@@ -1,9 +1,0 @@
-@inherits SetupFormBase
-<form class="setup-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
-    <h3>Anlage</h3>
-    <MudTextField T="string" Label="Name" @bind-Value="_name" MaxLength="160" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
-    <MudTextField T="string" Label="Adresse" @bind-Value="_address" MaxLength="300" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
-    <MudTextField T="string" Label="Bahnnummern" HelperText="Positive ganze Zahlen, durch Komma getrennt" @bind-Value="_lanes" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
-    @if (_error is not null) { <p role="alert" class="notice error">@_error</p> }
-    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_address))" Class="mt-4">Anlage anlegen</MudButton>
-</form>

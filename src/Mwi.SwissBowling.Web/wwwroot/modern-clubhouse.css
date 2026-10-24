@@ -1,7 +1,0 @@
-/* Shared component-library adjustments; feature layout lives in isolated CSS. */
-.mud-input-control { margin-bottom: .75rem; }
-.mud-table-container { overscroll-behavior-x: contain; }
-.mud-table th, .mud-table td { font-variant-numeric: tabular-nums; }
-@media (max-width: 600px) {
-    .mud-table-toolbar { height: auto; min-height: 64px; flex-wrap: wrap; gap: .5rem; padding: .75rem; }
-}
