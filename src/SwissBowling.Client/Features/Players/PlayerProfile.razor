@@ -14,12 +14,13 @@
             <MudItem xs="6" md="3"><StatCard Label="Meisterschaften" Value="@detail.Results.Count.ToString()" /></MudItem>
             <MudItem xs="6" md="3"><StatCard Label="Bestes Resultat" Value="@(detail.Results.Count == 0 ? "–" : detail.Results.Max(r => r.Pins).ToString())" /></MudItem>
             <MudItem xs="6" md="3"><StatCard Label="Durchschnitt" Value="@(detail.Results.Count == 0 ? "–" : detail.Results.Average(r => r.Pins).ToString("0.0"))" /></MudItem>
-            <MudItem xs="6" md="3"><StatCard Label="Auszeichnungen" Value="@detail.Results.Count(r => r.Award).ToString()" /></MudItem>
+            <MudItem xs="6" md="3"><StatCard Label="Podestplätze / Auszeichnungen" Value="@($"{detail.Results.Count(r => r.Rank is >= 1 and <= 3)} / {detail.Results.Count(r => r.Award)}")" /></MudItem>
         </MudGrid>
 
         <MudTable T="PlayerResultDto" Items="detail.Results" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
                   RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/meisterschaften/{args.Item!.ChampionshipId}"))">
             <HeaderContent>
+                <MudTh Style="width: 110px;">Rang</MudTh>
                 <MudTh>Datum</MudTh>
                 <MudTh>Meisterschaft</MudTh>
                 <MudTh Class="text-right">Holz</MudTh>
@@ -27,6 +28,12 @@
                 <MudTh>Auszeichnung</MudTh>
             </HeaderContent>
             <RowTemplate>
+                <MudTd>
+                    <div class="d-flex align-center gap-1">
+                        <RankBadge Rank="context.Rank" />
+                        <span class="mud-text-secondary">von @context.Participants</span>
+                    </div>
+                </MudTd>
                 <MudTd>@(context.Date?.ToString("dd.MM.yyyy") ?? "–")</MudTd>
                 <MudTd>@context.ChampionshipName</MudTd>
                 <MudTd Class="text-right font-weight-bold">@context.Pins</MudTd>

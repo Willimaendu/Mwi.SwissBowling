@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SwissBowling.Core.Championships;
 using SwissBowling.Core.Players;
 using SwissBowling.Server.Auth;
 using SwissBowling.Server.Data;
@@ -38,11 +39,29 @@ public static class PlayerEndpoints
             return Problems.NotFound("Kegler");
         }
 
-        var results = await db.Results.AsNoTracking()
+        var own = await db.Results.AsNoTracking()
             .Where(r => r.PlayerId == id)
             .OrderByDescending(r => r.Championship.StartDate)
-            .Select(r => new PlayerResultDto(r.ChampionshipId, r.Championship.Name, r.Date, r.Pins, r.Nines, r.Award))
+            .Select(r => new { r.ChampionshipId, r.Championship.Name, r.Date, r.Pins, r.Nines, r.Award })
             .ToListAsync(ct);
+
+        // Platzierung innerhalb der Kategorie: alle Resultate derselben Kategorie in diesen Meisterschaften rangieren.
+        var championshipIds = own.Select(r => r.ChampionshipId).ToList();
+        var field = await db.Results.AsNoTracking()
+            .Where(r => championshipIds.Contains(r.ChampionshipId) && r.Player.Category == player.Category)
+            .Select(r => new { r.ChampionshipId, r.PlayerId, r.Pins, r.Nines })
+            .ToListAsync(ct);
+
+        var rankings = field.GroupBy(r => r.ChampionshipId).ToDictionary(
+            g => g.Key,
+            g => RankingCalculator.Rank(g, r => r.Pins, r => r.Nines));
+
+        var results = own.Select(r =>
+        {
+            var ranking = rankings[r.ChampionshipId];
+            var rank = ranking.FirstOrDefault(x => x.Item.PlayerId == id).Rank;
+            return new PlayerResultDto(r.ChampionshipId, r.Name, r.Date, r.Pins, r.Nines, r.Award, rank, ranking.Count);
+        }).ToList();
 
         return TypedResults.Ok(new PlayerDetailDto(player.ToDto(), results));
     }

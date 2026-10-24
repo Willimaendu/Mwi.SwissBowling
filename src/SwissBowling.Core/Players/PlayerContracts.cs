@@ -39,6 +39,7 @@ public sealed record SavePlayerRequest(
     [property: Required] Guid ClubId,
     bool IsActive = true);
 
-public sealed record PlayerResultDto(Guid ChampionshipId, string ChampionshipName, DateOnly? Date, int Pins, int Nines, bool Award);
+/// <summary>Resultat inkl. Platzierung innerhalb der Kategorie (Rank von Participants).</summary>
+public sealed record PlayerResultDto(Guid ChampionshipId, string ChampionshipName, DateOnly? Date, int Pins, int Nines, bool Award, int Rank, int Participants);
 
 public sealed record PlayerDetailDto(PlayerDto Player, IReadOnlyList<PlayerResultDto> Results);
