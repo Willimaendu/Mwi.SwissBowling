@@ -126,14 +126,18 @@ public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunn
         public async Task StepAsync(string step, Func<Task> action)
         {
             await db.ImportRuns.Where(r => r.Id == runId).ExecuteUpdateAsync(s => s.SetProperty(r => r.CurrentStep, step));
-            await TryAsync(step, async () =>
+            await RunAsync(step, async () =>
             {
                 await action();
                 return null;
             });
         }
 
-        public async Task TryAsync(string source, Func<Task<ImportSummary?>> action)
+        public Task TryAsync(string source, Func<Task<ImportSummary>> action) =>
+            RunAsync(source, async () => await action());
+
+        /// <summary>Führt einen Schritt aus und protokolliert Ergebnis oder Fehler.</summary>
+        private async Task RunAsync(string source, Func<Task<ImportSummary?>> action)
         {
             try
             {
@@ -155,9 +159,6 @@ public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunn
                 db.ChangeTracker.Clear();
             }
         }
-
-        public Task TryAsync(string source, Func<Task<ImportSummary>> action) =>
-            TryAsync(source, async () => (ImportSummary?)await action());
 
         public Task FinishAsync(ImportRunStatus status) =>
             db.ImportRuns.Where(r => r.Id == runId).ExecuteUpdateAsync(s => s
