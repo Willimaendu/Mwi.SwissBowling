@@ -1,18 +1,7 @@
-/* Bridge legacy native forms and themed components during modernization. */
-.live-status { display: block; margin: .75rem 0 1.25rem; color: #52645a; font-size: .85rem; }
-.admin-workspace { min-width: 0; }
-.admin-workspace .workspace-tabs { padding: .75rem; border: 1px solid var(--line); border-radius: 12px; background: #fffef9; }
-.admin-workspace .mud-tabs-panels { padding-top: 1.5rem; }
-.admin-workspace .mud-tabs-panels form { max-width: 760px; padding: 1.5rem 0; }
-.mud-input-control input.mud-input-slot { border: 0; border-radius: 0; background: transparent; min-height: unset; color: inherit; }
-.mud-input-control label.mud-input-label { margin: 0; font-weight: inherit; }
-.mud-input-control input:disabled { background: transparent; }
+/* Shared component-library adjustments; feature layout lives in isolated CSS. */
 .mud-input-control { margin-bottom: .75rem; }
 .mud-table-container { overscroll-behavior-x: contain; }
 .mud-table th, .mud-table td { font-variant-numeric: tabular-nums; }
-@media (min-width: 1500px) { .page-shell { max-width: 1440px; } }
 @media (max-width: 600px) {
-    .admin-workspace .workspace-tabs { gap: .5rem; }
-    .admin-workspace .workspace-tabs .mud-button-root { flex: 1 1 40%; }
     .mud-table-toolbar { height: auto; min-height: 64px; flex-wrap: wrap; gap: .5rem; padding: .75rem; }
 }

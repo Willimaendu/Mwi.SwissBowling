@@ -1,12 +1,8 @@
 @inherits SetupFormBase
-<form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+<form class="setup-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
     <h3>Klub</h3>
     <MudTextField T="string" Label="Name" @bind-Value="_name" MaxLength="160" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
     <MudTextField T="string" Label="E-Mail (optional)" InputType="InputType.Email" @bind-Value="_email" Variant="Variant.Outlined" Disabled="Busy" />
     <MudTextField T="string" Label="Telefon (optional)" InputType="InputType.Telephone" @bind-Value="_phone" Variant="Variant.Outlined" Disabled="Busy" />
     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || string.IsNullOrWhiteSpace(_name))" Class="mt-4">Klub anlegen</MudButton>
 </form>
-@code {
-    private string _name = "", _email = "", _phone = "";
-    private Task SaveAsync() => CreateAsync("clubs", new ClubInput(_name, Optional(_email), Optional(_phone)));
-}

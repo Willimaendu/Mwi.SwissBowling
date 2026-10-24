@@ -1,0 +1,2 @@
+.hero { padding: .25rem 0 1rem; max-width: 53rem; }
+.hero > p:last-child { color: var(--muted); margin-bottom: 0; max-width: 75ch; }

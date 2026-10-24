@@ -1,23 +1,7 @@
 @page "/"
 @page "/meisterschaften"
 @using Mwi.SwissBowling.Web.Client.Features.Standings
-@inject Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient Events
-@inject IHttpContextAccessor Context
 <PageTitle>Meisterschaften · SwissBowling</PageTitle>
 <HeadContent><meta name="description" content="Veröffentlichte Meisterschaften und Ranglisten des Unterverbands Willisau-Sursee." /></HeadContent>
 <section class="hero"><p class="eyebrow">Gemeinsam kegeln</p><h1>Unsere Meisterschaften.</h1><p>Resultate entdecken, Ranglisten vergleichen und am Vereinsleben teilhaben.</p></section>
 <PublishedEvents InitialEvents="@(_events ?? [])" InitialUnavailable="_error" @rendermode="LiveRenderMode" />
-@code {
-    [Parameter] public IComponentRenderMode? LiveRenderMode { get; set; } = InteractiveWebAssembly;
-    private PublicEventSummary[]? _events;
-    private bool _error;
-    protected override async Task OnInitializedAsync()
-    {
-        try { _events = await Events.ListAsync(); }
-        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
-        {
-            _error = true;
-            if (Context.HttpContext?.Response.HasStarted == false) Context.HttpContext.Response.StatusCode = 503;
-        }
-    }
-}

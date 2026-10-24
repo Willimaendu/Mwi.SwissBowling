@@ -10,6 +10,7 @@ using Microsoft.JSInterop;
 using MudBlazor.Services;
 using Mwi.SwissBowling.Contracts;
 using Mwi.SwissBowling.Web.Components.Pages;
+using Mwi.SwissBowling.Web.Components.Layout;
 using Mwi.SwissBowling.Web.Client.Features.Administration;
 using Mwi.SwissBowling.Web.Client.Infrastructure;
 
@@ -104,13 +105,59 @@ public sealed class PublicRenderingTests
         Assert.Contains("/account/login?returnUrl=/administration", html);
     }
 
-    private static async Task<(string Html, int Status)> RenderAsync<T>(HttpMessageHandler handler, Dictionary<string, object?> parameters) where T : IComponent
+    [Theory]
+    [InlineData("/meisterschaften", "Meisterschaften")]
+    [InlineData("/administration", "Administration")]
+    public async Task DashboardShellRendersNavigationContentAndWorkspaceContext(string path, string workspace)
+    {
+        using var handler = new StubHandler(_ => throw new InvalidOperationException("The layout must not call the API."));
+        RenderFragment body = builder => builder.AddMarkupContent(0, "<h1>Testbereich</h1>");
+        var (html, status) = await RenderAsync<MainLayout>(handler,
+            new Dictionary<string, object?> { [nameof(MainLayout.Body)] = body }, path);
+
+        Assert.Equal(200, status);
+        Assert.Contains("application-shell", html);
+        Assert.Contains("href=\"#main\"", html);
+        Assert.Contains("aria-label=\"Hauptnavigation\"", html);
+        Assert.Contains("href=\"/meisterschaften\"", html);
+        Assert.Contains("href=\"/administration\"", html);
+        Assert.Contains("Testbereich", html);
+        Assert.Matches($"app-bar-caption[^>]*>{workspace}</span>", html);
+    }
+
+    [Fact]
+    public async Task AuthenticatedAdministrationRendersWorkflowNavigationAndOverview()
+    {
+        using var handler = new StubHandler(request => request.RequestUri!.AbsolutePath switch
+        {
+            "/bff/api/identity/me" => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new IdentityProfile(Guid.NewGuid(), "Test Administrator", true, true, ["SportAdministrator"]))
+            },
+            "/bff/api/setup" => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new SetupDto([], [], [], [], [], [], []))
+            },
+            _ => throw new InvalidOperationException("Unexpected API request.")
+        });
+        var (html, _) = await RenderAsync<AdminWorkspace>(handler, []);
+
+        Assert.Contains("workspace-nav", html);
+        Assert.Contains("workspace-content", html);
+        Assert.Contains("Test Administrator", html);
+        Assert.Contains("Stammdaten", html);
+        Assert.Contains("Freigaben", html);
+        Assert.Contains("Noch keine Meisterschaften", html);
+        Assert.DoesNotContain("Anmelden / Registrieren", html);
+    }
+
+    private static async Task<(string Html, int Status)> RenderAsync<T>(HttpMessageHandler handler, Dictionary<string, object?> parameters, string path = "/") where T : IComponent
     {
         var context = new DefaultHttpContext();
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddMudServices();
-        services.AddSingleton<NavigationManager>(new TestNavigationManager());
+        services.AddSingleton<NavigationManager>(new TestNavigationManager(path));
         services.AddSingleton<IJSRuntime>(new NoBrowserJsRuntime());
         // HtmlRenderer renders the same initial content without a browser activation boundary.
         if (typeof(T) == typeof(Home) || typeof(T) == typeof(PublicStandings))
@@ -131,7 +178,7 @@ public sealed class PublicRenderingTests
     }
     private sealed class TestNavigationManager : NavigationManager
     {
-        public TestNavigationManager() => Initialize("https://web.test/", "https://web.test/");
+        public TestNavigationManager(string path) => Initialize("https://web.test/", new Uri(new Uri("https://web.test/"), path).AbsoluteUri);
         protected override void NavigateToCore(string uri, bool forceLoad) => throw new InvalidOperationException("Static rendering must not navigate.");
     }
     private sealed class NoBrowserJsRuntime : IJSRuntime

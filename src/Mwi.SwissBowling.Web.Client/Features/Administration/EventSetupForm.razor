@@ -1,5 +1,5 @@
 @inherits SetupFormBase
-<form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+<form class="setup-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
     <h3>Einzelmeisterschaft</h3>
     <MudSelect T="Guid" Label="Jahresmeisterschaft" @bind-Value="_annual" Variant="Variant.Outlined" Disabled="Busy">@foreach (var row in Data.AnnualChampionships) { <MudSelectItem Value="row.Id">@row.Name</MudSelectItem> }</MudSelect>
     <MudTextField T="string" Label="Name" @bind-Value="_name" MaxLength="160" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
@@ -9,10 +9,3 @@
     <MudNumericField T="int?" Label="Wurfzahl (optional)" Min="1" @bind-Value="_throws" Variant="Variant.Outlined" Disabled="Busy" />
     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || _annual == Guid.Empty || _venue == Guid.Empty || string.IsNullOrWhiteSpace(_name) || _end < _start || _throws < 1)" Class="mt-4">Meisterschaft anlegen</MudButton>
 </form>
-@code {
-    private Guid _annual, _venue;
-    private string _name = "";
-    private DateOnly _start = DateOnly.FromDateTime(DateTime.Today), _end = DateOnly.FromDateTime(DateTime.Today);
-    private int? _throws;
-    private Task SaveAsync() => CreateAsync("events", new EventInput(_annual, _name, _venue, _start, _end, _throws));
-}

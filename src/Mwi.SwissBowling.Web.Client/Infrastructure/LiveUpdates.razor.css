@@ -1,0 +1,21 @@
+.live-status {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: .75rem 0 1.25rem;
+    color: var(--muted);
+    font-size: .8rem;
+}
+
+.live-status::before {
+    content: "";
+    width: .5rem;
+    height: .5rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--copper);
+}
+
+.live-status[data-connected="true"]::before { background: var(--forest); }
+
+@media print { .live-status { display: none; } }

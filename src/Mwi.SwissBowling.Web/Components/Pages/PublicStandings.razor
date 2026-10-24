@@ -1,8 +1,5 @@
 @page "/meisterschaften/{EventId:guid}"
 @using Mwi.SwissBowling.Web.Client.Features.Standings
-@inject Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient Events
-@inject IHttpContextAccessor Context
-@inject IConfiguration Configuration
 <PageTitle>@(_event?.Name ?? "Rangliste") · SwissBowling</PageTitle>
 <HeadContent>
     <meta name="description" content="Veröffentlichte Rangliste mit Holz, 9ern und 8ern, getrennt nach Spielerkategorie." />
@@ -14,30 +11,3 @@
 </HeadContent>
 <a class="back-link" href="/meisterschaften">← Alle Meisterschaften</a>
 <PublishedRanking @key="EventId" EventId="EventId" InitialEvent="_event" InitialUnavailable="_error" InitialNotFound="_notFound" @rendermode="LiveRenderMode" />
-@code {
-    [Parameter] public IComponentRenderMode? LiveRenderMode { get; set; } = InteractiveWebAssembly;
-    [Parameter] public Guid EventId { get; set; }
-    private PublicEventDto? _event;
-    private bool _notFound;
-    private bool _error;
-    private string Origin => (Configuration["Site:PublicOrigin"] ?? "https://localhost:7443").TrimEnd('/');
-    protected override async Task OnParametersSetAsync()
-    {
-        _error = false; _notFound = false; _event = null;
-        try
-        {
-            _event = await Events.ReadAsync(EventId);
-            if (_event is null)
-            {
-                _notFound = true;
-                if (Context.HttpContext?.Response.HasStarted == false) Context.HttpContext.Response.StatusCode = 404;
-                return;
-            }
-        }
-        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
-        {
-            _error = true;
-            if (Context.HttpContext?.Response.HasStarted == false) Context.HttpContext.Response.StatusCode = 503;
-        }
-    }
-}

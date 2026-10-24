@@ -1,5 +1,5 @@
 @inherits SetupFormBase
-<form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+<form class="setup-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
     <h3>Anlage</h3>
     <MudTextField T="string" Label="Name" @bind-Value="_name" MaxLength="160" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
     <MudTextField T="string" Label="Adresse" @bind-Value="_address" MaxLength="300" Required="true" Variant="Variant.Outlined" Disabled="Busy" />
@@ -7,18 +7,3 @@
     @if (_error is not null) { <p role="alert" class="notice error">@_error</p> }
     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_address))" Class="mt-4">Anlage anlegen</MudButton>
 </form>
-@code {
-    private string _name = "", _address = "", _lanes = "1,2";
-    private string? _error;
-    private async Task SaveAsync()
-    {
-        _error = null;
-        var parts = _lanes.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0 || parts.Any(part => !int.TryParse(part, out var number) || number <= 0))
-        {
-            _error = "Bahnnummern müssen positive ganze Zahlen sein.";
-            return;
-        }
-        await CreateAsync("venues", new VenueInput(_name, _address, parts.Select(int.Parse).ToArray()));
-    }
-}

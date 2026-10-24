@@ -1,0 +1,5 @@
+.published-ranking { min-width: 0; }
+.page-heading { margin-block: .5rem 1.5rem; }
+.page-heading p { color: var(--muted); }
+.published-ranking ::deep .mud-input-control { max-width: 32rem; }
+.published-ranking ::deep .mud-table-container { overflow-x: auto; }

@@ -1,5 +1,5 @@
 @inherits SetupFormBase
-<form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+<form class="setup-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
     <h3>Saisonale Zuordnung</h3>
     <MudSelect T="Guid" Label="Saison" @bind-Value="_season" Variant="Variant.Outlined" Disabled="Busy">@foreach (var row in Data.Seasons) { <MudSelectItem Value="row.Id">@row.Year</MudSelectItem> }</MudSelect>
     <MudSelect T="Guid" Label="Spieler" @bind-Value="_player" Variant="Variant.Outlined" Disabled="Busy">@foreach (var row in Data.Players) { <MudSelectItem Value="row.Id">@row.LastName @row.FirstName</MudSelectItem> }</MudSelect>
@@ -7,8 +7,3 @@
     <MudSelect T="PlayerCategory" Label="Kategorie" @bind-Value="_category" Variant="Variant.Outlined" Disabled="Busy">@foreach (var row in Enum.GetValues<PlayerCategory>()) { <MudSelectItem Value="row">@(row == PlayerCategory.Guest ? "Gäste" : row.ToString())</MudSelectItem> }</MudSelect>
     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Busy || _season == Guid.Empty || _player == Guid.Empty)" Class="mt-4">Zuordnung speichern</MudButton>
 </form>
-@code {
-    private Guid _season, _player, _club;
-    private PlayerCategory _category = PlayerCategory.Guest;
-    private Task SaveAsync() => CreateAsync("members", new SeasonMemberInput(_season, _player, _club == Guid.Empty ? null : _club, _category));
-}

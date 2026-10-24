@@ -1,0 +1,3 @@
+.setup-workspace { min-width: 0; }
+.setup-workspace > p { color: var(--muted); max-width: 75ch; }
+.setup-workspace ::deep .mud-tabs-panels { padding-top: 1rem; }

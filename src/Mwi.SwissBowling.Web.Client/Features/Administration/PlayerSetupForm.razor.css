@@ -1,0 +1,4 @@
+.setup-form { max-width: 48rem; padding-block: 1.5rem; }
+.setup-form h3 { margin-bottom: 1rem; }
+.setup-form ::deep .mud-input-control { margin-bottom: 1rem; }
+.setup-form input[type="date"] { max-width: 24rem; }

@@ -1,0 +1,3 @@
+.published-events { min-width: 0; }
+.published-events ::deep .mud-card { display: flex; flex-direction: column; height: 100%; border-top: 3px solid var(--forest); }
+.published-events ::deep .mud-card-actions { margin-top: auto; }
