@@ -8,7 +8,8 @@ public partial class Home
 
     protected override Task OnInitializedAsync() => LoadAsync(async () =>
     {
-        var all = await Api.GetAsync<List<ChampionshipDto>>(ChampionshipRoutes.Base);
-        _running = all.Where(c => c.Status == ChampionshipStatus.Running).ToList();
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var all = await Api.GetAsync<List<ChampionshipDto>>(ChampionshipRoutes.ByYear(today.Year));
+        _running = all.Where(c => c.StatusAt(today) == ChampionshipStatus.Running).ToList();
     });
 }

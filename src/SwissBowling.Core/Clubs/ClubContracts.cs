@@ -9,9 +9,9 @@ public static class ClubRoutes
     public static string ById(Guid id) => $"{Base}/{id}";
 }
 
-public sealed record ClubDto(Guid Id, string Name, string ShortName, string? City, int PlayerCount);
+public sealed record ClubDto(Guid Id, string Name, string? City, Guid AssociationId, string AssociationName, int PlayerCount, int? ExternalId);
 
 public sealed record SaveClubRequest(
     [property: Required, MaxLength(200)] string Name,
-    [property: Required, MaxLength(10)] string ShortName,
-    [property: MaxLength(100)] string? City);
+    [property: MaxLength(100)] string? City,
+    [property: Required] Guid AssociationId);

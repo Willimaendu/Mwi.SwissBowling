@@ -16,8 +16,8 @@ public partial class PlayerDialog
     {
         if (Player is { } p)
         {
-            (_model.FirstName, _model.LastName, _model.BirthYear, _model.Category, _model.LicenseNumber, _model.ClubId, _model.IsActive) =
-                (p.FirstName, p.LastName, p.BirthYear, p.Category, p.LicenseNumber, p.ClubId, p.IsActive);
+            (_model.Name, _model.City, _model.LicenseNumber, _model.Category, _model.ClubId, _model.IsActive) =
+                (p.Name, p.City, p.LicenseNumber, p.Category, p.ClubId, p.IsActive);
         }
         else
         {
@@ -28,7 +28,7 @@ public partial class PlayerDialog
     private Task SaveAsync() => SubmitAsync(
         () =>
         {
-            var request = new SavePlayerRequest(_model.FirstName, _model.LastName, _model.BirthYear, _model.Category, _model.LicenseNumber, _model.ClubId, _model.IsActive);
+            var request = new SavePlayerRequest(_model.Name, _model.City, _model.LicenseNumber, _model.Category, _model.ClubId, _model.IsActive);
             return Player is { } p
                 ? Api.PutAsync<PlayerDto>(PlayerRoutes.ById(p.Id), request)
                 : Api.PostAsync<PlayerDto>(PlayerRoutes.Base, request);
@@ -37,15 +37,13 @@ public partial class PlayerDialog
 
     private sealed class Model
     {
-        public string FirstName { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
-        public string LastName { get; set; } = string.Empty;
-
-        public int BirthYear { get; set; } = 1990;
-
-        public PlayerCategory Category { get; set; } = PlayerCategory.Herren;
+        public string? City { get; set; }
 
         public string? LicenseNumber { get; set; }
+
+        public PlayerCategory Category { get; set; } = PlayerCategory.A;
 
         public Guid ClubId { get; set; }
 

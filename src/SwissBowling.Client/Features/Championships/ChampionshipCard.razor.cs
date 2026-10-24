@@ -10,7 +10,9 @@ public partial class ChampionshipCard
 
     [Parameter, EditorRequired] public ChampionshipDto Championship { get; set; } = null!;
 
-    private Color StatusColor => Championship.Status switch
+    private ChampionshipStatus Status => Championship.StatusAt(DateOnly.FromDateTime(DateTime.Today));
+
+    private Color StatusColor => Status switch
     {
         ChampionshipStatus.Running => Color.Success,
         ChampionshipStatus.Completed => Color.Default,

@@ -22,7 +22,7 @@ public partial class PlayersAdmin
     private bool Matches(PlayerDto player) =>
         (_showInactive || player.IsActive)
         && (string.IsNullOrWhiteSpace(_search)
-            || player.FullName.Contains(_search, StringComparison.OrdinalIgnoreCase)
+            || player.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
             || player.ClubName.Contains(_search, StringComparison.OrdinalIgnoreCase)
             || (player.LicenseNumber?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false));
 
@@ -37,7 +37,7 @@ public partial class PlayersAdmin
 
     private async Task DeleteAsync(PlayerDto player)
     {
-        if (await ConfirmAsync("Kegler löschen", $"Soll {player.FullName} gelöscht werden? Kegler mit Resultaten können nur deaktiviert werden.")
+        if (await ConfirmAsync("Kegler löschen", $"Soll {player.Name} gelöscht werden? Kegler mit Resultaten können nur deaktiviert werden.")
             && await TryAsync(() => Api.DeleteAsync(PlayerRoutes.ById(player.Id)), "Kegler gelöscht."))
         {
             await TryAsync(ReloadPlayersAsync);

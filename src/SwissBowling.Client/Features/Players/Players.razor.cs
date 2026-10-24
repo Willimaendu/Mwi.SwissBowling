@@ -19,7 +19,7 @@ public partial class Players
         (ClubId is null || player.ClubId == ClubId)
         && (_category is null || player.Category == _category)
         && (string.IsNullOrWhiteSpace(_search)
-            || player.FullName.Contains(_search, StringComparison.OrdinalIgnoreCase)
+            || player.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
             || player.ClubName.Contains(_search, StringComparison.OrdinalIgnoreCase)
             || (player.LicenseNumber?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false));
 }

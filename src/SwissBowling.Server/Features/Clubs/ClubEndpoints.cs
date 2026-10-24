@@ -20,41 +20,47 @@ public static class ClubEndpoints
 
     private static async Task<IResult> GetAll(AppDbContext db, CancellationToken ct)
     {
-        var clubs = await db.Clubs.AsNoTracking().Include(c => c.Players).OrderBy(c => c.Name).ToListAsync(ct);
-        return TypedResults.Ok(clubs.Select(ToDto));
+        var clubs = await db.Clubs.AsNoTracking().Include(c => c.Association).Include(c => c.Players).OrderBy(c => c.Name).ToListAsync(ct);
+        return TypedResults.Ok(clubs.Select(c => c.ToDto()));
     }
 
     private static async Task<IResult> Create(SaveClubRequest request, AppDbContext db, CancellationToken ct)
     {
-        if (await ShortNameTaken(db, request.ShortName, null, ct))
+        var association = await db.Associations.FindAsync([request.AssociationId], ct);
+        if (association is null)
         {
-            return Problems.Conflict("Dieses Kürzel wird bereits verwendet.");
+            return Problems.Invalid("Der gewählte Unterverband existiert nicht.");
         }
 
-        var club = new Club { Name = request.Name.Trim(), ShortName = Normalize(request.ShortName), City = request.City?.Trim() };
+        var club = new Club { Name = request.Name.Trim(), City = request.City?.Trim(), Association = association };
         db.Clubs.Add(club);
         await db.SaveChangesAsync(ct);
-        return TypedResults.Created(ClubRoutes.ById(club.Id), ToDto(club));
+        return TypedResults.Created(ClubRoutes.ById(club.Id), club.ToDto());
     }
 
     private static async Task<IResult> Update(Guid id, SaveClubRequest request, AppDbContext db, CancellationToken ct)
     {
-        var club = await db.Clubs.Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == id, ct);
+        var club = await db.Clubs.Include(c => c.Association).Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == id, ct);
         if (club is null)
         {
             return Problems.NotFound("Klub");
         }
 
-        if (await ShortNameTaken(db, request.ShortName, id, ct))
+        if (club.AssociationId != request.AssociationId)
         {
-            return Problems.Conflict("Dieses Kürzel wird bereits verwendet.");
+            var association = await db.Associations.FindAsync([request.AssociationId], ct);
+            if (association is null)
+            {
+                return Problems.Invalid("Der gewählte Unterverband existiert nicht.");
+            }
+
+            club.Association = association;
         }
 
         club.Name = request.Name.Trim();
-        club.ShortName = Normalize(request.ShortName);
         club.City = request.City?.Trim();
         await db.SaveChangesAsync(ct);
-        return TypedResults.Ok(ToDto(club));
+        return TypedResults.Ok(club.ToDto());
     }
 
     private static async Task<IResult> Delete(Guid id, AppDbContext db, CancellationToken ct)
@@ -74,14 +80,4 @@ public static class ClubEndpoints
         await db.SaveChangesAsync(ct);
         return TypedResults.NoContent();
     }
-
-    private static string Normalize(string shortName) => shortName.Trim().ToUpperInvariant();
-
-    private static Task<bool> ShortNameTaken(AppDbContext db, string shortName, Guid? exceptId, CancellationToken ct)
-    {
-        var normalized = Normalize(shortName);
-        return db.Clubs.AnyAsync(c => c.ShortName == normalized && c.Id != exceptId, ct);
-    }
-
-    private static ClubDto ToDto(Club c) => new(c.Id, c.Name, c.ShortName, c.City, c.Players.Count(p => p.IsActive));
 }

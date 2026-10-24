@@ -9,18 +9,18 @@ public class Player
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
 
-    [MaxLength(100)]
-    public required string FirstName { get; set; }
+    /// <summary>«Nachname Vorname» wie bei der SFKV üblich.</summary>
+    [MaxLength(200)]
+    public required string Name { get; set; }
 
     [MaxLength(100)]
-    public required string LastName { get; set; }
+    public string? City { get; set; }
 
-    public int BirthYear { get; set; }
+    /// <summary>SFKV-Lizenznummer – eindeutiger Schlüssel für den Import.</summary>
+    [MaxLength(20)]
+    public string? LicenseNumber { get; set; }
 
     public PlayerCategory Category { get; set; }
-
-    [MaxLength(50)]
-    public string? LicenseNumber { get; set; }
 
     public bool IsActive { get; set; } = true;
 
@@ -30,16 +30,14 @@ public class Player
 
     public List<Result> Results { get; set; } = [];
 
-    public PlayerDto ToDto() =>
-        new(Id, FirstName, LastName, BirthYear, Category, LicenseNumber, IsActive, ClubId, Club.Name, Club.ShortName);
+    public PlayerDto ToDto() => new(Id, Name, City, LicenseNumber, Category, IsActive, ClubId, Club.Name);
 
     public void Apply(SavePlayerRequest request)
     {
-        FirstName = request.FirstName.Trim();
-        LastName = request.LastName.Trim();
-        BirthYear = request.BirthYear;
-        Category = request.Category;
+        Name = request.Name.Trim();
+        City = string.IsNullOrWhiteSpace(request.City) ? null : request.City.Trim();
         LicenseNumber = string.IsNullOrWhiteSpace(request.LicenseNumber) ? null : request.LicenseNumber.Trim();
+        Category = request.Category;
         ClubId = request.ClubId;
         IsActive = request.IsActive;
     }

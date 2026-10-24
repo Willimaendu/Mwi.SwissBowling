@@ -4,25 +4,34 @@
 
 <PageTitle>Klubs – Administration</PageTitle>
 
-<PageHeader Title="Klubs" Subtitle="Vereine und Kegelklubs verwalten">
+<PageHeader Title="Klubs" Subtitle="Kegelklubs verwalten">
     <Actions>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => EditAsync(null))">Neuer Klub</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => EditAsync(null))" Disabled="@(_associations.Count == 0)">Neuer Klub</MudButton>
     </Actions>
 </PageHeader>
 
-<LoadingState Loading="Loading" Error="@Error" IsEmpty="_clubs.Count == 0" EmptyText="Noch keine Klubs – lege den ersten an.">
-    <MudTable T="ClubDto" Items="_clubs" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
+@if (!Loading && _associations.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">Bitte zuerst einen <MudLink Href="/admin/unterverbaende">Unterverband</MudLink> anlegen.</MudAlert>
+}
+
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_clubs.Count == 0" EmptyText="Noch keine Klubs.">
+    <MudTable T="ClubDto" Items="_clubs" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches">
+        <ToolBarContent>
+            <MudTextField @bind-Value="_search" Placeholder="Suchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0" Style="max-width: 320px;" />
+        </ToolBarContent>
         <HeaderContent>
             <MudTh>Name</MudTh>
-            <MudTh>Kürzel</MudTh>
             <MudTh>Ort</MudTh>
+            <MudTh>Unterverband</MudTh>
             <MudTh Class="text-right">Aktive Kegler</MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd Class="font-weight-medium">@context.Name</MudTd>
-            <MudTd>@context.ShortName</MudTd>
             <MudTd>@(context.City ?? "–")</MudTd>
+            <MudTd>@context.AssociationName</MudTd>
             <MudTd Class="text-right">@context.PlayerCount</MudTd>
             <MudTd Class="text-right">
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditAsync(context))" />

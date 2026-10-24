@@ -5,11 +5,12 @@ using SwissBowling.Client.Shared.Services;
 using SwissBowling.Server.Auth;
 using SwissBowling.Server.Components;
 using SwissBowling.Server.Data;
+using SwissBowling.Server.Features.Associations;
 using SwissBowling.Server.Features.Championships;
 using SwissBowling.Server.Features.Clubs;
+using SwissBowling.Server.Features.Import;
 using SwissBowling.Server.Features.Players;
 using SwissBowling.Server.Features.Results;
-using SwissBowling.Server.Features.Seasons;
 using SwissBowling.Server.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,11 @@ builder.Services.AddHostedService<DbInitializer>();
 builder.Services.AddJwtIdentity();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+
+// Import von www.uvweb.kegler.ch
+builder.Services.AddHttpClient<UvwebScraper>(client => client.BaseAddress = new Uri("https://www.uvweb.kegler.ch/"));
+builder.Services.AddScoped<UvwebImporter>();
+builder.Services.AddHostedService<UvwebSyncService>();
 
 // Blazor (Interactive Auto) – Prerendering und Interactive Server laufen hier und brauchen die Client-Dienste.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents().AddInteractiveWebAssemblyComponents();
@@ -51,11 +57,12 @@ app.MapDefaultEndpoints();
 
 var api = app.MapGroup(string.Empty).AddEndpointFilter<ValidationFilter>();
 api.MapAuth();
+api.MapAssociations();
 api.MapClubs();
 api.MapPlayers();
-api.MapSeasons();
 api.MapChampionships();
 api.MapResults();
+api.MapImport();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

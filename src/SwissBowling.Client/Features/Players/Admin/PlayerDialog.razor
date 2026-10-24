@@ -3,9 +3,9 @@
 <DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && _model.ClubId != Guid.Empty)" OnSave="SaveAsync" OnCancel="Cancel">
     <MudForm @ref="Form" @bind-IsValid="IsValid">
         <MudGrid Spacing="2">
-            <MudItem xs="6"><MudTextField @bind-Value="_model.FirstName" Label="Vorname" Required="true" Variant="Variant.Outlined" /></MudItem>
-            <MudItem xs="6"><MudTextField @bind-Value="_model.LastName" Label="Nachname" Required="true" Variant="Variant.Outlined" /></MudItem>
-            <MudItem xs="6"><MudNumericField @bind-Value="_model.BirthYear" Label="Jahrgang" Min="1900" Max="2100" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="12"><MudTextField @bind-Value="_model.Name" Label="Name (Nachname Vorname)" Required="true" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6"><MudTextField @bind-Value="_model.City" Label="Ort" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6"><MudTextField @bind-Value="_model.LicenseNumber" Label="Lizenznummer" Variant="Variant.Outlined" /></MudItem>
             <MudItem xs="6">
                 <MudSelect @bind-Value="_model.Category" Label="Kategorie" Variant="Variant.Outlined">
                     @foreach (var category in Enum.GetValues<PlayerCategory>())
@@ -14,7 +14,6 @@
                     }
                 </MudSelect>
             </MudItem>
-            <MudItem xs="6"><MudTextField @bind-Value="_model.LicenseNumber" Label="Lizenznummer" Variant="Variant.Outlined" /></MudItem>
             <MudItem xs="6">
                 <MudSelect @bind-Value="_model.ClubId" Label="Klub" Variant="Variant.Outlined">
                     @foreach (var club in Clubs)

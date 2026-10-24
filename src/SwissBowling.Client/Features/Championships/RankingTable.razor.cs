@@ -8,14 +8,14 @@ public partial class RankingTable
 {
     [Inject] private NavigationManager Navigation { get; set; } = null!;
 
-    [Parameter, EditorRequired] public RankingDto Ranking { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<RankingEntryDto> Entries { get; set; } = [];
 
     private string _search = string.Empty;
 
     private bool Matches(RankingEntryDto entry) =>
         string.IsNullOrWhiteSpace(_search)
         || entry.PlayerName.Contains(_search, StringComparison.OrdinalIgnoreCase)
-        || entry.ClubShortName.Contains(_search, StringComparison.OrdinalIgnoreCase);
+        || entry.ClubName.Contains(_search, StringComparison.OrdinalIgnoreCase);
 
     private void OnRowClick(TableRowClickEventArgs<RankingEntryDto> args)
     {

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
+using SwissBowling.Core.Associations;
 using SwissBowling.Core.Championships;
-using SwissBowling.Core.Seasons;
 
 namespace SwissBowling.Client.Features.Championships.Admin;
 
@@ -8,7 +8,7 @@ public partial class ChampionshipDialog
 {
     [Parameter] public ChampionshipDto? Championship { get; set; }
 
-    [Parameter] public List<SeasonDto> Seasons { get; set; } = [];
+    [Parameter] public List<AssociationDto> Associations { get; set; } = [];
 
     private readonly Model _model = new();
 
@@ -16,19 +16,22 @@ public partial class ChampionshipDialog
     {
         if (Championship is { } c)
         {
-            (_model.Name, _model.Description, _model.SeasonId, _model.NumberOfRounds, _model.DiscardedRounds, _model.ThrowsPerRound) =
-                (c.Name, c.Description, c.SeasonId, c.NumberOfRounds, c.DiscardedRounds, c.ThrowsPerRound);
+            (_model.Name, _model.AssociationId, _model.Organizer, _model.Venue, _model.City, _model.Throws) =
+                (c.Name, c.AssociationId, c.Organizer, c.Venue, c.City, c.Throws);
+            _model.Start = c.StartDate.ToDateTime(TimeOnly.MinValue);
+            _model.End = c.EndDate.ToDateTime(TimeOnly.MinValue);
         }
         else
         {
-            _model.SeasonId = Seasons.FirstOrDefault()?.Id ?? Guid.Empty;
+            _model.AssociationId = Associations.FirstOrDefault()?.Id ?? Guid.Empty;
         }
     }
 
     private Task SaveAsync() => SubmitAsync(
         () =>
         {
-            var request = new SaveChampionshipRequest(_model.Name, _model.Description, _model.SeasonId, _model.NumberOfRounds, _model.DiscardedRounds, _model.ThrowsPerRound);
+            var request = new SaveChampionshipRequest(_model.Name, _model.AssociationId, _model.Organizer, _model.Venue, _model.City,
+                DateOnly.FromDateTime(_model.Start!.Value), DateOnly.FromDateTime(_model.End!.Value), _model.Throws);
             return Championship is { } c
                 ? Api.PutAsync<ChampionshipDto>(ChampionshipRoutes.ById(c.Id), request)
                 : Api.PostAsync<ChampionshipDto>(ChampionshipRoutes.Base, request);
@@ -39,14 +42,18 @@ public partial class ChampionshipDialog
     {
         public string Name { get; set; } = string.Empty;
 
-        public string? Description { get; set; }
+        public Guid AssociationId { get; set; }
 
-        public Guid SeasonId { get; set; }
+        public string? Organizer { get; set; }
 
-        public int NumberOfRounds { get; set; } = 6;
+        public string? Venue { get; set; }
 
-        public int DiscardedRounds { get; set; } = 1;
+        public string? City { get; set; }
 
-        public int ThrowsPerRound { get; set; } = 120;
+        public DateTime? Start { get; set; } = DateTime.Today;
+
+        public DateTime? End { get; set; } = DateTime.Today.AddDays(13);
+
+        public int Throws { get; set; } = 100;
     }
 }

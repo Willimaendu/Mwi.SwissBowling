@@ -25,17 +25,17 @@
         </ToolBarContent>
         <HeaderContent>
             <MudTh>Name</MudTh>
+            <MudTh>Ort</MudTh>
             <MudTh>Klub</MudTh>
             <MudTh>Kategorie</MudTh>
-            <MudTh>Jahrgang</MudTh>
             <MudTh>Lizenz</MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd Class="@(context.IsActive ? "font-weight-medium" : "mud-text-secondary")">@context.FullName @(context.IsActive ? "" : "(inaktiv)")</MudTd>
-            <MudTd>@context.ClubShortName</MudTd>
+            <MudTd Class="@(context.IsActive ? "font-weight-medium" : "mud-text-secondary")">@context.Name @(context.IsActive ? "" : "(inaktiv)")</MudTd>
+            <MudTd>@context.City</MudTd>
+            <MudTd>@context.ClubName</MudTd>
             <MudTd>@context.Category.Label()</MudTd>
-            <MudTd>@context.BirthYear</MudTd>
             <MudTd>@(context.LicenseNumber ?? "–")</MudTd>
             <MudTd Class="text-right">
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditAsync(context))" />

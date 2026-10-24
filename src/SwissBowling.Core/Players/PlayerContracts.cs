@@ -11,48 +11,34 @@ public static class PlayerRoutes
     public static string All(bool includeInactive) => $"{Base}?includeInactive={includeInactive}";
 }
 
+/// <summary>SFKV-Kategorien: A (stärkste), B, C und G (Gäste/Jüngere).</summary>
 public enum PlayerCategory
 {
-    Herren = 1,
-    Damen = 2,
-    Senioren = 3,
-    Seniorinnen = 4,
-    Junioren = 5,
-    Juniorinnen = 6
+    A = 1,
+    B = 2,
+    C = 3,
+    G = 4
 }
 
+/// <summary>Name im SFKV-Format «Nachname Vorname».</summary>
 public sealed record PlayerDto(
     Guid Id,
-    string FirstName,
-    string LastName,
-    int BirthYear,
-    PlayerCategory Category,
+    string Name,
+    string? City,
     string? LicenseNumber,
+    PlayerCategory Category,
     bool IsActive,
     Guid ClubId,
-    string ClubName,
-    string ClubShortName)
-{
-    public string FullName => $"{FirstName} {LastName}";
-}
+    string ClubName);
 
 public sealed record SavePlayerRequest(
-    [property: Required, MaxLength(100)] string FirstName,
-    [property: Required, MaxLength(100)] string LastName,
-    [property: Range(1900, 2100)] int BirthYear,
+    [property: Required, MaxLength(200)] string Name,
+    [property: MaxLength(100)] string? City,
+    [property: MaxLength(20)] string? LicenseNumber,
     PlayerCategory Category,
-    [property: MaxLength(50)] string? LicenseNumber,
     [property: Required] Guid ClubId,
     bool IsActive = true);
 
-/// <summary>Ein Resultat im Keglerprofil.</summary>
-public sealed record PlayerResultDto(
-    Guid RoundId,
-    Guid ChampionshipId,
-    string ChampionshipName,
-    int RoundNumber,
-    DateOnly Date,
-    string Venue,
-    int Pins);
+public sealed record PlayerResultDto(Guid ChampionshipId, string ChampionshipName, DateOnly? Date, int Pins, int Nines, bool Award);
 
 public sealed record PlayerDetailDto(PlayerDto Player, IReadOnlyList<PlayerResultDto> Results);

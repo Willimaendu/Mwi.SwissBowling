@@ -1,9 +1,14 @@
 @inherits FormDialog
 
-<DialogFrame Error="@Error" Busy="Busy" CanSave="IsValid" OnSave="SaveAsync" OnCancel="Cancel">
+<DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && _associationId != Guid.Empty)" OnSave="SaveAsync" OnCancel="Cancel">
     <MudForm @ref="Form" @bind-IsValid="IsValid">
         <MudTextField @bind-Value="_name" Label="Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
-        <MudTextField @bind-Value="_shortName" Label="Kürzel" Required="true" MaxLength="10" HelperText="Wird in Ranglisten angezeigt" Variant="Variant.Outlined" Class="mb-3" />
-        <MudTextField @bind-Value="_city" Label="Ort" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="_city" Label="Ort" Variant="Variant.Outlined" Class="mb-3" />
+        <MudSelect @bind-Value="_associationId" Label="Unterverband" Variant="Variant.Outlined">
+            @foreach (var association in Associations)
+            {
+                <MudSelectItem Value="@association.Id">@association.Name</MudSelectItem>
+            }
+        </MudSelect>
     </MudForm>
 </DialogFrame>

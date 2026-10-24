@@ -1,8 +1,7 @@
 <div class="ranking">
-<MudTable T="RankingEntryDto" Items="Ranking.Entries" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
+<MudTable T="RankingEntryDto" Items="Entries" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
           RowClass="cursor-pointer" OnRowClick="OnRowClick" Breakpoint="Breakpoint.None" Filter="Matches">
     <ToolBarContent>
-        <MudText Typo="Typo.subtitle1">Rangliste @(Ranking.Category?.Label() ?? "Gesamt")</MudText>
         <MudSpacer />
         <MudTextField @bind-Value="_search" Placeholder="Kegler oder Klub suchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                       Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0" Style="max-width: 320px;" />
@@ -11,45 +10,22 @@
         <MudTh Style="width: 64px;">Rang</MudTh>
         <MudTh>Kegler</MudTh>
         <MudTh Class="d-none d-sm-table-cell">Klub</MudTh>
-        <MudTh Class="d-none d-md-table-cell">Kategorie</MudTh>
-        @foreach (var round in Ranking.RoundNumbers)
-        {
-            <MudTh Class="d-none d-lg-table-cell text-right">R@(round)</MudTh>
-        }
-        <MudTh Class="text-right">Total</MudTh>
-        <MudTh Class="text-right d-none d-sm-table-cell">Ø</MudTh>
+        <MudTh Class="text-right">Holz</MudTh>
+        <MudTh Class="text-right d-none d-sm-table-cell">Neuner</MudTh>
+        <MudTh Class="d-none d-md-table-cell">Auszeichnung</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd><RankBadge Rank="context.Rank" /></MudTd>
         <MudTd Class="font-weight-medium">@context.PlayerName</MudTd>
-        <MudTd Class="d-none d-sm-table-cell">@context.ClubShortName</MudTd>
-        <MudTd Class="d-none d-md-table-cell">@context.Category.Label()</MudTd>
-        @foreach (var round in Ranking.RoundNumbers)
-        {
-            <MudTd Class="d-none d-lg-table-cell text-right">
-                @if (context.PinsByRound.TryGetValue(round, out var pins))
-                {
-                    <span class="@(context.DiscardedRoundNumbers.Contains(round) ? "discarded" : null)">@pins</span>
-                }
-                else
-                {
-                    <span class="mud-text-secondary">–</span>
-                }
-            </MudTd>
-        }
-        <MudTd Class="text-right font-weight-bold">
-            @context.Total
-            @if (context.RoundsPlayed < Ranking.Championship.CountedRounds)
+        <MudTd Class="d-none d-sm-table-cell">@context.ClubName</MudTd>
+        <MudTd Class="text-right font-weight-bold">@context.Pins</MudTd>
+        <MudTd Class="text-right d-none d-sm-table-cell">@context.Nines</MudTd>
+        <MudTd Class="d-none d-md-table-cell">
+            @if (context.Award)
             {
-                <MudTooltip Text="@($"Erst {context.RoundsPlayed} von {Ranking.Championship.CountedRounds} gewerteten Runden gespielt")">
-                    <MudIcon Icon="@Icons.Material.Outlined.HourglassEmpty" Size="Size.Small" Class="ml-1 mud-text-secondary" />
-                </MudTooltip>
+                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Warning" Size="Size.Small" />
             }
         </MudTd>
-        <MudTd Class="text-right d-none d-sm-table-cell">@context.Average.ToString("0.0")</MudTd>
     </RowTemplate>
-    <NoRecordsContent>
-        <MudText Class="pa-6 mud-text-secondary">Noch keine Resultate vorhanden.</MudText>
-    </NoRecordsContent>
 </MudTable>
 </div>

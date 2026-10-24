@@ -24,7 +24,7 @@ public static class PlayerEndpoints
         var players = await db.Players.AsNoTracking()
             .Include(p => p.Club)
             .Where(p => includeInactive == true || p.IsActive)
-            .OrderBy(p => p.LastName).ThenBy(p => p.FirstName)
+            .OrderBy(p => p.Name)
             .ToListAsync(ct);
 
         return TypedResults.Ok(players.Select(p => p.ToDto()));
@@ -40,9 +40,8 @@ public static class PlayerEndpoints
 
         var results = await db.Results.AsNoTracking()
             .Where(r => r.PlayerId == id)
-            .OrderByDescending(r => r.Round.Date).ThenByDescending(r => r.Round.Number)
-            .Select(r => new PlayerResultDto(
-                r.RoundId, r.Round.ChampionshipId, r.Round.Championship.Name, r.Round.Number, r.Round.Date, r.Round.Venue, r.Pins))
+            .OrderByDescending(r => r.Championship.StartDate)
+            .Select(r => new PlayerResultDto(r.ChampionshipId, r.Championship.Name, r.Date, r.Pins, r.Nines, r.Award))
             .ToListAsync(ct);
 
         return TypedResults.Ok(new PlayerDetailDto(player.ToDto(), results));
@@ -56,7 +55,12 @@ public static class PlayerEndpoints
             return Problems.Invalid("Der gewählte Klub existiert nicht.");
         }
 
-        var player = new Player { FirstName = request.FirstName, LastName = request.LastName, Club = club };
+        if (await LicenseTaken(db, request.LicenseNumber, null, ct))
+        {
+            return Problems.Conflict("Diese Lizenznummer ist bereits vergeben.");
+        }
+
+        var player = new Player { Name = request.Name, Club = club };
         player.Apply(request);
         db.Players.Add(player);
         await db.SaveChangesAsync(ct);
@@ -69,6 +73,11 @@ public static class PlayerEndpoints
         if (player is null)
         {
             return Problems.NotFound("Kegler");
+        }
+
+        if (await LicenseTaken(db, request.LicenseNumber, id, ct))
+        {
+            return Problems.Conflict("Diese Lizenznummer ist bereits vergeben.");
         }
 
         if (player.ClubId != request.ClubId)
@@ -103,5 +112,13 @@ public static class PlayerEndpoints
         db.Players.Remove(player);
         await db.SaveChangesAsync(ct);
         return TypedResults.NoContent();
+    }
+
+    private static Task<bool> LicenseTaken(AppDbContext db, string? license, Guid? exceptId, CancellationToken ct)
+    {
+        var normalized = license?.Trim();
+        return string.IsNullOrEmpty(normalized)
+            ? Task.FromResult(false)
+            : db.Players.AnyAsync(p => p.LicenseNumber == normalized && p.Id != exceptId, ct);
     }
 }

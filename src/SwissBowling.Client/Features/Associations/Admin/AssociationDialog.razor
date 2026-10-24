@@ -1,0 +1,7 @@
+@inherits FormDialog
+
+<DialogFrame Error="@Error" Busy="Busy" CanSave="IsValid" OnSave="SaveAsync" OnCancel="Cancel">
+    <MudForm @ref="Form" @bind-IsValid="IsValid">
+        <MudTextField @bind-Value="_name" Label="Name" Required="true" Variant="Variant.Outlined" />
+    </MudForm>
+</DialogFrame>

@@ -6,7 +6,7 @@ namespace SwissBowling.Core;
 /// <summary>Deutschsprachige Anzeigetexte für Enums.</summary>
 public static class Labels
 {
-    public static string Label(this PlayerCategory category) => category.ToString();
+    public static string Label(this PlayerCategory category) => $"Kat. {category}";
 
     public static string Label(this ChampionshipStatus status) => status switch
     {

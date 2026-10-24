@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using SwissBowling.Core.Auth;
 using SwissBowling.Core.Championships;
 using SwissBowling.Core.Players;
 using SwissBowling.Core.Results;
@@ -11,96 +9,89 @@ public partial class ResultEntry
 {
     [Parameter] public Guid Id { get; set; }
 
-    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
-
-    private RoundDetailDto? _detail;
+    private ChampionshipDto? _championship;
+    private List<ResultDto> _saved = [];
     private List<Row> _rows = [];
     private string _search = string.Empty;
     private bool _onlyWithResult;
-    private bool _isAdmin;
-
-    private bool CanEdit => _detail is { } d && (!d.Round.IsCompleted || _isAdmin);
 
     private int DirtyCount => _rows.Count(r => r.IsDirty);
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync() => LoadAsync(async () =>
     {
-        if (AuthState is not null)
-        {
-            _isAdmin = (await AuthState).User.IsInRole(Roles.Admin);
-        }
-
-        await LoadAsync(async () =>
-        {
-            _detail = await Api.GetAsync<RoundDetailDto>(ResultRoutes.ForRound(Id));
-            var players = await Api.GetAsync<List<PlayerDto>>(PlayerRoutes.All(includeInactive: false));
-            var saved = _detail.Results.ToDictionary(r => r.PlayerId, r => r.Pins);
-            _rows = players.Select(p => new Row(p, saved.TryGetValue(p.Id, out var pins) ? pins : null)).ToList();
-        });
-    }
+        _championship = (await Api.GetAsync<ChampionshipDetailDto>(ChampionshipRoutes.ById(Id))).Championship;
+        _saved = await Api.GetAsync<List<ResultDto>>(ResultRoutes.ForChampionship(Id));
+        var players = await Api.GetAsync<List<PlayerDto>>(PlayerRoutes.All(includeInactive: false));
+        var byPlayer = _saved.ToDictionary(r => r.PlayerId);
+        _rows = players.Select(p => new Row(p, byPlayer.GetValueOrDefault(p.Id))).ToList();
+    });
 
     private bool Matches(Row row) =>
-        (!_onlyWithResult || row.Pins is not null || row.SavedPins is not null)
+        (!_onlyWithResult || row.Pins is not null)
         && (string.IsNullOrWhiteSpace(_search)
-            || row.Player.FullName.Contains(_search, StringComparison.OrdinalIgnoreCase)
-            || row.Player.ClubShortName.Contains(_search, StringComparison.OrdinalIgnoreCase));
+            || row.Player.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
+            || row.Player.ClubName.Contains(_search, StringComparison.OrdinalIgnoreCase));
 
     private async Task SaveAsync()
     {
         var changed = _rows.Where(r => r.IsDirty).ToList();
-        var inputs = changed.Where(r => r.Pins is not null).Select(r => new ResultInput(r.Player.Id, r.Pins!.Value)).ToList();
-        var removed = changed.Where(r => r.Pins is null).ToList();
+        var inputs = changed.Where(r => r.Pins is not null)
+            .Select(r => new ResultInput(r.Player.Id, r.Pins!.Value, r.Nines, r.Award, r.Date is { } d ? DateOnly.FromDateTime(d) : null))
+            .ToList();
+        var removed = changed.Where(r => r.Pins is null && r.Saved is not null).ToList();
 
-        var ok = await TryAsync(async () =>
+        await TryAsync(async () =>
         {
             foreach (var row in removed)
             {
-                var result = _detail!.Results.First(x => x.PlayerId == row.Player.Id);
-                await Api.DeleteAsync(ResultRoutes.ById(result.Id));
+                await Api.DeleteAsync(ResultRoutes.ById(row.Saved!.Id));
             }
 
-            if (inputs.Count > 0)
-            {
-                _detail = await Api.PutAsync<RoundDetailDto>(ResultRoutes.ForRound(Id), new SaveResultsRequest(inputs));
-            }
-            else
-            {
-                _detail = await Api.GetAsync<RoundDetailDto>(ResultRoutes.ForRound(Id));
-            }
+            _saved = inputs.Count > 0
+                ? await Api.PutAsync<List<ResultDto>>(ResultRoutes.ForChampionship(Id), new SaveResultsRequest(inputs))
+                : await Api.GetAsync<List<ResultDto>>(ResultRoutes.ForChampionship(Id));
 
+            var byPlayer = _saved.ToDictionary(r => r.PlayerId);
             foreach (var row in changed)
             {
-                row.SavedPins = row.Pins;
+                row.MarkSaved(byPlayer.GetValueOrDefault(row.Player.Id));
             }
         }, $"{changed.Count} Resultate gespeichert.");
-
-        if (!ok)
-        {
-            await OnParametersSetAsync();
-        }
     }
 
-    private async Task ToggleCompletedAsync()
+    private sealed class Row
     {
-        var completed = !_detail!.Round.IsCompleted;
-        if (completed && !await ConfirmAsync("Runde abschliessen", "Danach sind Änderungen nur noch Administratoren erlaubt.", "Abschliessen"))
+        public Row(PlayerDto player, ResultDto? saved)
         {
-            return;
+            Player = player;
+            MarkSaved(saved);
         }
 
-        await TryAsync(
-            async () => _detail = _detail with { Round = await Api.PutAsync<RoundDto>(ChampionshipRoutes.RoundCompletion(Id), new SetRoundCompletedRequest(completed)) },
-            completed ? "Runde abgeschlossen." : "Runde wieder geöffnet.");
-    }
+        public PlayerDto Player { get; }
 
-    private sealed class Row(PlayerDto player, int? savedPins)
-    {
-        public PlayerDto Player { get; } = player;
+        public ResultDto? Saved { get; private set; }
 
-        public int? Pins { get; set; } = savedPins;
+        public int? Pins { get; set; }
 
-        public int? SavedPins { get; set; } = savedPins;
+        public int Nines { get; set; }
 
-        public bool IsDirty => Pins != SavedPins;
+        public bool Award { get; set; }
+
+        public DateTime? Date { get; set; }
+
+        public bool IsDirty =>
+            Pins != Saved?.Pins
+            || (Pins is not null && (Nines != Saved?.Nines || Award != Saved?.Award || DateOnlyOrNull(Date) != Saved?.Date));
+
+        public void MarkSaved(ResultDto? saved)
+        {
+            Saved = saved;
+            Pins = saved?.Pins;
+            Nines = saved?.Nines ?? 0;
+            Award = saved?.Award ?? false;
+            Date = saved is null ? DateTime.Today : saved.Date?.ToDateTime(TimeOnly.MinValue);
+        }
+
+        private static DateOnly? DateOnlyOrNull(DateTime? value) => value is { } d ? DateOnly.FromDateTime(d) : null;
     }
 }

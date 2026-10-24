@@ -1,0 +1,31 @@
+@page "/admin/unterverbaende"
+@layout AdminLayout
+@inherits ApiPage
+
+<PageTitle>Unterverbände – Administration</PageTitle>
+
+<PageHeader Title="Unterverbände" Subtitle="Unterverbände der SFKV">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => EditAsync(null))">Neuer Unterverband</MudButton>
+    </Actions>
+</PageHeader>
+
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_items.Count == 0" EmptyText="Noch keine Unterverbände – anlegen oder über den UVweb-Import übernehmen.">
+    <MudTable T="AssociationDto" Items="_items" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>UVweb-ID</MudTh>
+            <MudTh Class="text-right">Klubs</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd Class="font-weight-medium">@context.Name</MudTd>
+            <MudTd Class="mud-text-secondary">@(context.ExternalId?.ToString() ?? "–")</MudTd>
+            <MudTd Class="text-right">@context.ClubCount</MudTd>
+            <MudTd Class="text-right">
+                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditAsync(context))" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteAsync(context))" Disabled="@(context.ClubCount > 0)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</LoadingState>

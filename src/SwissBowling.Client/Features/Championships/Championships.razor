@@ -3,20 +3,26 @@
 
 <PageTitle>Meisterschaften – Swiss Bowling</PageTitle>
 
-<PageHeader Title="Meisterschaften" Subtitle="Alle Einzelmeisterschaften nach Saison">
+<PageHeader Title="Meisterschaften" Subtitle="Alle Meisterschaften nach Jahr und Unterverband">
     <Actions>
-        <MudSelect T="Guid?" Value="_seasonId" ValueChanged="OnSeasonChanged" Label="Saison" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="min-width: 200px;">
-            @foreach (var season in _seasons)
+        <MudSelect T="int?" Value="_year" ValueChanged="OnYearChanged" Label="Jahr" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="min-width: 140px;">
+            @foreach (var year in _years)
             {
-                <MudSelectItem T="Guid?" Value="@season.Id">@season.Name</MudSelectItem>
+                <MudSelectItem T="int?" Value="@year">@year</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="Guid?" @bind-Value="_associationId" Label="Unterverband" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="min-width: 220px;">
+            @foreach (var association in _associations)
+            {
+                <MudSelectItem T="Guid?" Value="@association.Id">@association.Name</MudSelectItem>
             }
         </MudSelect>
     </Actions>
 </PageHeader>
 
-<LoadingState Loading="Loading" Error="@Error" IsEmpty="_championships.Count == 0" EmptyText="Keine Meisterschaften gefunden.">
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="!Filtered.Any()" EmptyText="Keine Meisterschaften gefunden.">
     <MudGrid Spacing="3">
-        @foreach (var championship in _championships)
+        @foreach (var championship in Filtered)
         {
             <MudItem xs="12" md="6"><ChampionshipCard Championship="championship" /></MudItem>
         }

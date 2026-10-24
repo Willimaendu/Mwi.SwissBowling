@@ -5,17 +5,17 @@
 
 <PageTitle>Meisterschaften – Administration</PageTitle>
 
-<PageHeader Title="Meisterschaften" Subtitle="Meisterschaften planen, Runden verwalten, Resultate erfassen">
+<PageHeader Title="Meisterschaften" Subtitle="Meisterschaften anlegen und Resultate erfassen">
     <Actions>
         <AuthorizeView Roles="@Roles.Admin">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="CreateAsync" Disabled="@(_seasons.Count == 0)">Neue Meisterschaft</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="CreateAsync" Disabled="@(_associations.Count == 0)">Neue Meisterschaft</MudButton>
         </AuthorizeView>
     </Actions>
 </PageHeader>
 
-@if (!Loading && _seasons.Count == 0)
+@if (!Loading && _associations.Count == 0)
 {
-    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">Bitte zuerst eine <MudLink Href="/admin/saisons">Saison</MudLink> anlegen.</MudAlert>
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">Bitte zuerst einen <MudLink Href="/admin/unterverbaende">Unterverband</MudLink> anlegen.</MudAlert>
 }
 
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="_championships.Count == 0" EmptyText="Noch keine Meisterschaften.">
@@ -23,17 +23,17 @@
               RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/admin/meisterschaften/{args.Item!.Id}"))">
         <HeaderContent>
             <MudTh>Name</MudTh>
-            <MudTh>Saison</MudTh>
+            <MudTh>Unterverband</MudTh>
+            <MudTh>Datum</MudTh>
             <MudTh>Status</MudTh>
-            <MudTh>Runden</MudTh>
-            <MudTh Class="text-right">Teilnehmende</MudTh>
+            <MudTh Class="text-right">Resultate</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd Class="font-weight-medium">@context.Name</MudTd>
-            <MudTd>@context.SeasonName</MudTd>
-            <MudTd>@context.Status.Label()</MudTd>
-            <MudTd>@context.RoundsCompleted / @context.NumberOfRounds abgeschlossen</MudTd>
-            <MudTd Class="text-right">@context.ParticipantCount</MudTd>
+            <MudTd>@context.AssociationName</MudTd>
+            <MudTd>@context.StartDate.ToString("dd.MM.") – @context.EndDate.ToString("dd.MM.yyyy")</MudTd>
+            <MudTd>@context.StatusAt(_today).Label()</MudTd>
+            <MudTd Class="text-right">@context.ResultCount</MudTd>
         </RowTemplate>
     </MudTable>
 </LoadingState>

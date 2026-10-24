@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using SwissBowling.Core.Championships;
+using SwissBowling.Server.Features.Associations;
 using SwissBowling.Server.Features.Results;
-using SwissBowling.Server.Features.Seasons;
 
 namespace SwissBowling.Server.Features.Championships;
 
+/// <summary>Meisterschaft = Anlass auf einer Kegelbahn; jeder Kegler erzielt genau ein Resultat.</summary>
 public class Championship
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
@@ -12,61 +13,48 @@ public class Championship
     [MaxLength(200)]
     public required string Name { get; set; }
 
-    [MaxLength(2000)]
-    public string? Description { get; set; }
+    public Guid AssociationId { get; set; }
 
-    public Guid SeasonId { get; set; }
+    public Association Association { get; set; } = null!;
 
-    public Season Season { get; set; } = null!;
+    /// <summary>Durchführender Klub.</summary>
+    [MaxLength(200)]
+    public string? Organizer { get; set; }
 
-    public int NumberOfRounds { get; set; }
+    /// <summary>Lokal / Kegelbahn.</summary>
+    [MaxLength(200)]
+    public string? Venue { get; set; }
 
-    /// <summary>Anzahl Streichresultate (schlechteste Runden ohne Wertung).</summary>
-    public int DiscardedRounds { get; set; }
+    [MaxLength(100)]
+    public string? City { get; set; }
 
-    /// <summary>Würfe pro Runde und Kegler (typisch 120).</summary>
-    public int ThrowsPerRound { get; set; }
+    public DateOnly StartDate { get; set; }
 
-    public List<Round> Rounds { get; set; } = [];
+    public DateOnly EndDate { get; set; }
 
-    public int CountedRounds => NumberOfRounds - DiscardedRounds;
+    /// <summary>Anzahl Würfe pro Kegler (typisch 100 oder 120).</summary>
+    public int Throws { get; set; }
 
-    public int MaxPinsPerRound => ThrowsPerRound * 9;
+    /// <summary>msID auf UVweb (nur bei importierten Meisterschaften).</summary>
+    public int? ExternalId { get; set; }
+
+    public List<Result> Results { get; set; } = [];
+
+    public int MaxPins => Throws * 9;
 
     public void Apply(SaveChampionshipRequest request)
     {
         Name = request.Name.Trim();
-        Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
-        NumberOfRounds = request.NumberOfRounds;
-        DiscardedRounds = request.DiscardedRounds;
-        ThrowsPerRound = request.ThrowsPerRound;
+        Organizer = Clean(request.Organizer);
+        Venue = Clean(request.Venue);
+        City = Clean(request.City);
+        StartDate = request.StartDate;
+        EndDate = request.EndDate;
+        Throws = request.Throws;
     }
 
-    public ChampionshipDto ToDto(int participantCount) =>
-        new(Id, Name, Description, SeasonId, Season.Name, NumberOfRounds, DiscardedRounds, ThrowsPerRound,
-            Rounds.Count, Rounds.Count(r => r.IsCompleted), participantCount);
-}
+    public ChampionshipDto ToDto() =>
+        new(Id, Name, AssociationId, Association.Name, Organizer, Venue, City, StartDate, EndDate, Throws, Results.Count, ExternalId);
 
-public class Round
-{
-    public Guid Id { get; set; } = Guid.CreateVersion7();
-
-    public Guid ChampionshipId { get; set; }
-
-    public Championship Championship { get; set; } = null!;
-
-    /// <summary>Laufende Nummer innerhalb der Meisterschaft (1-basiert).</summary>
-    public int Number { get; set; }
-
-    public DateOnly Date { get; set; }
-
-    [MaxLength(200)]
-    public required string Venue { get; set; }
-
-    /// <summary>Abgeschlossene Runden dürfen nur noch von Administratoren geändert werden.</summary>
-    public bool IsCompleted { get; set; }
-
-    public List<Result> Results { get; set; } = [];
-
-    public RoundDto ToDto() => new(Id, ChampionshipId, Championship.Name, Number, Date, Venue, IsCompleted, Results.Count);
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

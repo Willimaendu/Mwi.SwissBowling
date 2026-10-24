@@ -11,7 +11,7 @@
         <ToolBarContent>
             <MudTextField @bind-Value="_search" Placeholder="Name, Klub oder Lizenz" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                           Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0 flex-grow-1" />
-            <MudSelect T="PlayerCategory?" @bind-Value="_category" Label="Kategorie" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Class="ml-3" Style="max-width: 200px;">
+            <MudSelect T="PlayerCategory?" @bind-Value="_category" Label="Kategorie" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Class="ml-3" Style="max-width: 180px;">
                 @foreach (var category in Enum.GetValues<PlayerCategory>())
                 {
                     <MudSelectItem T="PlayerCategory?" Value="@category">@category.Label()</MudSelectItem>
@@ -19,16 +19,18 @@
             </MudSelect>
         </ToolBarContent>
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<PlayerDto, object>(p => p.LastName)" InitialDirection="SortDirection.Ascending">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<PlayerDto, object>(p => p.Name)" InitialDirection="SortDirection.Ascending">Name</MudTableSortLabel></MudTh>
+            <MudTh Class="d-none d-sm-table-cell">Ort</MudTh>
             <MudTh>Klub</MudTh>
             <MudTh Class="d-none d-sm-table-cell">Kategorie</MudTh>
-            <MudTh Class="d-none d-md-table-cell">Jahrgang</MudTh>
+            <MudTh Class="d-none d-md-table-cell">Lizenz</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd Class="font-weight-medium">@context.FullName</MudTd>
+            <MudTd Class="font-weight-medium">@context.Name</MudTd>
+            <MudTd Class="d-none d-sm-table-cell">@context.City</MudTd>
             <MudTd>@context.ClubName</MudTd>
             <MudTd Class="d-none d-sm-table-cell">@context.Category.Label()</MudTd>
-            <MudTd Class="d-none d-md-table-cell">@context.BirthYear</MudTd>
+            <MudTd Class="d-none d-md-table-cell mud-text-secondary">@(context.LicenseNumber ?? "–")</MudTd>
         </RowTemplate>
     </MudTable>
 </LoadingState>
