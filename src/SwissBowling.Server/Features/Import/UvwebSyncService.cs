@@ -1,10 +1,7 @@
 namespace SwissBowling.Server.Features.Import;
 
-/// <summary>
-/// Gleicht periodisch ab: zuerst die Stammdaten von sfkv.ch, dann die aktuell auf UVweb publizierten Ranglisten
-/// (Konfiguration: Import:SyncIntervalHours, 0 = aus).
-/// </summary>
-public sealed class UvwebSyncService(IServiceScopeFactory scopes, IConfiguration configuration, ILogger<UvwebSyncService> logger) : BackgroundService
+/// <summary>Startet periodisch einen Importlauf ohne Archiv (Konfiguration: Import:SyncIntervalHours, 0 = aus).</summary>
+public sealed class UvwebSyncService(ImportRunner runner, IConfiguration configuration, ILogger<UvwebSyncService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -20,35 +17,16 @@ public sealed class UvwebSyncService(IServiceScopeFactory scopes, IConfiguration
         using var timer = new PeriodicTimer(TimeSpan.FromHours(hours));
         do
         {
-            await SyncAsync(stoppingToken);
+            try
+            {
+                var id = await runner.StartAsync(includeArchive: false, stoppingToken);
+                logger.LogInformation(id is null ? "Sync übersprungen – es läuft bereits ein Import" : "Sync gestartet: Lauf {RunId}", id);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(ex, "Sync konnte nicht gestartet werden");
+            }
         }
         while (await timer.WaitForNextTickAsync(stoppingToken));
-    }
-
-    private async Task SyncAsync(CancellationToken ct)
-    {
-        using var scope = scopes.CreateScope();
-
-        try
-        {
-            var masterData = scope.ServiceProvider.GetRequiredService<MasterDataImporter>();
-            foreach (var summary in await masterData.ImportAllAsync(ct))
-            {
-                logger.LogInformation("Stammdaten-Sync: {Source} – {Clubs} Klubs, {Players} Mitglieder", summary.Source, summary.Clubs, summary.Players);
-            }
-
-            var scraper = scope.ServiceProvider.GetRequiredService<UvwebScraper>();
-            var importer = scope.ServiceProvider.GetRequiredService<UvwebImporter>();
-            foreach (var item in await scraper.GetCurrentAsync(ct))
-            {
-                var summary = await importer.ImportAsync(item.MsId, item.UvId, item.RanglisteId, ct);
-                logger.LogInformation("UVweb-Sync: {Source} – {Results} Resultate", summary.Source, summary.Results);
-            }
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            // Ein fehlgeschlagener Lauf darf den Dienst nicht beenden – nächster Versuch beim nächsten Tick.
-            logger.LogWarning(ex, "Sync fehlgeschlagen");
-        }
     }
 }

@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
-using SwissBowling.Core.Import;
 using SwissBowling.Core.Players;
 using SwissBowling.Core.Results;
 
@@ -24,6 +23,12 @@ public sealed record UvwebChampionship(
 /// <summary>Resultat aus einer aktuellen HTML-Rangliste – mit Lizenznummer und klubID.</summary>
 public sealed record UvwebResult(string License, string Name, string? City, PlayerCategory Category, Discipline Discipline, int Pins, int Nines, bool Award, int ClubId);
 
+/// <summary>Eine aktuell publizierte Rangliste (Kennung: msID, uvID und Ranglisten-Slot).</summary>
+public sealed record UvwebCurrentEntry(int MsId, int UvId, int RanglisteId, string Association, string Name);
+
+/// <summary>Eine archivierte Rangliste als PDF.</summary>
+public sealed record UvwebArchiveEntry(int MsId, int UvId, string Name, string PdfUrl);
+
 /// <summary>Liest die öffentlichen HTML-Seiten von www.uvweb.kegler.ch.</summary>
 public sealed partial class UvwebScraper(HttpClient http)
 {
@@ -34,10 +39,10 @@ public sealed partial class UvwebScraper(HttpClient http)
     private static readonly CultureInfo Swiss = CultureInfo.GetCultureInfo("de-CH");
 
     /// <summary>Übersicht «Aktuelle Ranglisten» aller Unterverbände.</summary>
-    public async Task<IReadOnlyList<UvwebChampionshipDto>> GetCurrentAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<UvwebCurrentEntry>> GetCurrentAsync(CancellationToken ct)
     {
         var document = await LoadAsync("rangliste/AktuelleRanglisten.aspx", ct);
-        var items = new List<UvwebChampionshipDto>();
+        var items = new List<UvwebCurrentEntry>();
 
         foreach (var row in document.QuerySelectorAll("tr"))
         {
@@ -49,24 +54,22 @@ public sealed partial class UvwebScraper(HttpClient http)
             }
 
             var query = ParseQuery(link.GetAttribute("href"));
-            items.Add(new UvwebChampionshipDto(
+            items.Add(new UvwebCurrentEntry(
                 int.Parse(query["msID"], CultureInfo.InvariantCulture),
                 int.Parse(query["uvID"], CultureInfo.InvariantCulture),
                 int.Parse(query["RanglisteID"], CultureInfo.InvariantCulture),
                 Text(cells[1]),
-                Text(link),
-                Text(cells[3]),
-                IsImported: false));
+                Text(link)));
         }
 
         return items;
     }
 
     /// <summary>Ranglisten-Archiv eines Unterverbands: PDF-Links auf ftp.sfkv.net (bei Korrekturen gilt die zuletzt eingefügte PDF).</summary>
-    public async Task<IReadOnlyList<UvwebArchiveEntryDto>> GetArchiveAsync(int uvId, CancellationToken ct)
+    public async Task<IReadOnlyList<UvwebArchiveEntry>> GetArchiveAsync(int uvId, CancellationToken ct)
     {
         var document = await LoadAsync($"archiv/ranglistenarchiv_uv.aspx?uvID={uvId}", ct);
-        var entries = new List<UvwebArchiveEntryDto>();
+        var entries = new List<UvwebArchiveEntry>();
 
         foreach (var row in document.QuerySelectorAll("tr"))
         {
@@ -74,7 +77,7 @@ public sealed partial class UvwebScraper(HttpClient http)
             var link = row.QuerySelector("a[href$='.pdf']");
             if (cells.Length >= 4 && link is not null && int.TryParse(Text(cells[0]), out var msId))
             {
-                entries.Add(new UvwebArchiveEntryDto(msId, uvId, Text(link), link.GetAttribute("href") ?? string.Empty, Text(cells[3]), IsImported: false));
+                entries.Add(new UvwebArchiveEntry(msId, uvId, Text(link), link.GetAttribute("href") ?? string.Empty));
             }
         }
 

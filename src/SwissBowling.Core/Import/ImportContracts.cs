@@ -1,32 +1,35 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace SwissBowling.Core.Import;
 
 public static class ImportRoutes
 {
-    public const string Base = "api/import";
+    /// <summary>Importläufe: POST startet einen Lauf, GET listet die bisherigen.</summary>
+    public const string Runs = "api/import/runs";
 
-    /// <summary>Stammdaten (Unterverbände, Vorstand, Mitglieder, Klubs, Kegelbahnen) von www.sfkv.ch – der Master.</summary>
-    public const string MasterData = Base + "/sfkv";
-
-    /// <summary>Auf UVweb aktuell publizierte Ranglisten (HTML).</summary>
-    public const string Current = Base + "/uvweb";
-
-    public static string Championship(int msId, int uvId, int ranglisteId) => $"{Current}/{msId}?uvId={uvId}&ranglisteId={ranglisteId}";
-
-    /// <summary>Ranglisten-Archiv (PDF) eines Unterverbands.</summary>
-    public const string Archive = Current + "/archive";
-
-    public static string ArchiveOf(int uvId) => $"{Archive}?uvId={uvId}";
+    public static string Run(Guid id) => $"{Runs}/{id}";
 }
 
-/// <summary>Eine aktuell publizierte Rangliste (Kennung: msID, uvID und Ranglisten-Slot).</summary>
-public sealed record UvwebChampionshipDto(int MsId, int UvId, int RanglisteId, string Association, string Name, string UpdatedAt, bool IsImported);
+public enum ImportRunStatus
+{
+    Running,
+    Completed,
+    Failed
+}
 
-/// <summary>Eine archivierte Rangliste als PDF.</summary>
-public sealed record UvwebArchiveEntryDto(int MsId, int UvId, string Name, string PdfUrl, string InsertedAt, bool IsImported);
+/// <summary>Startet einen Lauf. Das Archiv (PDFs) wird nur für noch nicht importierte Meisterschaften geladen.</summary>
+public sealed record StartImportRequest(bool IncludeArchive = true);
 
-public sealed record ImportArchiveRequest(int MsId, int UvId, [property: Required, Url] string PdfUrl);
+/// <summary>Ein Protokolleintrag: was wurde aus welcher Quelle übernommen (angelegt oder aktualisiert).</summary>
+public sealed record ImportLogEntryDto(DateTimeOffset Time, string Source, int Clubs, int Players, int Results, string? Message, bool IsError);
 
-/// <summary>Zusammenfassung eines Importlaufs (Anzahl angelegter bzw. aktualisierter Einträge).</summary>
-public sealed record ImportSummaryDto(string Source, int Clubs, int Players, int Results);
+public sealed record ImportRunDto(
+    Guid Id,
+    DateTimeOffset StartedAt,
+    DateTimeOffset? FinishedAt,
+    ImportRunStatus Status,
+    bool IncludeArchive,
+    string? CurrentStep,
+    int Clubs,
+    int Players,
+    int Results,
+    int Errors,
+    IReadOnlyList<ImportLogEntryDto> Entries);

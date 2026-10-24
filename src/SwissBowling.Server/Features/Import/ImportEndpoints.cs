@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SwissBowling.Core.Import;
 using SwissBowling.Server.Auth;
 using SwissBowling.Server.Data;
+using SwissBowling.Server.Infrastructure;
 
 namespace SwissBowling.Server.Features.Import;
 
@@ -9,38 +10,34 @@ public static class ImportEndpoints
 {
     public static void MapImport(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup(ImportRoutes.Base).WithTags("Import").RequireAuthorization(Policies.Admin);
+        var group = app.MapGroup(ImportRoutes.Runs).WithTags("Import").RequireAuthorization(Policies.Admin);
 
-        group.MapPost("/sfkv", ImportMasterData).WithSummary("Stammdaten aller Unterverbände von www.sfkv.ch übernehmen");
-        group.MapGet("/uvweb", GetCurrent);
-        group.MapPost("/uvweb/{msId:int}", ImportCurrent);
-        group.MapGet("/uvweb/archive", GetArchive);
-        group.MapPost("/uvweb/archive", ImportArchive);
+        group.MapGet("/", GetRuns);
+        group.MapGet("/{id:guid}", GetRun);
+        group.MapPost("/", StartRun).WithSummary("Import-/Aktualisierungslauf starten (Stammdaten, aktuelle Ranglisten, optional Archiv)");
     }
 
-    private static async Task<IResult> ImportMasterData(MasterDataImporter importer, CancellationToken ct) =>
-        TypedResults.Ok(await importer.ImportAllAsync(ct));
-
-    private static async Task<IResult> GetCurrent(UvwebScraper scraper, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetRuns(AppDbContext db, CancellationToken ct)
     {
-        var current = await scraper.GetCurrentAsync(ct);
-        var imported = await ImportedIds(db, ct);
-        return TypedResults.Ok(current.Select(c => c with { IsImported = imported.Contains(c.MsId) }));
+        var runs = await db.ImportRuns.AsNoTracking().Include(r => r.Entries).OrderByDescending(r => r.StartedAt).Take(20).ToListAsync(ct);
+        return TypedResults.Ok(runs.Select(r => r.ToDto()));
     }
 
-    private static async Task<IResult> ImportCurrent(int msId, int uvId, int ranglisteId, UvwebImporter importer, CancellationToken ct) =>
-        TypedResults.Ok(await importer.ImportAsync(msId, uvId, ranglisteId, ct));
-
-    private static async Task<IResult> GetArchive(int uvId, UvwebScraper scraper, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetRun(Guid id, AppDbContext db, CancellationToken ct)
     {
-        var archive = await scraper.GetArchiveAsync(uvId, ct);
-        var imported = await ImportedIds(db, ct);
-        return TypedResults.Ok(archive.Select(a => a with { IsImported = imported.Contains(a.MsId) }));
+        var run = await db.ImportRuns.AsNoTracking().Include(r => r.Entries).FirstOrDefaultAsync(r => r.Id == id, ct);
+        return run is null ? Problems.NotFound("Importlauf") : TypedResults.Ok(run.ToDto());
     }
 
-    private static async Task<IResult> ImportArchive(ImportArchiveRequest request, UvwebImporter importer, CancellationToken ct) =>
-        TypedResults.Ok(await importer.ImportArchiveAsync(request.MsId, request.UvId, request.PdfUrl, ct));
+    private static async Task<IResult> StartRun(StartImportRequest request, ImportRunner runner, AppDbContext db, CancellationToken ct)
+    {
+        var id = await runner.StartAsync(request.IncludeArchive, ct);
+        if (id is null)
+        {
+            return Problems.Conflict("Es läuft bereits ein Import.");
+        }
 
-    private static async Task<HashSet<int>> ImportedIds(AppDbContext db, CancellationToken ct) =>
-        (await db.Championships.Where(c => c.ExternalId != null).Select(c => c.ExternalId!.Value).ToListAsync(ct)).ToHashSet();
+        var run = await db.ImportRuns.AsNoTracking().Include(r => r.Entries).FirstAsync(r => r.Id == id, ct);
+        return TypedResults.Ok(run.ToDto());
+    }
 }

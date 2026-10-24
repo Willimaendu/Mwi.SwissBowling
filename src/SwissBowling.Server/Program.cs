@@ -28,6 +28,7 @@ builder.Services.AddHttpClient<SfkvScraper>(client => client.BaseAddress = new U
 builder.Services.AddHttpClient<UvwebScraper>(client => client.BaseAddress = new Uri("https://www.uvweb.kegler.ch/"));
 builder.Services.AddScoped<MasterDataImporter>();
 builder.Services.AddScoped<UvwebImporter>();
+builder.Services.AddSingleton<ImportRunner>();
 builder.Services.AddHostedService<UvwebSyncService>();
 
 // Blazor (Interactive Auto) – Prerendering und Interactive Server laufen hier und brauchen die Client-Dienste.

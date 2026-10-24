@@ -1,8 +1,1 @@
-<MudButton Size="Size.Small" Variant="@(IsImported ? Variant.Outlined : Variant.Filled)" Color="Color.Primary" OnClick="OnClick" Disabled="Disabled"
-           StartIcon="@(Busy ? null : Icons.Material.Outlined.CloudDownload)">
-    @if (Busy)
-    {
-        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-    }
-    @(IsImported ? "Aktualisieren" : "Importieren")
-</MudButton>
+@* Obsolet: Der Import läuft als ein Gesamtlauf. Datei kann gelöscht werden (siehe cleanup-obsolete.ps1). *@

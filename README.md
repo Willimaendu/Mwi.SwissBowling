@@ -51,7 +51,11 @@ Unbekannte Kegler (z.B. Gäste) werden minimal angelegt.
 übersprungen), Kategorie-Blöcke und Zeilen wie `1. Wicki Fridolin, River Boys 795 / 38`. Kegler werden über den Namen (bei Mehrdeutigkeit
 Klub, dann Unterverband) zugeordnet, Klubs über den SFKV-Kurznamen – der stimmt mit den Stammdaten überein.
 
-**Automatischer Abgleich:** `UvwebSyncService` importiert periodisch Stammdaten und aktuelle Ranglisten (`Import:SyncIntervalHours`, Standard 6, 0 = aus).
+**Importlauf.** `ImportRunner` führt alles als einen Lauf im Hintergrund aus (Stammdaten aller UVs → aktuelle Ranglisten → optional noch
+nicht importierte Archiv-PDFs aller UVs) und protokolliert jeden Schritt in `ImportRun`/`ImportLogEntry`; ein fehlerhafter Schritt bricht
+den Lauf nicht ab. Admin: `/admin/import` – ein Knopf, Protokoll pro Lauf, Fortschritt per Polling. Es läuft höchstens ein Lauf gleichzeitig.
+
+**Automatischer Abgleich:** `UvwebSyncService` startet periodisch einen Lauf ohne Archiv (`Import:SyncIntervalHours`, Standard 6, 0 = aus).
 
 Die Nutzung der Daten ist mit dem Betreiber (Martin Schumacher) abgesprochen.
 

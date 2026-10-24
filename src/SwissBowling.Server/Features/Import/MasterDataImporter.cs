@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using SwissBowling.Core.Import;
 using SwissBowling.Server.Data;
 using SwissBowling.Server.Features.Associations;
 using SwissBowling.Server.Features.Clubs;
@@ -14,18 +13,9 @@ namespace SwissBowling.Server.Features.Import;
 /// </summary>
 public sealed class MasterDataImporter(SfkvScraper scraper, AppDbContext db)
 {
-    public async Task<IReadOnlyList<ImportSummaryDto>> ImportAllAsync(CancellationToken ct)
-    {
-        var summaries = new List<ImportSummaryDto>();
-        foreach (var code in await scraper.GetAssociationCodesAsync(ct))
-        {
-            summaries.Add(await ImportAssociationAsync(code, ct));
-        }
+    public Task<IReadOnlyList<string>> GetAssociationCodesAsync(CancellationToken ct) => scraper.GetAssociationCodesAsync(ct);
 
-        return summaries;
-    }
-
-    public async Task<ImportSummaryDto> ImportAssociationAsync(string shortCode, CancellationToken ct)
+    public async Task<ImportSummary> ImportAssociationAsync(string shortCode, CancellationToken ct)
     {
         var source = await scraper.GetAssociationAsync(shortCode, ct);
 
@@ -56,7 +46,7 @@ public sealed class MasterDataImporter(SfkvScraper scraper, AppDbContext db)
         var players = await UpsertPlayersAsync(source, association, ct);
 
         await db.SaveChangesAsync(ct);
-        return new ImportSummaryDto($"{source.Name} (sfkv.ch)", clubs, players, 0);
+        return new ImportSummary($"Stammdaten UV {source.Name}", clubs, players, 0);
     }
 
     private async Task<int> UpsertClubsAsync(SfkvAssociation source, Association association, CancellationToken ct)

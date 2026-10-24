@@ -2,110 +2,80 @@
 @layout AdminLayout
 @inherits ApiPage
 
-<PageTitle>Import UVweb – Administration</PageTitle>
+<PageTitle>Import – Administration</PageTitle>
 
-<PageHeader Title="Import" Subtitle="Stammdaten von www.sfkv.ch (Master), Resultate von www.uvweb.kegler.ch – Disziplinen Meisterschaft und MS Damen" />
-
-<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
-    Daten der SFKV und ihrer Unterverbände (Nutzung mit dem Betreiber abgesprochen). Alle Importe sind idempotent: bestehende Einträge werden anhand von
-    UV-Nr., Klub-ID, Lizenznummer bzw. MS-Nr. aktualisiert. Stammdaten und aktuelle Ranglisten werden zusätzlich automatisch abgeglichen (<code>Import:SyncIntervalHours</code>).
-</MudAlert>
-
-<MudTabs Elevation="0" Rounded="true" Outlined="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="rounded-lg">
-    <MudTabPanel Text="Stammdaten (sfkv.ch)" Icon="@Icons.Material.Outlined.AccountTree">
-        <MudText Class="mb-3">Unterverbände mit Vorstand, Mitgliedern, Klubs und Kegelbahnen. Zuerst ausführen – die Resultat-Importe ordnen Kegler und Klubs darüber zu.</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.CloudDownload" OnClick="ImportMasterDataAsync" Disabled="@(_busy is not null)">
-            @if (_busy == MasterDataBusy)
+<PageHeader Title="Import / Aktualisierung" Subtitle="Stammdaten von www.sfkv.ch, Resultate (Meisterschaft und MS Damen) von www.uvweb.kegler.ch">
+    <Actions>
+        <MudCheckBox T="bool" @bind-Value="_includeArchive" Label="Archiv (PDF) einschliessen" Color="Color.Primary" Disabled="@IsRunning" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.CloudDownload" OnClick="StartAsync" Disabled="@IsRunning">
+            @if (IsRunning)
             {
                 <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
             }
-            Stammdaten aller Unterverbände importieren
+            Import starten
         </MudButton>
-    </MudTabPanel>
+    </Actions>
+</PageHeader>
 
-    <MudTabPanel Text="Aktuelle Ranglisten" Icon="@Icons.Material.Outlined.Public">
-        <div class="d-flex gap-2 mb-3">
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Refresh" OnClick="ReloadCurrentAsync" Disabled="@(_busy is not null)">Aktualisieren</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.CloudDownload" OnClick="@(() => ImportAllAsync(_current, ImportCurrentAsync))" Disabled="@(_busy is not null || _current.Count == 0)">Alle importieren</MudButton>
-        </div>
-        <LoadingState Loading="Loading" Error="@Error" IsEmpty="_current.Count == 0" EmptyText="Auf UVweb sind zurzeit keine Ranglisten publiziert.">
-            <MudTable T="UvwebChampionshipDto" Items="_current" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
-                <HeaderContent>
-                    <MudTh>MS-Nr.</MudTh>
-                    <MudTh>Unterverband</MudTh>
-                    <MudTh>Meisterschaft</MudTh>
-                    <MudTh>Aktualisiert</MudTh>
-                    <MudTh>Status</MudTh>
-                    <MudTh></MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd Class="mud-text-secondary">@context.MsId</MudTd>
-                    <MudTd>@context.Association</MudTd>
-                    <MudTd Class="font-weight-medium">@context.Name</MudTd>
-                    <MudTd Class="mud-text-secondary">@context.UpdatedAt</MudTd>
-                    <MudTd><ImportStatus IsImported="context.IsImported" /></MudTd>
-                    <MudTd Class="text-right">
-                        <ImportButton IsImported="context.IsImported" Busy="@(_busy == context.MsId)" Disabled="@(_busy is not null)" OnClick="@(() => ImportCurrentAsync(context))" />
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-        </LoadingState>
-    </MudTabPanel>
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">
+    Ein Lauf übernimmt der Reihe nach alle Unterverbände (Vorstand, Mitglieder, Klubs, Kegelbahnen), alle aktuell publizierten Ranglisten und –
+    falls gewählt – die noch nicht importierten Archiv-Ranglisten aller Unterverbände. Alles ist idempotent; der Lauf läuft im Hintergrund weiter,
+    auch wenn diese Seite verlassen wird. Stammdaten und aktuelle Ranglisten werden zusätzlich automatisch abgeglichen (<code>Import:SyncIntervalHours</code>).
+</MudAlert>
 
-    <MudTabPanel Text="Archiv (PDF)" Icon="@Icons.Material.Outlined.Inventory2">
-        <div class="d-flex flex-wrap gap-2 mb-3 align-center">
-            <MudSelect T="int?" Value="_archiveUvId" ValueChanged="LoadArchiveAsync" Label="Unterverband" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 260px;">
-                @foreach (var association in _associations)
-                {
-                    <MudSelectItem T="int?" Value="@association.ExternalId">@association.Name</MudSelectItem>
-                }
-            </MudSelect>
-            <MudSpacer />
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.CloudDownload" OnClick="@(() => ImportAllAsync(_archive.Where(a => !a.IsImported).ToList(), ImportArchiveAsync))"
-                       Disabled="@(_busy is not null || _archive.All(a => a.IsImported))">Alle fehlenden importieren</MudButton>
-        </div>
-        @if (_archiveUvId is null)
-        {
-            <MudText Class="mud-text-secondary pa-4">Unterverband wählen, um dessen Archiv zu laden.</MudText>
-        }
-        else
-        {
-            <LoadingState Loading="_archiveLoading" Error="@_archiveError" IsEmpty="_archive.Count == 0" EmptyText="Kein Archiv vorhanden.">
-                <MudTable T="UvwebArchiveEntryDto" Items="_archive" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
-                    <HeaderContent>
-                        <MudTh>MS-Nr.</MudTh>
-                        <MudTh>Meisterschaft</MudTh>
-                        <MudTh>Eingefügt</MudTh>
-                        <MudTh>Status</MudTh>
-                        <MudTh></MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd Class="mud-text-secondary">@context.MsId</MudTd>
-                        <MudTd Class="font-weight-medium"><MudLink Href="@context.PdfUrl" Target="_blank">@context.Name</MudLink></MudTd>
-                        <MudTd Class="mud-text-secondary">@context.InsertedAt</MudTd>
-                        <MudTd><ImportStatus IsImported="context.IsImported" /></MudTd>
-                        <MudTd Class="text-right">
-                            <ImportButton IsImported="context.IsImported" Busy="@(_busy == context.MsId)" Disabled="@(_busy is not null)" OnClick="@(() => ImportArchiveAsync(context))" />
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            </LoadingState>
-        }
-    </MudTabPanel>
-</MudTabs>
-
-@if (_summaries.Count > 0)
+@if (_startError is not null)
 {
-    <MudText Typo="Typo.h6" Class="mt-6 mb-2">Protokoll</MudText>
-    <MudSimpleTable Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
-        <thead>
-            <tr><th>Quelle</th><th class="text-right">Klubs</th><th class="text-right">Kegler</th><th class="text-right">Resultate</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var summary in _summaries)
-            {
-                <tr><td>@summary.Source</td><td class="text-right">@summary.Clubs</td><td class="text-right">@summary.Players</td><td class="text-right">@summary.Results</td></tr>
-            }
-        </tbody>
-    </MudSimpleTable>
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">@_startError</MudAlert>
 }
+
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_runs.Count == 0" EmptyText="Noch kein Importlauf.">
+    <MudExpansionPanels MultiExpansion="false" Elevation="0" Outlined="true" Class="rounded-lg">
+        @foreach (var run in _runs)
+        {
+            <MudExpansionPanel Expanded="@(run.Id == _runs[0].Id)">
+                <TitleContent>
+                    <div class="d-flex align-center gap-3 flex-wrap">
+                        <ImportStatus Status="run.Status" />
+                        <MudText Typo="Typo.body1" Class="font-weight-medium">@run.StartedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            @(run.IncludeArchive ? "mit Archiv" : "ohne Archiv") · @run.Clubs Klubs · @run.Players Kegler · @run.Results Resultate
+                            @if (run.Errors > 0)
+                            {
+                                <span class="mud-error-text"> · @run.Errors Fehler</span>
+                            }
+                        </MudText>
+                        @if (run.CurrentStep is { } step)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Info">@step …</MudChip>
+                        }
+                        @if (run.FinishedAt is { } finished)
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Dauer @((finished - run.StartedAt).ToString(@"hh\:mm\:ss"))</MudText>
+                        }
+                    </div>
+                </TitleContent>
+                <ChildContent>
+                    <MudTable T="ImportLogEntryDto" Items="run.Entries.OrderByDescending(e => e.Time)" Dense="true" Hover="true" Elevation="0" FixedHeader="true" Height="400px"
+                              RowClassFunc="@((e, _) => e.IsError ? "mud-error-text" : string.Empty)">
+                        <HeaderContent>
+                            <MudTh Style="width: 90px;">Zeit</MudTh>
+                            <MudTh>Quelle</MudTh>
+                            <MudTh Class="text-right">Klubs</MudTh>
+                            <MudTh Class="text-right">Kegler</MudTh>
+                            <MudTh Class="text-right">Resultate</MudTh>
+                            <MudTh>Meldung</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd Class="mud-text-secondary">@context.Time.ToLocalTime().ToString("HH:mm:ss")</MudTd>
+                            <MudTd>@context.Source</MudTd>
+                            <MudTd Class="text-right">@(context.Clubs > 0 ? context.Clubs : "")</MudTd>
+                            <MudTd Class="text-right">@(context.Players > 0 ? context.Players : "")</MudTd>
+                            <MudTd Class="text-right">@(context.Results > 0 ? context.Results : "")</MudTd>
+                            <MudTd>@context.Message</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </ChildContent>
+            </MudExpansionPanel>
+        }
+    </MudExpansionPanels>
+</LoadingState>

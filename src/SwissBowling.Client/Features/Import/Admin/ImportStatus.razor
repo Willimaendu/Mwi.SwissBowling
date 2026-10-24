@@ -1,8 +1,12 @@
-@if (IsImported)
+@switch (Status)
 {
-    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.Check">Importiert</MudChip>
-}
-else
-{
-    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">Neu</MudChip>
+    case ImportRunStatus.Running:
+        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text" Icon="@Icons.Material.Filled.Sync">Läuft</MudChip>
+        break;
+    case ImportRunStatus.Completed:
+        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.Check">Abgeschlossen</MudChip>
+        break;
+    default:
+        <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Text" Icon="@Icons.Material.Filled.ErrorOutline">Fehlgeschlagen</MudChip>
+        break;
 }

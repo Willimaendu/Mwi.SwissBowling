@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using SwissBowling.Core.Import;
 using SwissBowling.Server.Data;
 using SwissBowling.Server.Features.Associations;
 using SwissBowling.Server.Features.Championships;
@@ -16,7 +15,7 @@ namespace SwissBowling.Server.Features.Import;
 /// </summary>
 public sealed class UvwebImporter(UvwebScraper scraper, AppDbContext db)
 {
-    public async Task<ImportSummaryDto> ImportAsync(int msId, int uvId, int ranglisteId, CancellationToken ct)
+    public async Task<ImportSummary> ImportAsync(int msId, int uvId, int ranglisteId, CancellationToken ct)
     {
         var source = await scraper.GetChampionshipAsync(msId, uvId, ct);
         var results = await scraper.GetResultsAsync(msId, uvId, ranglisteId, ct);
@@ -55,10 +54,10 @@ public sealed class UvwebImporter(UvwebScraper scraper, AppDbContext db)
         }
 
         await db.SaveChangesAsync(ct);
-        return new ImportSummaryDto(source.Name, 0, newPlayers, results.Count);
+        return new ImportSummary(source.Name, 0, newPlayers, results.Count);
     }
 
-    public async Task<ImportSummaryDto> ImportArchiveAsync(int msId, int uvId, string pdfUrl, CancellationToken ct)
+    public async Task<ImportSummary> ImportArchiveAsync(int msId, int uvId, string pdfUrl, CancellationToken ct)
     {
         var source = await scraper.GetChampionshipAsync(msId, uvId, ct);
         await using var pdf = await scraper.GetPdfAsync(pdfUrl, ct);
@@ -98,7 +97,7 @@ public sealed class UvwebImporter(UvwebScraper scraper, AppDbContext db)
         }
 
         await db.SaveChangesAsync(ct);
-        return new ImportSummaryDto(source.Name, newClubs, newPlayers, results.Count);
+        return new ImportSummary($"{source.Name} (Archiv)", newClubs, newPlayers, results.Count);
     }
 
     private async Task<Association> GetAssociationAsync(UvwebChampionship source, CancellationToken ct) =>

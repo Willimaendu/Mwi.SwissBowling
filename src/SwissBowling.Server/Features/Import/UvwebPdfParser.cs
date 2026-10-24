@@ -58,7 +58,8 @@ public static partial class UvwebPdfParser
                 continue;
             }
 
-            if (discipline is null || category is null || EntryPattern().Match(line) is not { Success: true } entry)
+            if (discipline is null || category is null || EntryPattern().Match(line) is not { Success: true } entry
+                || entry.Groups["club"].Value.Contains(" / ", StringComparison.Ordinal))
             {
                 continue;
             }
@@ -83,6 +84,10 @@ public static partial class UvwebPdfParser
     [GeneratedRegex(@"^Kategorie\s+([ABCG])\b")]
     private static partial Regex CategoryPattern();
 
-    [GeneratedRegex(@"^\d+\.\s+(?<name>[^,]+),\s+(?<club>.+?)\s+(?<pins>\d+)\s*/\s*(?<nines>\d+)$")]
+    /// <summary>
+    /// Einzelresultat «1. Name Vorname, Klub 795 / 38». Paar-Zeilen (Americaine: «A / B, Klub1 / Klub2 644 / 31») werden ausgeschlossen:
+    /// kein «/» im Namen, kein « / » (mit Leerzeichen) im Klub – «Zolli/Gäbelbach» bleibt erlaubt.
+    /// </summary>
+    [GeneratedRegex(@"^\d+\.\s+(?<name>[^,/]+),\s+(?<club>.+?)\s+(?<pins>\d+)\s*/\s*(?<nines>\d+)$")]
     private static partial Regex EntryPattern();
 }

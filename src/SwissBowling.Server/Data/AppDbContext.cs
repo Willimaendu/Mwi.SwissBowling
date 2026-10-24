@@ -5,6 +5,7 @@ using SwissBowling.Server.Auth;
 using SwissBowling.Server.Features.Associations;
 using SwissBowling.Server.Features.Championships;
 using SwissBowling.Server.Features.Clubs;
+using SwissBowling.Server.Features.Import;
 using SwissBowling.Server.Features.Players;
 using SwissBowling.Server.Features.Results;
 using SwissBowling.Server.Features.Venues;
@@ -27,9 +28,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
     public DbSet<Result> Results => Set<Result>();
 
+    public DbSet<ImportRun> ImportRuns => Set<ImportRun>();
+
+    public DbSet<ImportLogEntry> ImportLogEntries => Set<ImportLogEntry>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<ImportRun>().HasMany(r => r.Entries).WithOne(e => e.Run).OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Association>().HasIndex(a => a.ExternalId).IsUnique();
         builder.Entity<Association>().HasMany(a => a.Clubs).WithOne(c => c.Association).OnDelete(DeleteBehavior.Restrict);
