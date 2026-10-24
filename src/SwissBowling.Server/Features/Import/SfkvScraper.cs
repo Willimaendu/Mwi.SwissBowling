@@ -82,24 +82,26 @@ public sealed partial class SfkvScraper(HttpClient http)
     }
 
     /// <summary>Datenzeilen der Tabelle, deren Kopfzeile <paramref name="headerKeyword"/> enthält.</summary>
-    private static IEnumerable<IHtmlCollection<IElement>> Rows(IEnumerable<IElement> tables, string headerKeyword)
+    private static IEnumerable<List<IElement>> Rows(IEnumerable<IElement> tables, string headerKeyword)
     {
         var table = tables.FirstOrDefault(t => t.QuerySelector("tr") is { } header && header.TextContent.Contains(headerKeyword, StringComparison.Ordinal));
         return table is null
             ? []
-            : table.QuerySelectorAll("tr").Skip(1).Select(r => r.QuerySelectorAll("td")).Where(c => c.Length >= 6);
+            : table.QuerySelectorAll("tr").Skip(1)
+                .Select(r => r.Children.Where(c => c.LocalName is "td" or "th").ToList())
+                .Where(c => c.Count >= 6);
     }
 
-    private static SfkvBoardMember ParseBoardMember(IHtmlCollection<IElement> c) =>
+    private static SfkvBoardMember ParseBoardMember(List<IElement> c) =>
         new(Text(c[0]), Text(c[1]), CityFromAddress(Lines(c[2]).LastOrDefault()), ParseDate(Text(c[3])), NullIfEmpty(Text(c[4])), NullIfEmpty(Lines(c[5]).FirstOrDefault()));
 
-    private static SfkvMember ParseMember(IHtmlCollection<IElement> c) =>
+    private static SfkvMember ParseMember(List<IElement> c) =>
         new(Text(c[0]), Text(c[1]), CityFromAddress(Text(c[2]).Split(',').Last()), ParseDate(Text(c[3])), NullIfEmpty(Text(c[4])), ParseCategory(Text(c[5])) ?? PlayerCategory.C);
 
-    private static SfkvClub ParseClub(IHtmlCollection<IElement> c) =>
+    private static SfkvClub ParseClub(List<IElement> c) =>
         new(Text(c[0]), NullIfEmpty(Text(c[1])), ParseCategory(Text(c[2])), int.TryParse(Text(c[3]), out var id) ? id : null, NullIfEmpty(Text(c[4])), NullIfEmpty(c[5].QuerySelector("a")?.GetAttribute("href")));
 
-    private static SfkvVenue ParseVenue(IHtmlCollection<IElement> c)
+    private static SfkvVenue ParseVenue(List<IElement> c)
     {
         var (zip, city) = SplitZipCity(Text(c[1]));
         return new SfkvVenue(Text(c[0]), zip, city, NullIfEmpty(Text(c[2])), int.TryParse(Text(c[3]), out var lanes) ? lanes : null, NullIfEmpty(Text(c[4])), NullIfEmpty(c[5].QuerySelector("a")?.GetAttribute("href")));

@@ -46,9 +46,9 @@ public sealed partial class UvwebScraper(HttpClient http)
 
         foreach (var row in document.QuerySelectorAll("tr"))
         {
-            var cells = row.QuerySelectorAll("td");
+            var cells = Cells(row);
             var link = row.QuerySelector("a[href*='msID=']");
-            if (cells.Length < 4 || link is null)
+            if (cells.Count < 4 || link is null)
             {
                 continue;
             }
@@ -73,9 +73,9 @@ public sealed partial class UvwebScraper(HttpClient http)
 
         foreach (var row in document.QuerySelectorAll("tr"))
         {
-            var cells = row.QuerySelectorAll("td");
+            var cells = Cells(row);
             var link = row.QuerySelector("a[href$='.pdf']");
-            if (cells.Length >= 4 && link is not null && int.TryParse(Text(cells[0]), out var msId))
+            if (cells.Count >= 4 && link is not null && int.TryParse(Text(cells[0]), out var msId))
             {
                 entries.Add(new UvwebArchiveEntry(msId, uvId, Text(link), link.GetAttribute("href") ?? string.Empty));
             }
@@ -89,8 +89,8 @@ public sealed partial class UvwebScraper(HttpClient http)
     {
         var document = await LoadAsync($"rangliste/msangaben.aspx?msID={msId}", ct);
         var details = document.QuerySelectorAll("tr")
-            .Select(r => r.QuerySelectorAll("td"))
-            .Where(c => c.Length >= 2)
+            .Select(Cells)
+            .Where(c => c.Count >= 2)
             .GroupBy(c => Text(c[0]))
             .ToDictionary(g => g.Key, g => Text(g.First()[1]), StringComparer.OrdinalIgnoreCase);
 
@@ -130,22 +130,45 @@ public sealed partial class UvwebScraper(HttpClient http)
     /// <summary>PDF einer archivierten Rangliste herunterladen.</summary>
     public Task<Stream> GetPdfAsync(string pdfUrl, CancellationToken ct) => http.GetStreamAsync(new Uri(pdfUrl), ct);
 
+    /// <summary>
+    /// Liest alle Seiten einer Rangliste. Die GridView zeigt 30 Zeilen pro Seite; weitere Seiten liefert nur ein
+    /// ASP.NET-Postback (__doPostBack('gvRangliste','Page$n')) mit dem ViewState der vorherigen Seite.
+    /// </summary>
     private async Task<List<UvwebResult>> LoadRankingAsync(string katId, string diszId, int uvId, int ranglisteId, PlayerCategory category, Discipline discipline, CancellationToken ct)
     {
-        var document = await LoadAsync($"rangliste/meisterschaft.aspx?KatID={katId}&DiszID={diszId}&uvID={uvId}&RanglisteID={ranglisteId}", ct);
+        var url = $"rangliste/meisterschaft.aspx?KatID={katId}&DiszID={diszId}&uvID={uvId}&RanglisteID={ranglisteId}";
+        var document = await LoadAsync(url, ct);
         var results = new List<UvwebResult>();
+        var page = 1;
 
-        // Spalten: Rang | Name | Ort | Resultat | Neuner | Auszeichnung | Lizenz-Nr. | Details-Link (klubID)
-        foreach (var row in document.QuerySelectorAll("tr"))
+        while (true)
         {
-            var cells = row.QuerySelectorAll("td");
+            results.AddRange(ParseRanking(document, category, discipline));
+
+            page++;
+            if (!document.QuerySelectorAll("a[href*='Page$']").Any(a => (a.GetAttribute("href") ?? string.Empty).Contains($"Page${page}'", StringComparison.Ordinal)))
+            {
+                return results;
+            }
+
+            document = await PostBackAsync(url, document, "gvRangliste", $"Page${page}", ct);
+        }
+    }
+
+    /// <summary>Spalten: Rang | Name (th) | Ort | Resultat | Neuner | Auszeichnung | Lizenz-Nr. | Details-Link (klubID)</summary>
+    private static IEnumerable<UvwebResult> ParseRanking(IDocument document, PlayerCategory category, Discipline discipline)
+    {
+        foreach (var row in document.QuerySelectorAll("#gvRangliste > tbody > tr, #gvRangliste > tr"))
+        {
+            // Die Namensspalte ist ein <th scope="row"> – deshalb td und th gemeinsam lesen.
+            var cells = Cells(row);
             var link = row.QuerySelector("a[href*='klubID=']");
-            if (cells.Length < 7 || link is null || !int.TryParse(Text(cells[0]), out _))
+            if (cells.Count < 8 || link is null || !int.TryParse(Text(cells[0]), out _))
             {
                 continue;
             }
 
-            results.Add(new UvwebResult(
+            yield return new UvwebResult(
                 Text(cells[6]),
                 Text(cells[1]),
                 NullIfEmpty(Text(cells[2])),
@@ -154,10 +177,26 @@ public sealed partial class UvwebScraper(HttpClient http)
                 ParsePins(Text(cells[3])),
                 int.TryParse(Text(cells[4]), out var nines) ? nines : 0,
                 Text(cells[5]).Equals("Ja", StringComparison.OrdinalIgnoreCase),
-                int.Parse(ParseQuery(link.GetAttribute("href"))["klubID"], CultureInfo.InvariantCulture)));
+                int.Parse(ParseQuery(link.GetAttribute("href"))["klubID"], CultureInfo.InvariantCulture));
+        }
+    }
+
+    /// <summary>Führt einen WebForms-Postback aus (ViewState & Co. aus der aktuellen Seite übernehmen).</summary>
+    private async Task<IDocument> PostBackAsync(string url, IDocument current, string target, string argument, CancellationToken ct)
+    {
+        var form = new Dictionary<string, string> { ["__EVENTTARGET"] = target, ["__EVENTARGUMENT"] = argument };
+        foreach (var input in current.QuerySelectorAll("input[type='hidden']"))
+        {
+            var name = input.GetAttribute("name");
+            if (!string.IsNullOrEmpty(name) && !form.ContainsKey(name))
+            {
+                form[name] = input.GetAttribute("value") ?? string.Empty;
+            }
         }
 
-        return results;
+        using var response = await http.PostAsync(url, new FormUrlEncodedContent(form), ct);
+        response.EnsureSuccessStatusCode();
+        return await Parser.ParseDocumentAsync(await response.Content.ReadAsStringAsync(ct), ct);
     }
 
     private async Task<IDocument> LoadAsync(string relativeUrl, CancellationToken ct)
@@ -175,6 +214,9 @@ public sealed partial class UvwebScraper(HttpClient http)
     }
 
     private static string Text(INode node) => WhitespacePattern().Replace(node.TextContent, " ").Trim();
+
+    /// <summary>Direkte Zellen einer Zeile – td und th, da GridViews die erste Datenspalte als th rendern können.</summary>
+    private static List<IElement> Cells(IElement row) => row.Children.Where(c => c.LocalName is "td" or "th").ToList();
 
     private static string? NullIfEmpty(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

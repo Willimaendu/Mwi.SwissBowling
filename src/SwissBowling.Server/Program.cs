@@ -25,7 +25,13 @@ builder.Services.AddOpenApi();
 
 // Import: Stammdaten von www.sfkv.ch, Resultate von www.uvweb.kegler.ch
 builder.Services.AddHttpClient<SfkvScraper>(client => client.BaseAddress = new Uri("https://www.sfkv.ch/"));
-builder.Services.AddHttpClient<UvwebScraper>(client => client.BaseAddress = new Uri("https://www.uvweb.kegler.ch/"));
+builder.Services.AddHttpClient<UvwebScraper>(client =>
+    {
+        client.BaseAddress = new Uri("https://www.uvweb.kegler.ch/");
+        // WebForms rendert für unbekannte Browser abweichend – deshalb als normaler Browser auftreten.
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) SwissBowling/1.0");
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { UseCookies = true, CookieContainer = new System.Net.CookieContainer() });
 builder.Services.AddScoped<MasterDataImporter>();
 builder.Services.AddScoped<UvwebImporter>();
 builder.Services.AddSingleton<ImportRunner>();
