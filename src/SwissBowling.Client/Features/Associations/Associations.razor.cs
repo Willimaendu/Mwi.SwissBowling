@@ -6,5 +6,5 @@ public partial class Associations
 {
     private List<AssociationDto> _items = [];
 
-    protected override Task OnInitializedAsync() => LoadAsync(async () => _items = await Api.GetAsync<List<AssociationDto>>(AssociationRoutes.Base));
+    protected override Task OnInitializedAsync() => LoadAsync(async () => _items = await FetchAsync<List<AssociationDto>>("associations", AssociationRoutes.Base));
 }

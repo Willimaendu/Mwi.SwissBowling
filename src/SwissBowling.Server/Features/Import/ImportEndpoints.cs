@@ -13,7 +13,6 @@ public static class ImportEndpoints
         var group = app.MapGroup(ImportRoutes.Runs).WithTags("Import").RequireAuthorization(Policies.Admin);
 
         group.MapGet("/", GetRuns);
-        group.MapGet("/{id:guid}", GetRun);
         group.MapPost("/", StartRun).WithSummary("Import-/Aktualisierungslauf starten (Stammdaten, aktuelle Ranglisten, optional Archiv)");
     }
 
@@ -21,12 +20,6 @@ public static class ImportEndpoints
     {
         var runs = await db.ImportRuns.AsNoTracking().Include(r => r.Entries).OrderByDescending(r => r.StartedAt).Take(20).ToListAsync(ct);
         return TypedResults.Ok(runs.Select(r => r.ToDto()));
-    }
-
-    private static async Task<IResult> GetRun(Guid id, AppDbContext db, CancellationToken ct)
-    {
-        var run = await db.ImportRuns.AsNoTracking().Include(r => r.Entries).FirstOrDefaultAsync(r => r.Id == id, ct);
-        return run is null ? Problems.NotFound("Importlauf") : TypedResults.Ok(run.ToDto());
     }
 
     private static async Task<IResult> StartRun(StartImportRequest request, ImportRunner runner, AppDbContext db, CancellationToken ct)

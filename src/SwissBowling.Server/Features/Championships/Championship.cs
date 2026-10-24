@@ -53,8 +53,8 @@ public class Championship
         Throws = request.Throws;
     }
 
-    public ChampionshipDto ToDto() =>
-        new(Id, Name, AssociationId, Association.Name, Organizer, Venue, City, StartDate, EndDate, Throws, Results.Count, ExternalId);
+    public ChampionshipDto ToDto(int? resultCount = null) =>
+        new(Id, Name, AssociationId, Association.Name, Organizer, Venue, City, StartDate, EndDate, Throws, resultCount ?? Results.Count, ExternalId);
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

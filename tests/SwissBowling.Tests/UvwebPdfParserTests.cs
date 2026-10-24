@@ -3,7 +3,7 @@ using SwissBowling.Core.Results;
 using SwissBowling.Server.Features.Import;
 using Xunit;
 
-namespace SwissBowling.Core.Tests;
+namespace SwissBowling.Tests;
 
 public sealed class UvwebPdfParserTests
 {

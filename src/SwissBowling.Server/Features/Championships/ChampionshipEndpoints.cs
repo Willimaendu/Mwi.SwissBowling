@@ -21,13 +21,15 @@ public static class ChampionshipEndpoints
 
     private static async Task<IResult> GetAll(int? year, AppDbContext db, CancellationToken ct)
     {
+        // Resultate nur zählen statt laden – die Liste bleibt auch mit vielen Meisterschaften schnell.
         var items = await db.Championships.AsNoTracking()
-            .Include(c => c.Association).Include(c => c.Results)
+            .Include(c => c.Association)
             .Where(c => year == null || c.StartDate.Year == year)
             .OrderByDescending(c => c.StartDate).ThenBy(c => c.Name)
+            .Select(c => new { Championship = c, ResultCount = c.Results.Count })
             .ToListAsync(ct);
 
-        return TypedResults.Ok(items.Select(c => c.ToDto()));
+        return TypedResults.Ok(items.Select(x => x.Championship.ToDto(x.ResultCount)));
     }
 
     private static async Task<IResult> GetDetail(Guid id, AppDbContext db, CancellationToken ct)

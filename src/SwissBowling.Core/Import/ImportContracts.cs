@@ -4,8 +4,6 @@ public static class ImportRoutes
 {
     /// <summary>Importläufe: POST startet einen Lauf, GET listet die bisherigen.</summary>
     public const string Runs = "api/import/runs";
-
-    public static string Run(Guid id) => $"{Runs}/{id}";
 }
 
 public enum ImportRunStatus

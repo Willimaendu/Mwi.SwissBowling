@@ -11,7 +11,6 @@ using SwissBowling.Server.Features.Clubs;
 using SwissBowling.Server.Features.Import;
 using SwissBowling.Server.Features.Players;
 using SwissBowling.Server.Features.Results;
-using SwissBowling.Server.Features.Venues;
 using SwissBowling.Server.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -72,7 +71,6 @@ api.MapClubs();
 api.MapPlayers();
 api.MapChampionships();
 api.MapResults();
-api.MapVenues();
 api.MapImport();
 
 app.MapStaticAssets();

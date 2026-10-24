@@ -16,10 +16,11 @@ public partial class Clubs
         Selector = c => c.AssociationName
     };
 
-    protected override Task OnInitializedAsync() => LoadAsync(async () => _clubs = await Api.GetAsync<List<ClubDto>>(ClubRoutes.Base));
+    protected override Task OnInitializedAsync() => LoadAsync(async () => _clubs = await FetchAsync<List<ClubDto>>("clubs", ClubRoutes.Base));
 
     private bool Matches(ClubDto club) =>
         string.IsNullOrWhiteSpace(_search)
         || club.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
+        || (club.City?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false)
         || (club.HomeVenue?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false);
 }

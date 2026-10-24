@@ -9,5 +9,5 @@ public partial class AssociationDetail
 
     private AssociationDetailDto? _detail;
 
-    protected override Task OnParametersSetAsync() => LoadAsync(async () => _detail = await Api.GetAsync<AssociationDetailDto>(AssociationRoutes.ById(Id)));
+    protected override Task OnParametersSetAsync() => LoadAsync(async () => _detail = await FetchAsync<AssociationDetailDto>($"association-{Id}", AssociationRoutes.ById(Id)));
 }

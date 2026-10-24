@@ -1,7 +1,3 @@
-::deep .cursor-pointer {
-  cursor: pointer;
-}
-
 ::deep td.text-right {
   font-variant-numeric: tabular-nums;
 }

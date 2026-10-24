@@ -19,23 +19,25 @@
         </PageHeader>
 
         <MudTabs Elevation="0" Rounded="true" Outlined="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="rounded-lg">
-            <MudTabPanel Text="Klubs" Icon="@Icons.Material.Outlined.Groups" BadgeData="@detail.Clubs.Count">
+            <MudTabPanel Text="@($"Klubs ({detail.Clubs.Count})")" Icon="@Icons.Material.Outlined.Groups">
                 <MudTable T="ClubDto" Items="detail.Clubs" Hover="true" Dense="true" Elevation="0" RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler?club={args.Item!.Id}"))">
                     <HeaderContent>
                         <MudTh>Klub</MudTh>
+                        <MudTh>Ort</MudTh>
                         <MudTh>Kat.</MudTh>
                         <MudTh>Heimbahn</MudTh>
                         <MudTh Class="text-right">Aktive Kegler</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd Class="font-weight-medium">@context.Name</MudTd>
+                        <MudTd>@context.City</MudTd>
                         <MudTd>@context.Category</MudTd>
                         <MudTd>@context.HomeVenue</MudTd>
                         <MudTd Class="text-right">@context.PlayerCount</MudTd>
                     </RowTemplate>
                 </MudTable>
             </MudTabPanel>
-            <MudTabPanel Text="Kegelbahnen" Icon="@Icons.Material.Outlined.Place" BadgeData="@detail.Venues.Count">
+            <MudTabPanel Text="@($"Kegelbahnen ({detail.Venues.Count})")" Icon="@Icons.Material.Outlined.Place">
                 <MudTable T="VenueDto" Items="detail.Venues" Hover="true" Dense="true" Elevation="0">
                     <HeaderContent>
                         <MudTh>Lokal</MudTh>
@@ -62,7 +64,7 @@
                     </RowTemplate>
                 </MudTable>
             </MudTabPanel>
-            <MudTabPanel Text="Vorstand" Icon="@Icons.Material.Outlined.Badge" BadgeData="@detail.Board.Count">
+            <MudTabPanel Text="@($"Vorstand ({detail.Board.Count})")" Icon="@Icons.Material.Outlined.Badge">
                 <MudTable T="BoardMemberDto" Items="detail.Board" Dense="true" Elevation="0">
                     <HeaderContent>
                         <MudTh>Funktion</MudTh>

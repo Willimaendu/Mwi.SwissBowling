@@ -6,7 +6,7 @@
     <Project Path="src/SwissBowling.Client/SwissBowling.Client.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/SwissBowling.Core.Tests/SwissBowling.Core.Tests.csproj" />
+    <Project Path="tests/SwissBowling.Tests/SwissBowling.Tests.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />

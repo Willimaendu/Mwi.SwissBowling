@@ -17,8 +17,8 @@ public partial class ClubDialog
     {
         if (Club is { } c)
         {
-            (_model.Name, _model.Category, _model.AssociationId, _model.HomeVenue, _model.Email, _model.Website) =
-                (c.Name, c.Category, c.AssociationId, c.HomeVenue, c.Email, c.Website);
+            (_model.Name, _model.City, _model.Category, _model.AssociationId, _model.HomeVenue, _model.Email, _model.Website) =
+                (c.Name, c.City, c.Category, c.AssociationId, c.HomeVenue, c.Email, c.Website);
         }
         else
         {
@@ -29,7 +29,7 @@ public partial class ClubDialog
     private Task SaveAsync() => SubmitAsync(
         () =>
         {
-            var request = new SaveClubRequest(_model.Name, _model.Category, _model.HomeVenue, _model.Email, _model.Website, _model.AssociationId);
+            var request = new SaveClubRequest(_model.Name, _model.City, _model.Category, _model.HomeVenue, _model.Email, _model.Website, _model.AssociationId);
             return Club is { } c
                 ? Api.PutAsync<ClubDto>(ClubRoutes.ById(c.Id), request)
                 : Api.PostAsync<ClubDto>(ClubRoutes.Base, request);
@@ -39,6 +39,8 @@ public partial class ClubDialog
     private sealed class Model
     {
         public string Name { get; set; } = string.Empty;
+
+        public string? City { get; set; }
 
         public PlayerCategory? Category { get; set; }
 

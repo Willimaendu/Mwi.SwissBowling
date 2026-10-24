@@ -20,7 +20,7 @@ public sealed record SfkvBoardMember(string Function, string Name, string? City,
 
 public sealed record SfkvMember(string License, string Name, string? City, DateOnly? BirthDate, string? ClubName, PlayerCategory Category);
 
-public sealed record SfkvClub(string Name, string? HomeVenue, PlayerCategory? Category, int? ClubId, string? Email, string? Website);
+public sealed record SfkvClub(string Name, string? HomeVenue, string? City, PlayerCategory? Category, int? ClubId, string? Email, string? Website);
 
 public sealed record SfkvVenue(string Name, string? Zip, string? City, string? Phone, int? Lanes, string? RestDay, string? Website);
 
@@ -98,8 +98,18 @@ public sealed partial class SfkvScraper(HttpClient http)
     private static SfkvMember ParseMember(List<IElement> c) =>
         new(Text(c[0]), Text(c[1]), CityFromAddress(Text(c[2]).Split(',').Last()), ParseDate(Text(c[3])), NullIfEmpty(Text(c[4])), ParseCategory(Text(c[5])) ?? PlayerCategory.C);
 
-    private static SfkvClub ParseClub(List<IElement> c) =>
-        new(Text(c[0]), NullIfEmpty(Text(c[1])), ParseCategory(Text(c[2])), int.TryParse(Text(c[3]), out var id) ? id : null, NullIfEmpty(Text(c[4])), NullIfEmpty(c[5].QuerySelector("a")?.GetAttribute("href")));
+    /// <summary>Spalte «Heimbahn» enthält «Bahnname, Klubort» – der Ort gehört zum Klub, nicht zur Bahn.</summary>
+    private static SfkvClub ParseClub(List<IElement> c)
+    {
+        var (venue, city) = SplitAtLastComma(Text(c[1]));
+        return new SfkvClub(Text(c[0]), venue, city, ParseCategory(Text(c[2])), int.TryParse(Text(c[3]), out var id) ? id : null, NullIfEmpty(Text(c[4])), NullIfEmpty(c[5].QuerySelector("a")?.GetAttribute("href")));
+    }
+
+    private static (string? Left, string? Right) SplitAtLastComma(string value)
+    {
+        var comma = value.LastIndexOf(',');
+        return comma < 0 ? (NullIfEmpty(value), null) : (NullIfEmpty(value[..comma]), NullIfEmpty(value[(comma + 1)..]));
+    }
 
     private static SfkvVenue ParseVenue(List<IElement> c)
     {

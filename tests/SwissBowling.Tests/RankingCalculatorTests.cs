@@ -1,7 +1,7 @@
 using SwissBowling.Core.Championships;
 using Xunit;
 
-namespace SwissBowling.Core.Tests;
+namespace SwissBowling.Tests;
 
 public sealed class RankingCalculatorTests
 {

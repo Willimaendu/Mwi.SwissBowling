@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\SwissBowling.Core\SwissBowling.Core.csproj" />
     <ProjectReference Include="..\..\src\SwissBowling.Server\SwissBowling.Server.csproj" />
   </ItemGroup>
 

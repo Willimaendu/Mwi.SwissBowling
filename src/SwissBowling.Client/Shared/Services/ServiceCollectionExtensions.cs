@@ -8,6 +8,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddClientServices(this IServiceCollection services)
     {
         services.AddHttpClient<IApiClient, ApiClient>();
+        services.AddScoped<ApiActivity>();
         services.AddScoped<ITokenStore, TokenStore>();
         services.AddScoped<JwtAuthenticationStateProvider>();
         services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());

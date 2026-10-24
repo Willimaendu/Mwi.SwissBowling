@@ -9,7 +9,7 @@ public partial class Home
     protected override Task OnInitializedAsync() => LoadAsync(async () =>
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var all = await Api.GetAsync<List<ChampionshipDto>>(ChampionshipRoutes.ByYear(today.Year));
+        var all = await FetchAsync<List<ChampionshipDto>>("home", ChampionshipRoutes.ByYear(today.Year));
         _running = all.Where(c => c.StatusAt(today) == ChampionshipStatus.Running).ToList();
     });
 }

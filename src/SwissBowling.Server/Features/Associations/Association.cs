@@ -32,7 +32,8 @@ public class Association
 
     public List<BoardMember> Board { get; set; } = [];
 
-    public AssociationDto ToDto() => new(Id, Name, ShortCode, Website, ExternalId, Clubs.Count, Players.Count(p => p.IsActive));
+    public AssociationDto ToDto(int? clubCount = null, int? playerCount = null) =>
+        new(Id, Name, ShortCode, Website, ExternalId, clubCount ?? Clubs.Count, playerCount ?? Players.Count(p => p.IsActive));
 }
 
 /// <summary>Vorstandsmitglied eines Unterverbands (öffentliche Funktionärsdaten gemäss sfkv.ch).</summary>

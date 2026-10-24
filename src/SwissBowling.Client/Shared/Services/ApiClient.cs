@@ -27,7 +27,7 @@ public sealed class ApiException(HttpStatusCode statusCode, string message) : Ex
 /// Läuft in allen Render-Modi (Prerendering, Interactive Server, WebAssembly): Die Basisadresse stammt aus dem
 /// <see cref="NavigationManager"/>, das JWT pro Anfrage aus dem benutzerbezogenen <see cref="ITokenStore"/>.
 /// </summary>
-public sealed class ApiClient(HttpClient http, NavigationManager navigation, ITokenStore tokens) : IApiClient
+public sealed class ApiClient(HttpClient http, NavigationManager navigation, ITokenStore tokens, ApiActivity activity) : IApiClient
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -55,6 +55,7 @@ public sealed class ApiClient(HttpClient http, NavigationManager navigation, ITo
 
     private async Task<HttpResponseMessage> SendRawAsync(HttpMethod method, string url, object? body, CancellationToken ct)
     {
+        using var scope = activity.Begin();
         using var request = new HttpRequestMessage(method, new Uri(new Uri(navigation.BaseUri), url));
         if (body is not null)
         {

@@ -9,5 +9,5 @@ public partial class ChampionshipDetail
 
     private ChampionshipDetailDto? _detail;
 
-    protected override Task OnParametersSetAsync() => LoadAsync(async () => _detail = await Api.GetAsync<ChampionshipDetailDto>(ChampionshipRoutes.ById(Id)));
+    protected override Task OnParametersSetAsync() => LoadAsync(async () => _detail = await FetchAsync<ChampionshipDetailDto>($"championship-{Id}", ChampionshipRoutes.ById(Id)));
 }

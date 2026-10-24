@@ -1,16 +1,18 @@
 @* Rangliste nach Disziplin (Meisterschaft, MS Damen) und darin nach Kategorie *@
-<MudTabs Elevation="0" Rounded="true" Outlined="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="rounded-lg">
-    @foreach (var discipline in Ranking.GroupBy(r => r.Discipline).OrderBy(g => g.Key))
-    {
-        <MudTabPanel Text="@discipline.Key.Label()" BadgeData="@discipline.Count()" BadgeColor="Color.Primary">
-            <MudTabs Elevation="0" Rounded="true" PanelClass="pt-4" MinimumTabWidth="90px">
-                @foreach (var category in discipline.GroupBy(r => r.Category).OrderBy(g => g.Key))
-                {
-                    <MudTabPanel Text="@category.Key.Label()" BadgeData="@category.Count()">
-                        <RankingTable Entries="category.ToList()" />
-                    </MudTabPanel>
-                }
-            </MudTabs>
-        </MudTabPanel>
-    }
-</MudTabs>
+<div class="ranking-tabs">
+    <MudTabs Elevation="0" Rounded="true" Outlined="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="rounded-lg">
+        @foreach (var discipline in Ranking.GroupBy(r => r.Discipline).OrderBy(g => g.Key))
+        {
+            <MudTabPanel Text="@($"{discipline.Key.Label()} ({discipline.Count()})")">
+                <MudTabs Elevation="0" Rounded="true" PanelClass="pt-4" MinimumTabWidth="90px">
+                    @foreach (var category in discipline.GroupBy(r => r.Category).OrderBy(g => g.Key))
+                    {
+                        <MudTabPanel Text="@($"{category.Key.Label()} ({category.Count()})")">
+                            <RankingTable Entries="category.ToList()" />
+                        </MudTabPanel>
+                    }
+                </MudTabs>
+            </MudTabPanel>
+        }
+    </MudTabs>
+</div>

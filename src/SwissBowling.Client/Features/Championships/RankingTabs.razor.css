@@ -1,0 +1,5 @@
+::deep .mud-tab {
+  text-transform: none;
+  font-weight: 600;
+  letter-spacing: 0;
+}

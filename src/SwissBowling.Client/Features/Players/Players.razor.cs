@@ -16,7 +16,7 @@ public partial class Players
     private PlayerCategory? _category;
 
     protected override Task OnInitializedAsync() => LoadAsync(async () =>
-        _players = await Api.GetAsync<List<PlayerDto>>(PlayerRoutes.All(includeInactive: false)));
+        _players = await FetchAsync<List<PlayerDto>>("players", PlayerRoutes.All(includeInactive: false)));
 
     private bool Matches(PlayerDto player) =>
         (ClubId is null || player.ClubId == ClubId)

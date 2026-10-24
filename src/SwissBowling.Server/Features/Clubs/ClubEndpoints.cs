@@ -20,8 +20,11 @@ public static class ClubEndpoints
 
     private static async Task<IResult> GetAll(AppDbContext db, CancellationToken ct)
     {
-        var clubs = await db.Clubs.AsNoTracking().Include(c => c.Association).Include(c => c.Players).OrderBy(c => c.Name).ToListAsync(ct);
-        return TypedResults.Ok(clubs.Select(c => c.ToDto()));
+        var clubs = await db.Clubs.AsNoTracking().Include(c => c.Association).OrderBy(c => c.Name)
+            .Select(c => new { Club = c, ActivePlayers = c.Players.Count(p => p.IsActive) })
+            .ToListAsync(ct);
+
+        return TypedResults.Ok(clubs.Select(x => x.Club.ToDto(x.ActivePlayers)));
     }
 
     private static async Task<IResult> Create(SaveClubRequest request, AppDbContext db, CancellationToken ct)

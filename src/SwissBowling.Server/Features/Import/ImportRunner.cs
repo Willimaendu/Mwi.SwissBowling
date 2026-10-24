@@ -13,8 +13,6 @@ public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunn
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    public bool IsRunning => _gate.CurrentCount == 0;
-
     /// <summary>Startet einen Lauf, falls keiner aktiv ist, und liefert dessen ID.</summary>
     public async Task<Guid?> StartAsync(bool includeArchive, CancellationToken ct)
     {

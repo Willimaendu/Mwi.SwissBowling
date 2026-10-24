@@ -62,6 +62,7 @@ public sealed class MasterDataImporter(SfkvScraper scraper, AppDbContext db)
             club.Name = item.Name;
             club.Association = association;
             club.ExternalId = item.ClubId ?? club.ExternalId;
+            club.City = item.City;
             club.Category = item.Category;
             club.HomeVenue = item.HomeVenue;
             club.Email = item.Email;

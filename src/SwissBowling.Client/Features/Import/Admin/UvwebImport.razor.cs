@@ -3,7 +3,7 @@ using SwissBowling.Core.Import;
 
 namespace SwissBowling.Client.Features.Import.Admin;
 
-public partial class UvwebImport : IDisposable
+public partial class UvwebImport
 {
     private List<ImportRunDto> _runs = [];
     private bool _includeArchive = true;
@@ -53,5 +53,9 @@ public partial class UvwebImport : IDisposable
         }
     }
 
-    public void Dispose() => _timer?.Dispose();
+    public override void Dispose()
+    {
+        _timer?.Dispose();
+        base.Dispose();
+    }
 }

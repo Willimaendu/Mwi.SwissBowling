@@ -9,5 +9,5 @@ public partial class PlayerProfile
 
     private PlayerDetailDto? _detail;
 
-    protected override Task OnParametersSetAsync() => LoadAsync(async () => _detail = await Api.GetAsync<PlayerDetailDto>(PlayerRoutes.ById(Id)));
+    protected override Task OnParametersSetAsync() => LoadAsync(async () => _detail = await FetchAsync<PlayerDetailDto>($"player-{Id}", PlayerRoutes.ById(Id)));
 }

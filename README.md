@@ -9,7 +9,7 @@ der aktuell auf [www.uvweb.kegler.ch](https://www.uvweb.kegler.ch) publizierten 
 | `SwissBowling.Core` | Alles, was Server **und** Client nutzen: Verträge (DTOs/Requests mit DataAnnotations), API-Routen, Enums, Rangierung |
 | `SwissBowling.Server` | REST API (Minimal APIs), EF Core + Identity + JWT, UVweb-Import, Blazor-Host (Prerendering, Interactive Server) |
 | `SwissBowling.Client` | Blazor WebAssembly: Seiten, Layouts, API-Client, Anmeldung |
-| `SwissBowling.Core.Tests` | xUnit-Tests der Rangierung |
+| `SwissBowling.Tests` | xUnit-Tests (Rangierung, PDF-Parser) |
 
 Paketversionen werden zentral und **exakt** in `Directory.Packages.props` gepflegt (Central Package Management, keine Floating Versions).
 
@@ -43,7 +43,7 @@ Querschnittliches: `Client/Shared` (Layouts, `ApiPage`/`FormDialog`, Komponenten
 
 **Stammdaten – Master: www.sfkv.ch/unterverbaende/uvXX.** `SfkvScraper` liest pro Unterverband Kopfdaten (Kürzel, UV-Nr., Homepage),
 Vorstand, Mitglieder, Klubs und Kegelbahnen; `MasterDataImporter` übernimmt sie idempotent (UV-Nr., Klub-ID, Mitglieder-ID, Bahn-Name).
-Nicht mehr gelistete Mitglieder werden deaktiviert. Admin: `/admin/import` → «Stammdaten» – **zuerst ausführen**.
+Nicht mehr gelistete Mitglieder werden deaktiviert. Die Klub-Zelle «Heimbahn» (`Bahnname, Klubort`) wird in `HomeVenue` und `City` aufgeteilt.
 
 **Resultate – www.uvweb.kegler.ch.** `UvwebScraper` liest MS-Angaben, Navigation und die Ranglisten der Disziplinen 1 (Meisterschaft)
 und 2 (MS Damen) pro Kategorie; `UvwebImporter` ordnet Kegler über die Lizenznummer und Klubs über die klubID (= SFKV Klub-ID) zu.
@@ -77,7 +77,7 @@ Voraussetzungen: .NET SDK 10, Docker Desktop.
 dotnet run --project src/SwissBowling.AppHost
 ```
 
-Development-Login: `admin@swissbowling.local` / `Admin123!`. Erster Schritt im Admin: `/admin/import` → «Alle importieren».
+Development-Login: `admin@swissbowling.local` / `Admin123!`. Erster Schritt im Admin: `/admin/import` → «Import starten».
 In Produktion `Jwt__SigningKey` (≥ 32 Zeichen) und `Seed__AdminPassword` als Secrets setzen.
 
 Migrationen (ohne sie legt der Start das Schema per `EnsureCreated` an):

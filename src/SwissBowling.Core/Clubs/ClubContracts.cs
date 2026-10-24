@@ -13,6 +13,7 @@ public static class ClubRoutes
 public sealed record ClubDto(
     Guid Id,
     string Name,
+    string? City,
     PlayerCategory? Category,
     string? HomeVenue,
     string? Email,
@@ -24,6 +25,7 @@ public sealed record ClubDto(
 
 public sealed record SaveClubRequest(
     [property: Required, MaxLength(200)] string Name,
+    [property: MaxLength(100)] string? City,
     PlayerCategory? Category,
     [property: MaxLength(200)] string? HomeVenue,
     [property: MaxLength(200), EmailAddress] string? Email,

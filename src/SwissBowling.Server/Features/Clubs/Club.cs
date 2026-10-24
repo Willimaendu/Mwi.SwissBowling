@@ -14,9 +14,14 @@ public class Club
     [MaxLength(200)]
     public required string Name { get; set; }
 
+    /// <summary>Ort des Klubs (sfkv.ch führt ihn in der Spalte «Heimbahn» hinter dem Komma).</summary>
+    [MaxLength(100)]
+    public string? City { get; set; }
+
     /// <summary>Klubkategorie A/B/C (Stärkeklasse des Klubs).</summary>
     public PlayerCategory? Category { get; set; }
 
+    /// <summary>Heimbahn (Lokal), z.B. «Kegelsporthalle Allmend».</summary>
     [MaxLength(200)]
     public string? HomeVenue { get; set; }
 
@@ -35,11 +40,13 @@ public class Club
 
     public List<Player> Players { get; set; } = [];
 
-    public ClubDto ToDto() => new(Id, Name, Category, HomeVenue, Email, Website, AssociationId, Association.Name, Players.Count(p => p.IsActive), ExternalId);
+    public ClubDto ToDto(int? activePlayers = null) =>
+        new(Id, Name, City, Category, HomeVenue, Email, Website, AssociationId, Association.Name, activePlayers ?? Players.Count(p => p.IsActive), ExternalId);
 
     public void Apply(SaveClubRequest request)
     {
         Name = request.Name.Trim();
+        City = Clean(request.City);
         Category = request.Category;
         HomeVenue = Clean(request.HomeVenue);
         Email = Clean(request.Email);

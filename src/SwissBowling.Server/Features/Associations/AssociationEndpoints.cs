@@ -21,15 +21,17 @@ public static class AssociationEndpoints
 
     private static async Task<IResult> GetAll(AppDbContext db, CancellationToken ct)
     {
-        var items = await Query(db).OrderBy(a => a.Name).ToListAsync(ct);
-        return TypedResults.Ok(items.Select(a => a.ToDto()));
+        var items = await db.Associations.AsNoTracking().OrderBy(a => a.Name)
+            .Select(a => new { Association = a, Clubs = a.Clubs.Count, Players = a.Players.Count(p => p.IsActive) })
+            .ToListAsync(ct);
+
+        return TypedResults.Ok(items.Select(x => x.Association.ToDto(x.Clubs, x.Players)));
     }
 
     private static async Task<IResult> GetDetail(Guid id, AppDbContext db, CancellationToken ct)
     {
-        var association = await Query(db)
+        var association = await db.Associations.AsNoTracking()
             .Include(a => a.Board)
-            .Include(a => a.Clubs).ThenInclude(c => c.Players)
             .Include(a => a.Venues)
             .FirstOrDefaultAsync(a => a.Id == id, ct);
 
@@ -38,10 +40,15 @@ public static class AssociationEndpoints
             return Problems.NotFound("Unterverband");
         }
 
+        var clubs = await db.Clubs.AsNoTracking().Where(c => c.AssociationId == id).OrderBy(c => c.Name)
+            .Select(c => new { Club = c, ActivePlayers = c.Players.Count(p => p.IsActive) })
+            .ToListAsync(ct);
+        var playerCount = await db.Players.CountAsync(p => p.AssociationId == id && p.IsActive, ct);
+
         return TypedResults.Ok(new AssociationDetailDto(
-            association.ToDto(),
+            association.ToDto(clubs.Count, playerCount),
             association.Board.OrderBy(b => b.Function).Select(b => b.ToDto()).ToList(),
-            association.Clubs.OrderBy(c => c.Name).Select(c => c.ToDto()).ToList(),
+            clubs.Select(x => { x.Club.Association = association; return x.Club.ToDto(x.ActivePlayers); }).ToList(),
             association.Venues.OrderBy(v => v.Zip).Select(v => v.ToDto()).ToList()));
     }
 

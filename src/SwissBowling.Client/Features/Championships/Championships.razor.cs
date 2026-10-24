@@ -15,8 +15,8 @@ public partial class Championships
 
     protected override Task OnInitializedAsync() => LoadAsync(async () =>
     {
-        _associations = await Api.GetAsync<List<AssociationDto>>(AssociationRoutes.Base);
-        var all = await Api.GetAsync<List<ChampionshipDto>>(ChampionshipRoutes.Base);
+        _associations = await FetchAsync<List<AssociationDto>>("associations", AssociationRoutes.Base);
+        var all = await FetchAsync<List<ChampionshipDto>>("championships", ChampionshipRoutes.Base);
         _years = all.Select(c => c.StartDate.Year).Distinct().OrderDescending().ToList();
         _championships = all.Where(c => _year is null || c.StartDate.Year == _year).ToList();
     });

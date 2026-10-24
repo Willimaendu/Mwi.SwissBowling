@@ -1,0 +1,9 @@
+.activity-bar {
+  position: fixed;
+  top: var(--mud-appbar-height, 72px);
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 1400;
+  pointer-events: none;
+}

@@ -4,9 +4,13 @@ using SwissBowling.Client.Shared.Services;
 
 namespace SwissBowling.Client.Shared.Components;
 
-/// <summary>Basis für Seiten mit API-Zugriff: einheitliches Laden, Fehlerbehandlung und Rückmeldungen.</summary>
-public abstract class ApiPage : ComponentBase
+/// <summary>Basis für Seiten mit API-Zugriff: einheitliches Laden, Fehlerbehandlung, Rückmeldungen und Weitergabe
+/// vorgerenderter Daten an den interaktiven Modus (kein zweites Laden nach dem Prerendering).</summary>
+public abstract class ApiPage : ComponentBase, IDisposable
 {
+    private readonly Dictionary<string, object?> _persisted = [];
+    private PersistingComponentStateSubscription _subscription;
+
     [Inject] protected IApiClient Api { get; set; } = null!;
 
     [Inject] protected ISnackbar Snackbar { get; set; } = null!;
@@ -15,9 +19,13 @@ public abstract class ApiPage : ComponentBase
 
     [Inject] protected NavigationManager Navigation { get; set; } = null!;
 
+    [Inject] private PersistentComponentState State { get; set; } = null!;
+
     protected bool Loading { get; private set; } = true;
 
     protected string? Error { get; private set; }
+
+    protected override void OnInitialized() => _subscription = State.RegisterOnPersisting(PersistAsync);
 
     /// <summary>Lädt Daten; Fehler landen in <see cref="Error"/> statt in einer Exception.</summary>
     protected async Task LoadAsync(Func<Task> load)
@@ -36,6 +44,21 @@ public abstract class ApiPage : ComponentBase
         {
             Loading = false;
         }
+    }
+
+    /// <summary>
+    /// Holt Daten über die API – oder übernimmt sie aus dem Prerendering, falls sie dort unter <paramref name="key"/> bereits geladen wurden.
+    /// </summary>
+    protected async Task<T> FetchAsync<T>(string key, string url)
+    {
+        if (State.TryTakeFromJson<T>(key, out var restored) && restored is not null)
+        {
+            return restored;
+        }
+
+        var value = await Api.GetAsync<T>(url);
+        _persisted[key] = value;
+        return value;
     }
 
     /// <summary>Führt eine Aktion aus und meldet Erfolg bzw. Fehler per Snackbar.</summary>
@@ -69,5 +92,21 @@ public abstract class ApiPage : ComponentBase
         var dialog = await Dialogs.ShowAsync<TDialog>(title, parameters, new DialogOptions { MaxWidth = width, FullWidth = true });
         var result = await dialog.Result;
         return result is { Canceled: false, Data: TResult data } ? data : null;
+    }
+
+    public virtual void Dispose()
+    {
+        _subscription.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    private Task PersistAsync()
+    {
+        foreach (var (key, value) in _persisted)
+        {
+            State.PersistAsJson(key, value);
+        }
+
+        return Task.CompletedTask;
     }
 }
