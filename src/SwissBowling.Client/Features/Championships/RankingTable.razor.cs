@@ -10,7 +10,11 @@ public partial class RankingTable
 
     [Parameter, EditorRequired] public IReadOnlyList<RankingEntryDto> Entries { get; set; } = [];
 
+    [Parameter] public Guid? HighlightPlayerId { get; set; }
+
     private string _search = string.Empty;
+
+    private string RowClass(RankingEntryDto entry, int index) => entry.PlayerId == HighlightPlayerId ? "highlight" : string.Empty;
 
     private bool Matches(RankingEntryDto entry) =>
         string.IsNullOrWhiteSpace(_search)

@@ -20,7 +20,8 @@
 
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="_championships.Count == 0" EmptyText="Noch keine Meisterschaften.">
     <MudTable T="ChampionshipDto" Items="_championships" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
-              RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/admin/meisterschaften/{args.Item!.Id}"))">
+              RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/admin/meisterschaften/{args.Item!.Id}"))"
+              Virtualize="true" FixedHeader="true" Height="@AppTheme.TableHeight">
         <HeaderContent>
             <MudTh>Name</MudTh>
             <MudTh>Unterverband</MudTh>

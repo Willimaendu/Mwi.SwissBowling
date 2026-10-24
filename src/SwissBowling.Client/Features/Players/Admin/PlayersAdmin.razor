@@ -16,7 +16,8 @@
 }
 
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="_players.Count == 0" EmptyText="Noch keine Kegler erfasst.">
-    <MudTable T="PlayerDto" Items="_players" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches">
+    <MudTable T="PlayerDto" Items="_players" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches"
+              Virtualize="true" FixedHeader="true" Height="@AppTheme.TableHeight">
         <ToolBarContent>
             <MudTextField @bind-Value="_search" Placeholder="Suchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                           Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0" Style="max-width: 320px;" />

@@ -7,6 +7,9 @@ public static class AppTheme
 {
     public const string Logo = "images/sfkv-logo.png";
 
+    /// <summary>Höhe virtualisierter Tabellen: Viewport abzüglich App-Bar, Seitenkopf und Toolbar.</summary>
+    public const string TableHeight = "calc(100vh - 300px)";
+
     public static readonly MudTheme Theme = new()
     {
         PaletteLight = new PaletteLight

@@ -13,6 +13,7 @@ public static class ChampionshipEndpoints
         var group = app.MapGroup(ChampionshipRoutes.Base).WithTags("Meisterschaften");
 
         group.MapGet("/", GetAll);
+        group.MapGet("/years", GetYears);
         group.MapGet("/{id:guid}", GetDetail);
         group.MapPost("/", Create).RequireAuthorization(Policies.Admin);
         group.MapPut("/{id:guid}", Update).RequireAuthorization(Policies.Admin);
@@ -31,6 +32,9 @@ public static class ChampionshipEndpoints
 
         return TypedResults.Ok(items.Select(x => x.Championship.ToDto(x.ResultCount)));
     }
+
+    private static async Task<IResult> GetYears(AppDbContext db, CancellationToken ct) =>
+        TypedResults.Ok(await db.Championships.Select(c => c.StartDate.Year).Distinct().OrderByDescending(y => y).ToListAsync(ct));
 
     private static async Task<IResult> GetDetail(Guid id, AppDbContext db, CancellationToken ct)
     {

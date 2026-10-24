@@ -13,13 +13,10 @@ namespace SwissBowling.Server.Features.Import;
 /// Kegler werden über die Lizenznummer (HTML) bzw. den Namen (Archiv-PDF) zugeordnet. Fehlende Kegler/Klubs
 /// (z.B. Gäste) werden minimal angelegt.
 /// </summary>
-public sealed class UvwebImporter(UvwebScraper scraper, AppDbContext db)
+public sealed class UvwebImporter(AppDbContext db)
 {
-    public async Task<ImportSummary> ImportAsync(int msId, int uvId, int ranglisteId, CancellationToken ct)
+    public async Task<ImportSummary> ImportAsync(UvwebChampionship source, IReadOnlyList<UvwebResult> results, CancellationToken ct)
     {
-        var source = await scraper.GetChampionshipAsync(msId, uvId, ct);
-        var results = await scraper.GetResultsAsync(msId, uvId, ranglisteId, ct);
-
         var association = await GetAssociationAsync(source, ct);
         var championship = await UpsertChampionshipAsync(source, association, ct);
 
@@ -57,12 +54,8 @@ public sealed class UvwebImporter(UvwebScraper scraper, AppDbContext db)
         return new ImportSummary(source.Name, 0, newPlayers, results.Count);
     }
 
-    public async Task<ImportSummary> ImportArchiveAsync(int msId, int uvId, string pdfUrl, CancellationToken ct)
+    public async Task<ImportSummary> ImportArchiveAsync(UvwebChampionship source, IReadOnlyList<UvwebArchiveResult> results, CancellationToken ct)
     {
-        var source = await scraper.GetChampionshipAsync(msId, uvId, ct);
-        await using var pdf = await scraper.GetPdfAsync(pdfUrl, ct);
-        var results = UvwebPdfParser.Parse(pdf);
-
         var association = await GetAssociationAsync(source, ct);
         var championship = await UpsertChampionshipAsync(source, association, ct);
 

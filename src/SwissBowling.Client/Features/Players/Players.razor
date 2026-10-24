@@ -7,7 +7,8 @@
 
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="_players.Count == 0" EmptyText="Noch keine Kegler erfasst.">
     <MudTable T="PlayerDto" Items="_players" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches"
-              RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler/{args.Item!.Id}"))" Breakpoint="Breakpoint.None">
+              RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler/{args.Item!.Id}"))" Breakpoint="Breakpoint.None"
+              Virtualize="true" FixedHeader="true" Height="@AppTheme.TableHeight">
         <ToolBarContent>
             <MudTextField @bind-Value="_search" Placeholder="Name, Klub oder Lizenz" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                           Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0 flex-grow-1" />

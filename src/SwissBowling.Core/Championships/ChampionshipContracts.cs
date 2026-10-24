@@ -11,6 +11,9 @@ public static class ChampionshipRoutes
     public static string ById(Guid id) => $"{Base}/{id}";
 
     public static string ByYear(int? year) => year is null ? Base : $"{Base}?year={year}";
+
+    /// <summary>Jahre, in denen Meisterschaften stattfanden (absteigend).</summary>
+    public const string Years = $"{Base}/years";
 }
 
 public enum ChampionshipStatus

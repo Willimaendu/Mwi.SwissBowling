@@ -1,6 +1,6 @@
 <div class="ranking">
 <MudTable T="RankingEntryDto" Items="Entries" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
-          RowClass="cursor-pointer" OnRowClick="OnRowClick" Breakpoint="Breakpoint.None" Filter="Matches">
+          RowClass="cursor-pointer" RowClassFunc="RowClass" OnRowClick="OnRowClick" Breakpoint="Breakpoint.None" Filter="Matches">
     <ToolBarContent>
         <MudSpacer />
         <MudTextField @bind-Value="_search" Placeholder="Kegler oder Klub suchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"

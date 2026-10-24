@@ -11,14 +11,10 @@ namespace SwissBowling.Server.Features.Import;
 /// Übernimmt die Stammdaten von www.sfkv.ch (Master): Unterverband über UV-Nr., Klubs über Klub-ID, Kegler über
 /// Mitglieder-ID (Lizenz), Kegelbahnen über Name, Vorstand wird ersetzt. Kegler, die nicht mehr gelistet sind, werden deaktiviert.
 /// </summary>
-public sealed class MasterDataImporter(SfkvScraper scraper, AppDbContext db)
+public sealed class MasterDataImporter(AppDbContext db)
 {
-    public Task<IReadOnlyList<string>> GetAssociationCodesAsync(CancellationToken ct) => scraper.GetAssociationCodesAsync(ct);
-
-    public async Task<ImportSummary> ImportAssociationAsync(string shortCode, CancellationToken ct)
+    public async Task<ImportSummary> ImportAsync(SfkvAssociation source, CancellationToken ct)
     {
-        var source = await scraper.GetAssociationAsync(shortCode, ct);
-
         var association = await db.Associations
                 .Include(a => a.Board).Include(a => a.Venues).Include(a => a.Clubs).Include(a => a.Players)
                 .FirstOrDefaultAsync(a => (source.UvId != null && a.ExternalId == source.UvId) || a.ShortCode == source.ShortCode, ct)

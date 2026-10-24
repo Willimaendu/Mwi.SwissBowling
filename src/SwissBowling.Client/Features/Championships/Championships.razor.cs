@@ -16,9 +16,14 @@ public partial class Championships
     protected override Task OnInitializedAsync() => LoadAsync(async () =>
     {
         _associations = await FetchAsync<List<AssociationDto>>("associations", AssociationRoutes.Base);
-        var all = await FetchAsync<List<ChampionshipDto>>("championships", ChampionshipRoutes.Base);
-        _years = all.Select(c => c.StartDate.Year).Distinct().OrderDescending().ToList();
-        _championships = all.Where(c => _year is null || c.StartDate.Year == _year).ToList();
+        _years = await FetchAsync<List<int>>("years", ChampionshipRoutes.Years);
+        if (_year is { } year && !_years.Contains(year))
+        {
+            // Noch nichts im laufenden Jahr: das jüngste Jahr mit Meisterschaften zeigen.
+            _year = _years.Count > 0 ? _years[0] : null;
+        }
+
+        _championships = await FetchAsync<List<ChampionshipDto>>("championships", ChampionshipRoutes.ByYear(_year));
     });
 
     private Task OnYearChanged(int? year)

@@ -18,7 +18,7 @@
         </MudGrid>
 
         <MudTable T="PlayerResultDto" Items="detail.Results" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
-                  RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/meisterschaften/{args.Item!.ChampionshipId}"))">
+                  RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/meisterschaften/{args.Item!.ChampionshipId}?kegler={detail.Player.Id}"))">
             <HeaderContent>
                 <MudTh Style="width: 140px; white-space: nowrap;">Rang</MudTh>
                 <MudTh>Datum</MudTh>

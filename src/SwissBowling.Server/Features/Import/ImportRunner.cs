@@ -7,10 +7,12 @@ namespace SwissBowling.Server.Features.Import;
 /// <summary>
 /// Führt einen vollständigen Import-/Aktualisierungslauf im Hintergrund aus und protokolliert jeden Schritt:
 /// 1. Stammdaten aller Unterverbände (sfkv.ch), 2. aktuelle Ranglisten (UVweb), 3. optional Archiv-PDFs aller
-/// Unterverbände (nur noch nicht importierte Meisterschaften). Es läuft höchstens ein Lauf gleichzeitig.
+/// Unterverbände (nur noch nicht importierte Meisterschaften). Die Quellen werden parallel geladen, die Datenbank
+/// sequenziell beschrieben. Es läuft höchstens ein Lauf gleichzeitig.
 /// </summary>
 public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunner> logger)
 {
+    private const int Parallelism = 4;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     /// <summary>Startet einen Lauf, falls keiner aktiv ist, und liefert dessen ID.</summary>
@@ -47,41 +49,50 @@ public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunn
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var log = new RunLog(db, runId);
 
+            var sfkv = scope.ServiceProvider.GetRequiredService<SfkvScraper>();
+            var uvweb = scope.ServiceProvider.GetRequiredService<UvwebScraper>();
             var masterData = scope.ServiceProvider.GetRequiredService<MasterDataImporter>();
-            var scraper = scope.ServiceProvider.GetRequiredService<UvwebScraper>();
             var importer = scope.ServiceProvider.GetRequiredService<UvwebImporter>();
+            var ct = CancellationToken.None;
 
             await log.StepAsync("Stammdaten: Unterverbände von sfkv.ch laden", async () =>
             {
-                foreach (var code in await masterData.GetAssociationCodesAsync(CancellationToken.None))
-                {
-                    await log.TryAsync($"Stammdaten {code}", () => masterData.ImportAssociationAsync(code, CancellationToken.None));
-                }
+                var codes = await sfkv.GetAssociationCodesAsync(ct);
+                await log.ImportAllAsync(codes,
+                    code => $"Stammdaten {code}",
+                    code => sfkv.GetAssociationAsync(code, ct),
+                    source => masterData.ImportAsync(source, ct));
             });
 
             await log.StepAsync("Aktuelle Ranglisten von UVweb laden", async () =>
             {
-                foreach (var item in await scraper.GetCurrentAsync(CancellationToken.None))
-                {
-                    await log.TryAsync($"{item.Association}: {item.Name}", () => importer.ImportAsync(item.MsId, item.UvId, item.RanglisteId, CancellationToken.None));
-                }
+                var current = await uvweb.GetCurrentAsync(ct);
+                await log.ImportAllAsync(current,
+                    item => $"{item.Association}: {item.Name}",
+                    async item => (Championship: await uvweb.GetChampionshipAsync(item.MsId, item.UvId, ct), Results: await uvweb.GetResultsAsync(item.MsId, item.UvId, item.RanglisteId, ct)),
+                    data => importer.ImportAsync(data.Championship, data.Results, ct));
             });
 
             if (includeArchive)
             {
-                var imported = (await db.Championships.Where(c => c.ExternalId != null).Select(c => c.ExternalId!.Value).ToListAsync()).ToHashSet();
-                var associations = await db.Associations.Where(a => a.ExternalId != null).OrderBy(a => a.Name).ToListAsync();
+                var imported = (await db.Championships.Where(c => c.ExternalId != null).Select(c => c.ExternalId!.Value).ToListAsync(ct)).ToHashSet();
+                var associations = await db.Associations.Where(a => a.ExternalId != null).OrderBy(a => a.Name).ToListAsync(ct);
 
                 foreach (var association in associations)
                 {
                     await log.StepAsync($"Archiv {association.Name} laden", async () =>
                     {
-                        var archive = await scraper.GetArchiveAsync(association.ExternalId!.Value, CancellationToken.None);
-                        foreach (var entry in archive.Where(e => !imported.Contains(e.MsId)))
-                        {
-                            await log.TryAsync($"{association.Name}: {entry.Name} (Archiv)", () => importer.ImportArchiveAsync(entry.MsId, entry.UvId, entry.PdfUrl, CancellationToken.None));
-                            imported.Add(entry.MsId);
-                        }
+                        var archive = await uvweb.GetArchiveAsync(association.ExternalId!.Value, ct);
+                        var pending = archive.Where(e => imported.Add(e.MsId)).ToList();
+                        await log.ImportAllAsync(pending,
+                            entry => $"{association.Name}: {entry.Name} (Archiv)",
+                            async entry =>
+                            {
+                                var championship = await uvweb.GetChampionshipAsync(entry.MsId, entry.UvId, ct);
+                                await using var pdf = await uvweb.GetPdfAsync(entry.PdfUrl, ct);
+                                return (Championship: championship, Results: UvwebPdfParser.Parse(pdf));
+                            },
+                            data => importer.ImportArchiveAsync(data.Championship, data.Results, ct));
                     });
                 }
             }
@@ -131,8 +142,33 @@ public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunn
             });
         }
 
-        public Task TryAsync(string source, Func<Task<ImportSummary>> action) =>
-            RunAsync(source, async () => await action());
+        /// <summary>
+        /// Lädt die Quellen parallel (höchstens <see cref="Parallelism"/> gleichzeitig, um die Webseiten nicht zu überlasten)
+        /// und übernimmt sie in der ursprünglichen Reihenfolge nacheinander in die Datenbank – der DbContext ist nicht threadsicher.
+        /// </summary>
+        public async Task ImportAllAsync<TItem, TData>(IEnumerable<TItem> items, Func<TItem, string> source, Func<TItem, Task<TData>> fetch, Func<TData, Task<ImportSummary>> import)
+        {
+            using var gate = new SemaphoreSlim(Parallelism);
+            var fetching = items.Select(item => (Source: source(item), Data: FetchAsync(gate, () => fetch(item)))).ToList();
+
+            foreach (var (label, data) in fetching)
+            {
+                await RunAsync(label, async () => await import(await data));
+            }
+        }
+
+        private static async Task<T> FetchAsync<T>(SemaphoreSlim gate, Func<Task<T>> fetch)
+        {
+            await gate.WaitAsync();
+            try
+            {
+                return await fetch();
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
 
         /// <summary>Führt einen Schritt aus und protokolliert Ergebnis oder Fehler.</summary>
         private async Task RunAsync(string source, Func<Task<ImportSummary?>> action)
