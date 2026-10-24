@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <ItemGroup>
 	<ProjectReference Include="../Mwi.SwissBowling.Core/Mwi.SwissBowling.Core.csproj" />
 	<ProjectReference Include="../Mwi.SwissBowling.Contracts/Mwi.SwissBowling.Contracts.csproj" />
 	<ProjectReference Include="../Mwi.SwissBowling.Web.Client/Mwi.SwissBowling.Web.Client.csproj" />
 	<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
 	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+	<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" />
 	<PackageReference Include="MudBlazor" />
   </ItemGroup>
 </Project>

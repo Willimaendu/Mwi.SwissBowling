@@ -1,0 +1,2 @@
+.overview-summary { display: flex; flex-wrap: wrap; gap: 1.5rem; padding-block: .75rem 1.25rem; color: var(--dashboard-muted); font-size: 12px; }
+.dashboard-sign-in { display: inline-flex; align-items: center; padding: .5rem 1rem; border-radius: 4px; color: #fff; background: var(--dashboard-accent); text-decoration: none; }

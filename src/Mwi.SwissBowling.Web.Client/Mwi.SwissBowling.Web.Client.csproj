@@ -6,6 +6,7 @@
 	<ProjectReference Include="../Mwi.SwissBowling.Contracts/Mwi.SwissBowling.Contracts.csproj" />
 	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
 	<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+	<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" />
 	<PackageReference Include="MudBlazor" />
   </ItemGroup>
 </Project>

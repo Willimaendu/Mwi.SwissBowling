@@ -1,0 +1,4 @@
+<header class="page-header">
+    <div class="page-title"><h1>@Title</h1>@if (!string.IsNullOrWhiteSpace(Description)) { <p>@Description</p> }</div>
+    @if (Actions is not null) { <div class="page-actions" role="group" aria-label="Seitenaktionen">@Actions</div> }
+</header>

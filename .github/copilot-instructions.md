@@ -7,4 +7,5 @@
 - Use file-scoped namespaces throughout SwissBowling C# code.
 
 ## SwissBowling UI Direction
-- The SwissBowling UI direction is Modern Clubhouse, featuring forest green, warm ivory, restrained copper accents, spacious layouts, and an approachable club-oriented presentation, implemented with themed MudBlazor. Preserve efficient keyboard-friendly result entry and accessible responsive layouts.
+- Rebuild SwissBowling using Microsoft Aspire Dashboard as the reference for appearance and code organization. Use Microsoft Fluent UI Blazor components, a neutral dashboard visual system, compact toolbars, persistent navigation and appropriate data grids; do not retain MudBlazor or the Modern Clubhouse theme.
+- Separate component markup, behavior and scoped styles into .razor, .razor.cs and .razor.css files where applicable. Use file-scoped namespaces in code-behind. Preserve keyboard-friendly result entry, accessible responsive layouts, and automatic SignalR updates without manual refreshes.

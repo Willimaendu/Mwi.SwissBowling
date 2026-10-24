@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FluentUI.AspNetCore.Components;
 using MudBlazor.Services;
 using Mwi.SwissBowling.Core.Hosting;
 using Mwi.SwissBowling.Core.Persistence;
@@ -30,6 +31,7 @@ public static class Program
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<Mwi.SwissBowling.Web.Features.Standings.PublicEventsClient>();
         builder.Services.AddRazorComponents().AddInteractiveWebAssemblyComponents();
+        builder.Services.AddFluentUIComponents();
         builder.Services.AddMudServices();
         builder.Services.AddHttpClient("api", client =>
         {
