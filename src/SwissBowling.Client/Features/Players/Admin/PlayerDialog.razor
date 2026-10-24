@@ -1,0 +1,32 @@
+@inherits FormDialog
+
+<DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && _model.ClubId != Guid.Empty)" OnSave="SaveAsync" OnCancel="Cancel">
+    <MudForm @ref="Form" @bind-IsValid="IsValid">
+        <MudGrid Spacing="2">
+            <MudItem xs="6"><MudTextField @bind-Value="_model.FirstName" Label="Vorname" Required="true" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6"><MudTextField @bind-Value="_model.LastName" Label="Nachname" Required="true" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6"><MudNumericField @bind-Value="_model.BirthYear" Label="Jahrgang" Min="1900" Max="2100" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_model.Category" Label="Kategorie" Variant="Variant.Outlined">
+                    @foreach (var category in Enum.GetValues<PlayerCategory>())
+                    {
+                        <MudSelectItem Value="@category">@category.Label()</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6"><MudTextField @bind-Value="_model.LicenseNumber" Label="Lizenznummer" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_model.ClubId" Label="Klub" Variant="Variant.Outlined">
+                    @foreach (var club in Clubs)
+                    {
+                        <MudSelectItem Value="@club.Id">@club.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            @if (Player is not null)
+            {
+                <MudItem xs="12"><MudSwitch @bind-Value="_model.IsActive" Label="Aktiv" Color="Color.Primary" /></MudItem>
+            }
+        </MudGrid>
+    </MudForm>
+</DialogFrame>

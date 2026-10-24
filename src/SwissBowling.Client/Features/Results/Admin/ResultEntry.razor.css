@@ -1,0 +1,9 @@
+::deep .dirty {
+  background: rgba(245, 179, 1, .08);
+}
+
+::deep .pins input {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

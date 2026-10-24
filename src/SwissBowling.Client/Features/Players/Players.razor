@@ -1,0 +1,34 @@
+@page "/kegler"
+@inherits ApiPage
+
+<PageTitle>Kegler – Swiss Bowling</PageTitle>
+
+<PageHeader Title="Keglerinnen & Kegler" Subtitle="Alle aktiven Kegler mit Klub und Kategorie" />
+
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_players.Count == 0" EmptyText="Noch keine Kegler erfasst.">
+    <MudTable T="PlayerDto" Items="_players" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches"
+              RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler/{args.Item!.Id}"))" Breakpoint="Breakpoint.None">
+        <ToolBarContent>
+            <MudTextField @bind-Value="_search" Placeholder="Name, Klub oder Lizenz" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0 flex-grow-1" />
+            <MudSelect T="PlayerCategory?" @bind-Value="_category" Label="Kategorie" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Class="ml-3" Style="max-width: 200px;">
+                @foreach (var category in Enum.GetValues<PlayerCategory>())
+                {
+                    <MudSelectItem T="PlayerCategory?" Value="@category">@category.Label()</MudSelectItem>
+                }
+            </MudSelect>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<PlayerDto, object>(p => p.LastName)" InitialDirection="SortDirection.Ascending">Name</MudTableSortLabel></MudTh>
+            <MudTh>Klub</MudTh>
+            <MudTh Class="d-none d-sm-table-cell">Kategorie</MudTh>
+            <MudTh Class="d-none d-md-table-cell">Jahrgang</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd Class="font-weight-medium">@context.FullName</MudTd>
+            <MudTd>@context.ClubName</MudTd>
+            <MudTd Class="d-none d-sm-table-cell">@context.Category.Label()</MudTd>
+            <MudTd Class="d-none d-md-table-cell">@context.BirthYear</MudTd>
+        </RowTemplate>
+    </MudTable>
+</LoadingState>

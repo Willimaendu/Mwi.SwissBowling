@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Gemeinsamer Code für Server und Client: Verträge (DTOs, Requests), API-Routen, Enums, Ranglisten-Logik -->
+
+</Project>

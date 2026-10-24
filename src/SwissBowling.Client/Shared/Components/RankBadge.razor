@@ -1,0 +1,10 @@
+<span class="rank-wrap">
+    @if (Rank <= 3)
+    {
+        <MudAvatar Size="Size.Small" Class="@($"rank rank-{Rank}")">@Rank</MudAvatar>
+    }
+    else
+    {
+        <span class="mud-text-secondary rank-plain">@Rank</span>
+    }
+</span>

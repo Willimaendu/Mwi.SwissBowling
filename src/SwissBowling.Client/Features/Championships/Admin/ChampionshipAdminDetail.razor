@@ -1,0 +1,58 @@
+@page "/admin/meisterschaften/{Id:guid}"
+@layout AdminLayout
+@inherits ApiPage
+
+<PageTitle>@(_detail?.Championship.Name ?? "Meisterschaft") – Administration</PageTitle>
+
+<LoadingState Loading="Loading" Error="@Error">
+    @if (_detail is { } detail)
+    {
+        <PageHeader Title="@detail.Championship.Name"
+                    Subtitle="@($"Saison {detail.Championship.SeasonName} · {detail.Championship.ThrowsPerRound} Wurf · beste {detail.Championship.CountedRounds} von {detail.Championship.NumberOfRounds} Runden")"
+                    Breadcrumbs="@([new("Meisterschaften", "/admin/meisterschaften"), new(detail.Championship.Name, null, disabled: true)])">
+            <Actions>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.OpenInNew" Href="@($"/meisterschaften/{Id}")" Target="_blank">Öffentliche Ansicht</MudButton>
+                <AuthorizeView Roles="@Roles.Admin">
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Edit" OnClick="EditAsync">Bearbeiten</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Delete" OnClick="DeleteAsync">Löschen</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => EditRoundAsync(null))"
+                               Disabled="@(detail.Rounds.Count >= detail.Championship.NumberOfRounds)">Runde hinzufügen</MudButton>
+                </AuthorizeView>
+            </Actions>
+        </PageHeader>
+
+        <MudTable T="RoundDto" Items="detail.Rounds" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
+            <HeaderContent>
+                <MudTh>Runde</MudTh>
+                <MudTh>Datum</MudTh>
+                <MudTh>Ort</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh Class="text-right">Resultate</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd Class="font-weight-bold">Runde @context.Number</MudTd>
+                <MudTd>@context.Date.ToString("dd.MM.yyyy")</MudTd>
+                <MudTd>@context.Venue</MudTd>
+                <MudTd>
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="@(context.IsCompleted ? Color.Success : Color.Warning)">
+                        @(context.IsCompleted ? "Abgeschlossen" : "Offen")
+                    </MudChip>
+                </MudTd>
+                <MudTd Class="text-right">@context.ResultCount</MudTd>
+                <MudTd Class="text-right">
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Href="@($"/admin/runden/{context.Id}/erfassung")">
+                        @(context.IsCompleted ? "Ansehen" : "Erfassen")
+                    </MudButton>
+                    <AuthorizeView Roles="@Roles.Admin" Context="auth">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditRoundAsync(context))" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteRoundAsync(context))" Disabled="@(context.ResultCount > 0)" />
+                    </AuthorizeView>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Class="pa-6 mud-text-secondary">Noch keine Runden geplant.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</LoadingState>

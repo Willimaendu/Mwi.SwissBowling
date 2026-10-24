@@ -1,0 +1,51 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="AppTheme.Theme" @bind-IsDarkMode="_darkMode" />
+<MudPopoverProvider />
+<MudDialogProvider CloseOnEscapeKey="true" BackdropClick="false" />
+<MudSnackbarProvider />
+
+<AuthorizeView Roles="@($"{Roles.Admin},{Roles.Scorer}")">
+    <Authorized>
+        <MudLayout>
+            <MudAppBar Elevation="0" Class="border-b mud-border-lines-default">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@(() => _drawerOpen = !_drawerOpen)" />
+                <MudText Typo="Typo.h6" Class="font-weight-bold">Swiss Bowling</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="ml-2">Admin</MudChip>
+                <MudSpacer />
+                <MudIconButton Icon="@(_darkMode ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="@(() => _darkMode = !_darkMode)" />
+                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                    <ActivatorContent>
+                        <MudButton Color="Color.Inherit" StartIcon="@Icons.Material.Outlined.AccountCircle" EndIcon="@Icons.Material.Filled.ExpandMore">@context.User.Identity?.Name</MudButton>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Icon="@Icons.Material.Outlined.Public" Href="/">Öffentliche Seite</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Outlined.Logout" OnClick="LogoutAsync">Abmelden</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+            </MudAppBar>
+
+            <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0" Variant="DrawerVariant.Responsive">
+                <MudNavMenu Class="pa-2" Color="Color.Primary" Rounded="true">
+                    <MudNavLink Href="/admin" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.EmojiEvents">Meisterschaften</MudNavLink>
+                    @if (context.User.IsInRole(Roles.Admin))
+                    {
+                        <MudNavLink Href="/admin/kegler" Icon="@Icons.Material.Outlined.People">Kegler</MudNavLink>
+                        <MudNavLink Href="/admin/klubs" Icon="@Icons.Material.Outlined.Groups">Klubs</MudNavLink>
+                        <MudNavLink Href="/admin/saisons" Icon="@Icons.Material.Outlined.CalendarMonth">Saisons</MudNavLink>
+                        <MudNavLink Href="/admin/benutzer" Icon="@Icons.Material.Outlined.ManageAccounts">Benutzer</MudNavLink>
+                    }
+                </MudNavMenu>
+            </MudDrawer>
+
+            <MudMainContent>
+                <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6">
+                    @Body
+                </MudContainer>
+            </MudMainContent>
+        </MudLayout>
+    </Authorized>
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>

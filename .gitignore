@@ -1,17 +1,19 @@
-**/bin/
-**/obj/
+## .NET
+bin/
+obj/
+*.user
+*.suo
 .vs/
 .idea/
 TestResults/
-playwright-report/
-**/playwright/.auth/
-*.user
-*.suo
-*.pfx
-*.p12
-*.pem
-.env
-.env.*
-!.env.example
+*.swp
+
+## Secrets / env
+.env*
+**/appsettings.*.local.json
+**/*.pfx
+**/*.p12
+**/*.pem
+
+## Node
 node_modules/
-.rebuild/

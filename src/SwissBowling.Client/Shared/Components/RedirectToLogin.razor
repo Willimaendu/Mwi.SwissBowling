@@ -1,0 +1,7 @@
+@* Während des Prerenderings ist das JWT nicht lesbar – erst beim interaktiven Rendern zur Anmeldung umleiten *@
+@if (!RendererInfo.IsInteractive)
+{
+    <div class="d-flex justify-center align-center" style="height: 60vh;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    </div>
+}

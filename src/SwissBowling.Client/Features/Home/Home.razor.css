@@ -1,0 +1,22 @@
+.hero {
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--mud-palette-primary) 0%, #7a1a14 100%);
+}
+
+.hero-text {
+  max-width: 60ch;
+  opacity: .9;
+}
+
+::deep .hero-button {
+  background: #fff;
+  color: var(--mud-palette-primary);
+}
+
+::deep .hero-button-outlined {
+  color: #fff;
+  border-color: rgba(255, 255, 255, .6);
+}

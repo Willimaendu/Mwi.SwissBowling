@@ -1,0 +1,12 @@
+::deep .cursor-pointer {
+  cursor: pointer;
+}
+
+::deep .discarded {
+  text-decoration: line-through;
+  opacity: .6;
+}
+
+::deep td.text-right {
+  font-variant-numeric: tabular-nums;
+}

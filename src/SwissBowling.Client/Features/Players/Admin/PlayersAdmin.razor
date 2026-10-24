@@ -1,0 +1,46 @@
+@page "/admin/kegler"
+@layout AdminLayout
+@inherits ApiPage
+
+<PageTitle>Kegler – Administration</PageTitle>
+
+<PageHeader Title="Kegler" Subtitle="Keglerinnen und Kegler verwalten">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => EditAsync(null))" Disabled="@(_clubs.Count == 0)">Neuer Kegler</MudButton>
+    </Actions>
+</PageHeader>
+
+@if (!Loading && _clubs.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">Bitte zuerst einen <MudLink Href="/admin/klubs">Klub</MudLink> anlegen.</MudAlert>
+}
+
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_players.Count == 0" EmptyText="Noch keine Kegler erfasst.">
+    <MudTable T="PlayerDto" Items="_players" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches">
+        <ToolBarContent>
+            <MudTextField @bind-Value="_search" Placeholder="Suchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0" Style="max-width: 320px;" />
+            <MudSpacer />
+            <MudSwitch T="bool" @bind-Value="_showInactive" Label="Inaktive anzeigen" Color="Color.Primary" />
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Klub</MudTh>
+            <MudTh>Kategorie</MudTh>
+            <MudTh>Jahrgang</MudTh>
+            <MudTh>Lizenz</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd Class="@(context.IsActive ? "font-weight-medium" : "mud-text-secondary")">@context.FullName @(context.IsActive ? "" : "(inaktiv)")</MudTd>
+            <MudTd>@context.ClubShortName</MudTd>
+            <MudTd>@context.Category.Label()</MudTd>
+            <MudTd>@context.BirthYear</MudTd>
+            <MudTd>@(context.LicenseNumber ?? "–")</MudTd>
+            <MudTd Class="text-right">
+                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="@(() => EditAsync(context))" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</LoadingState>

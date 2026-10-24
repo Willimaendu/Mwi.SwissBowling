@@ -1,0 +1,50 @@
+@page "/meisterschaften/{Id:guid}"
+@inherits ApiPage
+
+<PageTitle>@(_detail?.Championship.Name ?? "Meisterschaft") – Swiss Bowling</PageTitle>
+
+<LoadingState Loading="Loading" Error="@Error">
+    @if (_detail is { } detail)
+    {
+        <PageHeader Title="@detail.Championship.Name" Subtitle="@detail.Championship.Description"
+                    Breadcrumbs="@([new("Meisterschaften", "/meisterschaften"), new(detail.Championship.Name, null, disabled: true)])">
+            <Actions>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Info">@detail.Championship.Status.Label()</MudChip>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                    Saison @detail.Championship.SeasonName · @detail.Championship.ThrowsPerRound Wurf · beste @detail.Championship.CountedRounds von @detail.Championship.NumberOfRounds Runden
+                </MudText>
+            </Actions>
+        </PageHeader>
+
+        <MudTabs Elevation="0" Rounded="true" Outlined="true" ApplyEffectsToContainer="true" PanelClass="pt-4" Class="rounded-lg">
+            <MudTabPanel Text="Rangliste" Icon="@Icons.Material.Outlined.Leaderboard">
+                <div class="d-flex flex-wrap gap-1 mb-4">
+                    <MudButton Size="Size.Small" Color="Color.Primary" Variant="@(_category is null ? Variant.Filled : Variant.Text)" OnClick="@(() => LoadRankingAsync(null))">Gesamt</MudButton>
+                    @foreach (var category in Enum.GetValues<PlayerCategory>())
+                    {
+                        <MudButton Size="Size.Small" Color="Color.Primary" Variant="@(_category == category ? Variant.Filled : Variant.Text)" OnClick="@(() => LoadRankingAsync(category))">@category.Label()</MudButton>
+                    }
+                </div>
+                @if (_ranking is { } ranking)
+                {
+                    <RankingTable Ranking="ranking" />
+                }
+            </MudTabPanel>
+            <MudTabPanel Text="Runden" Icon="@Icons.Material.Outlined.EventNote">
+                <MudList T="RoundDto">
+                    @foreach (var round in detail.Rounds)
+                    {
+                        <MudListItem T="RoundDto" Href="@($"/runden/{round.Id}")" Icon="@(round.IsCompleted ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Schedule)">
+                            <MudText Typo="Typo.body1">Runde @round.Number · @round.Date.ToString("dd.MM.yyyy") · @round.Venue</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@round.ResultCount Resultate</MudText>
+                        </MudListItem>
+                    }
+                </MudList>
+                @if (detail.Rounds.Count == 0)
+                {
+                    <MudText Class="mud-text-secondary pa-4">Noch keine Runden geplant.</MudText>
+                }
+            </MudTabPanel>
+        </MudTabs>
+    }
+</LoadingState>

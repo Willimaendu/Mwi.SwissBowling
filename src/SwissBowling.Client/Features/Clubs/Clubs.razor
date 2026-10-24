@@ -1,0 +1,24 @@
+@page "/klubs"
+@inherits ApiPage
+
+<PageTitle>Klubs – Swiss Bowling</PageTitle>
+
+<PageHeader Title="Klubs" Subtitle="Alle Kegelklubs mit ihren aktiven Keglern" />
+
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_clubs.Count == 0" EmptyText="Noch keine Klubs erfasst.">
+    <MudGrid Spacing="3">
+        @foreach (var club in _clubs)
+        {
+            <MudItem xs="12" sm="6" lg="4">
+                <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg d-flex align-center gap-4">
+                    <MudAvatar Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Large">@club.ShortName[..Math.Min(3, club.ShortName.Length)]</MudAvatar>
+                    <div class="flex-grow-1">
+                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@club.Name</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@(club.City ?? "–") · @club.PlayerCount aktive Kegler</MudText>
+                    </div>
+                    <MudIconButton Href="@($"/kegler?club={club.Id}")" Icon="@Icons.Material.Outlined.ArrowForward" Color="Color.Primary" />
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+</LoadingState>

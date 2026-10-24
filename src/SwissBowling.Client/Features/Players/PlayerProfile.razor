@@ -1,0 +1,41 @@
+@page "/kegler/{Id:guid}"
+@inherits ApiPage
+
+<PageTitle>@(_detail?.Player.FullName ?? "Kegler") – Swiss Bowling</PageTitle>
+
+<LoadingState Loading="Loading" Error="@Error">
+    @if (_detail is { } detail)
+    {
+        <PageHeader Title="@detail.Player.FullName"
+                    Subtitle="@($"{detail.Player.ClubName} · {detail.Player.Category.Label()} · Jahrgang {detail.Player.BirthYear}")"
+                    Breadcrumbs="@([new("Kegler", "/kegler"), new(detail.Player.FullName, null, disabled: true)])" />
+
+        <MudGrid Spacing="3" Class="mb-6">
+            <MudItem xs="4"><StatCard Label="Resultate" Value="@detail.Results.Count.ToString()" /></MudItem>
+            <MudItem xs="4"><StatCard Label="Bestes Resultat" Value="@(detail.Results.Count == 0 ? "–" : detail.Results.Max(r => r.Pins).ToString())" /></MudItem>
+            <MudItem xs="4"><StatCard Label="Durchschnitt" Value="@(detail.Results.Count == 0 ? "–" : detail.Results.Average(r => r.Pins).ToString("0.0"))" /></MudItem>
+        </MudGrid>
+
+        <MudTable T="PlayerResultDto" Items="detail.Results" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
+                  RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/runden/{args.Item!.RoundId}"))" GroupBy="_groupByChampionship">
+            <HeaderContent>
+                <MudTh>Datum</MudTh>
+                <MudTh>Runde</MudTh>
+                <MudTh>Ort</MudTh>
+                <MudTh Class="text-right">Holz</MudTh>
+            </HeaderContent>
+            <GroupHeaderTemplate>
+                <MudTh colspan="4" Class="font-weight-bold">@context.Key</MudTh>
+            </GroupHeaderTemplate>
+            <RowTemplate>
+                <MudTd>@context.Date.ToString("dd.MM.yyyy")</MudTd>
+                <MudTd>Runde @context.RoundNumber</MudTd>
+                <MudTd Class="mud-text-secondary">@context.Venue</MudTd>
+                <MudTd Class="text-right font-weight-bold">@context.Pins</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Class="pa-6 mud-text-secondary">Noch keine Resultate erfasst.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</LoadingState>

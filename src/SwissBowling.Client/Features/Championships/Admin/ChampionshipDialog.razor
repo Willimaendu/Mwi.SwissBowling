@@ -1,0 +1,19 @@
+@inherits FormDialog
+
+<DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && _model.SeasonId != Guid.Empty)" OnSave="SaveAsync" OnCancel="Cancel">
+    <MudForm @ref="Form" @bind-IsValid="IsValid">
+        <MudTextField @bind-Value="_model.Name" Label="Name" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+        <MudSelect @bind-Value="_model.SeasonId" Label="Saison" Variant="Variant.Outlined" Class="mb-3" Disabled="@(Championship is not null)">
+            @foreach (var season in Seasons)
+            {
+                <MudSelectItem Value="@season.Id">@season.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudGrid Spacing="2">
+            <MudItem xs="4"><MudNumericField @bind-Value="_model.NumberOfRounds" Label="Runden" Min="1" Max="50" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="4"><MudNumericField @bind-Value="_model.DiscardedRounds" Label="Streichresultate" Min="0" Max="@(_model.NumberOfRounds - 1)" Variant="Variant.Outlined" /></MudItem>
+            <MudItem xs="4"><MudNumericField @bind-Value="_model.ThrowsPerRound" Label="Würfe / Runde" Min="1" Max="1000" Variant="Variant.Outlined" /></MudItem>
+        </MudGrid>
+        <MudTextField @bind-Value="_model.Description" Label="Beschreibung" Lines="3" Variant="Variant.Outlined" Class="mt-3" />
+    </MudForm>
+</DialogFrame>

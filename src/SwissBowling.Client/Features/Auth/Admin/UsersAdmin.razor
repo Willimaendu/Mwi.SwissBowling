@@ -1,0 +1,36 @@
+@page "/admin/benutzer"
+@layout AdminLayout
+@inherits ApiPage
+
+<PageTitle>Benutzer – Administration</PageTitle>
+
+<PageHeader Title="Benutzer" Subtitle="Administratoren und Erfasser verwalten">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="CreateAsync">Neuer Benutzer</MudButton>
+    </Actions>
+</PageHeader>
+
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_users.Count == 0" EmptyText="Keine Benutzer.">
+    <MudTable T="UserDto" Items="_users" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
+        <HeaderContent>
+            <MudTh>E-Mail</MudTh>
+            <MudTh>Rollen</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd Class="font-weight-medium">@context.Email</MudTd>
+            <MudTd>
+                @foreach (var role in context.Roles)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(role == Roles.Admin ? Color.Primary : Color.Default)">@role</MudChip>
+                }
+            </MudTd>
+            <MudTd Class="text-right">
+                <MudTooltip Text="Passwort setzen">
+                    <MudIconButton Icon="@Icons.Material.Outlined.LockReset" Size="Size.Small" OnClick="@(() => SetPasswordAsync(context))" />
+                </MudTooltip>
+                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</LoadingState>

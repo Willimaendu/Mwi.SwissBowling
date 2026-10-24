@@ -1,0 +1,18 @@
+@inherits FormDialog
+
+@* Legt einen Benutzer an oder setzt – wenn User gesetzt ist – nur das Passwort *@
+<DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && (User is not null || _isAdmin || _isScorer))" OnSave="SaveAsync" OnCancel="Cancel">
+    <MudForm @ref="Form" @bind-IsValid="IsValid">
+        @if (User is null)
+        {
+            <MudTextField @bind-Value="_email" Label="E-Mail" InputType="InputType.Email" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+        }
+        <MudTextField @bind-Value="_password" Label="@(User is null ? "Initiales Passwort" : "Neues Passwort")" InputType="InputType.Password" Required="true"
+                      Validation="@(new Func<string, string?>(ValidatePassword))" Variant="Variant.Outlined" Class="mb-3" />
+        @if (User is null)
+        {
+            <MudCheckBox T="bool" @bind-Value="_isAdmin" Label="Administrator – Vollzugriff" Color="Color.Primary" />
+            <MudCheckBox T="bool" @bind-Value="_isScorer" Label="Erfasser – Resultate erfassen, Runden abschliessen" Color="Color.Primary" />
+        }
+    </MudForm>
+</DialogFrame>

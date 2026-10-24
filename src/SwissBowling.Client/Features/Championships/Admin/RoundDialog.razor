@@ -1,0 +1,8 @@
+@inherits FormDialog
+
+<DialogFrame Error="@Error" Busy="Busy" CanSave="@(IsValid && _date is not null)" OnSave="SaveAsync" OnCancel="Cancel">
+    <MudForm @ref="Form" @bind-IsValid="IsValid">
+        <MudDatePicker @bind-Date="_date" Label="Datum" DateFormat="dd.MM.yyyy" Variant="Variant.Outlined" Class="mb-3" />
+        <MudTextField @bind-Value="_venue" Label="Kegelbahn / Ort" Required="true" Variant="Variant.Outlined" />
+    </MudForm>
+</DialogFrame>

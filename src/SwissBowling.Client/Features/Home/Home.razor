@@ -1,0 +1,27 @@
+@page "/"
+@using SwissBowling.Client.Features.Championships
+@inherits ApiPage
+
+<PageTitle>Swiss Bowling – Resultate & Ranglisten</PageTitle>
+
+<section class="hero">
+    <MudText Typo="Typo.overline">Schweizer Kegeln</MudText>
+    <MudText Typo="Typo.h3" HtmlTag="h1" Class="font-weight-bold">Resultate &amp; Ranglisten aller Meisterschaften</MudText>
+    <MudText Typo="Typo.body1" Class="mt-3 hero-text">
+        Verfolge laufende Einzelmeisterschaften, Ranglisten pro Kategorie und die Resultate aller Keglerinnen und Kegler.
+    </MudText>
+    <div class="d-flex flex-wrap gap-2 mt-5">
+        <MudButton Href="/meisterschaften" Variant="Variant.Filled" Class="hero-button" StartIcon="@Icons.Material.Outlined.EmojiEvents">Meisterschaften</MudButton>
+        <MudButton Href="/kegler" Variant="Variant.Outlined" Class="hero-button-outlined" StartIcon="@Icons.Material.Outlined.Search">Kegler suchen</MudButton>
+    </div>
+</section>
+
+<MudText Typo="Typo.h6" Class="mb-3">Laufende Meisterschaften</MudText>
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_running.Count == 0" EmptyText="Zurzeit läuft keine Meisterschaft.">
+    <MudGrid Spacing="3">
+        @foreach (var championship in _running)
+        {
+            <MudItem xs="12" md="6"><ChampionshipCard Championship="championship" /></MudItem>
+        }
+    </MudGrid>
+</LoadingState>

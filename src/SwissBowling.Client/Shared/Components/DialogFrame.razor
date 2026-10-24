@@ -1,0 +1,14 @@
+@* Einheitlicher Rahmen für Bearbeitungsdialoge (Inhalt, Fehlermeldung, Abbrechen/Speichern) *@
+<MudDialog>
+    <DialogContent>
+        @ChildContent
+        @if (Error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined" Class="mt-3">@Error</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="OnCancel">Abbrechen</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="OnSave" Disabled="@(Busy || !CanSave)">@SaveText</MudButton>
+    </DialogActions>
+</MudDialog>

@@ -1,0 +1,12 @@
+::deep .rank {
+  font-weight: 700;
+}
+
+::deep .rank-1 { background: #F5B301; color: #3b2a00; }
+::deep .rank-2 { background: #B8BEC7; color: #1f2933; }
+::deep .rank-3 { background: #C98A4B; color: #2d1a08; }
+
+.rank-plain {
+  padding-left: 8px;
+  font-variant-numeric: tabular-nums;
+}

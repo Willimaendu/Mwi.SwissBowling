@@ -1,0 +1,56 @@
+@page "/admin/runden/{Id:guid}/erfassung"
+@layout AdminLayout
+@inherits ApiPage
+
+<PageTitle>Resultaterfassung – Administration</PageTitle>
+
+<div class="result-entry">
+<LoadingState Loading="Loading" Error="@Error">
+    @if (_detail is { } detail)
+    {
+        <PageHeader Title="@($"Runde {detail.Round.Number} – Resultaterfassung")"
+                    Subtitle="@($"{detail.Championship.Name} · {detail.Round.Date:dd.MM.yyyy} · {detail.Round.Venue} · max. {detail.Championship.MaxPinsPerRound} Holz")"
+                    Breadcrumbs="@([new("Meisterschaften", "/admin/meisterschaften"), new(detail.Championship.Name, $"/admin/meisterschaften/{detail.Championship.Id}"), new($"Runde {detail.Round.Number}", null, disabled: true)])">
+            <Actions>
+                <MudButton Variant="Variant.Outlined" Color="@(detail.Round.IsCompleted ? Color.Default : Color.Success)" OnClick="ToggleCompletedAsync" Disabled="@(DirtyCount > 0)"
+                           StartIcon="@(detail.Round.IsCompleted ? Icons.Material.Outlined.LockOpen : Icons.Material.Outlined.TaskAlt)">
+                    @(detail.Round.IsCompleted ? "Wieder öffnen" : "Runde abschliessen")
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveAsync" Disabled="@(DirtyCount == 0 || !CanEdit)">
+                    Speichern @(DirtyCount > 0 ? $"({DirtyCount})" : "")
+                </MudButton>
+            </Actions>
+        </PageHeader>
+
+        @if (!CanEdit)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">Die Runde ist abgeschlossen – Änderungen sind nur Administratoren erlaubt.</MudAlert>
+        }
+
+        <MudTable T="Row" Items="_rows" Dense="true" Hover="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches" FixedHeader="true" Height="calc(100vh - 320px)"
+                  RowClassFunc="@((row, _) => row.IsDirty ? "dirty" : string.Empty)">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_search" Placeholder="Kegler oder Klub filtern" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0" Style="max-width: 320px;" />
+                <MudSpacer />
+                <MudSwitch T="bool" @bind-Value="_onlyWithResult" Label="Nur mit Resultat" Color="Color.Primary" />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Kegler</MudTh>
+                <MudTh>Klub</MudTh>
+                <MudTh>Kategorie</MudTh>
+                <MudTh Style="width: 160px;">Holz</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd Class="font-weight-medium">@context.Player.FullName</MudTd>
+                <MudTd>@context.Player.ClubShortName</MudTd>
+                <MudTd>@context.Player.Category.Label()</MudTd>
+                <MudTd>
+                    <MudNumericField T="int?" @bind-Value="context.Pins" Min="0" Max="detail.Championship.MaxPinsPerRound" HideSpinButtons="true" Immediate="true"
+                                     Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="–" Disabled="@(!CanEdit)" Class="pins" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</LoadingState>
+</div>

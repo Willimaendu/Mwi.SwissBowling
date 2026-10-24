@@ -1,0 +1,17 @@
+@* Lade-, Fehler- und Leerzustand an einer Stelle *@
+@if (Loading)
+{
+    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" Class="rounded-lg" />
+}
+else if (Error is not null)
+{
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">@Error</MudAlert>
+}
+else if (IsEmpty)
+{
+    <MudPaper Elevation="0" Outlined="true" Class="pa-10 text-center rounded-lg mud-text-secondary">@EmptyText</MudPaper>
+}
+else
+{
+    @ChildContent
+}

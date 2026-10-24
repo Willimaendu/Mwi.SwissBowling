@@ -1,0 +1,22 @@
+@page "/login"
+
+<PageTitle>Anmelden – Swiss Bowling</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="py-12">
+    <MudPaper Elevation="0" Outlined="true" Class="pa-8 rounded-xl">
+        <MudText Typo="Typo.h5" HtmlTag="h1" Class="font-weight-bold mb-4">Administration</MudText>
+
+        <MudForm @ref="_form" @bind-IsValid="_isValid">
+            <MudTextField @bind-Value="_email" Label="E-Mail" InputType="InputType.Email" Required="true" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField @bind-Value="_password" Label="Passwort" InputType="InputType.Password" Required="true" Variant="Variant.Outlined" OnKeyDown="OnKeyDown" />
+        </MudForm>
+
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Dense="true" Class="mt-4">@_error</MudAlert>
+        }
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-6" OnClick="LoginAsync" Disabled="@(_busy || !_isValid)">Anmelden</MudButton>
+        <MudButton Href="/" Variant="Variant.Text" FullWidth="true" Class="mt-2">Zurück zur öffentlichen Seite</MudButton>
+    </MudPaper>
+</MudContainer>
