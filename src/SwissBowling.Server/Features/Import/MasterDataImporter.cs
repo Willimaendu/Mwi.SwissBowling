@@ -97,7 +97,13 @@ public sealed class MasterDataImporter(SfkvScraper scraper, AppDbContext db)
             player.IsActive = true;
         }
 
-        // Nicht mehr gelistete Mitglieder dieses Unterverbands sind ausgetreten.
+        // Nicht mehr gelistete Mitglieder dieses Unterverbands sind ausgetreten. Eine leere Liste deutet auf eine
+        // unvollständig ausgelieferte Seite hin – dann wird niemand deaktiviert.
+        if (source.Members.Count == 0)
+        {
+            return 0;
+        }
+
         foreach (var former in association.Players.Where(p => p.LicenseNumber is not null && !existing.ContainsKey(p.LicenseNumber)))
         {
             former.IsActive = false;

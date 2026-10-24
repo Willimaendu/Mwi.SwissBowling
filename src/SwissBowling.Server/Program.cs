@@ -1,3 +1,5 @@
+using System.Net;
+using Microsoft.Extensions.Http.Resilience;
 using MudBlazor.Services;
 using Scalar.AspNetCore;
 using SwissBowling.Client;
@@ -23,14 +25,15 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 // Import: Stammdaten von www.sfkv.ch, Resultate von www.uvweb.kegler.ch
-builder.Services.AddHttpClient<SfkvScraper>(client => client.BaseAddress = new Uri("https://www.sfkv.ch/"));
-builder.Services.AddHttpClient<UvwebScraper>(client =>
-    {
-        client.BaseAddress = new Uri("https://www.uvweb.kegler.ch/");
-        // WebForms rendert für unbekannte Browser abweichend – deshalb als normaler Browser auftreten.
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) SwissBowling/1.0");
-    })
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { UseCookies = true, CookieContainer = new System.Net.CookieContainer() });
+// Beide Quellen antworten zeitweise langsam oder mit 5xx – deshalb grosszügiges Timeout und Wiederholungen.
+// Beide Seiten werden wie von einem Browser abgerufen (UVweb rendert für unbekannte Browser abweichend) und antworten
+// zeitweise langsam oder mit 5xx – der Standard-Resilience-Handler wiederholt solche Anfragen mit Backoff.
+builder.Services.AddHttpClient<SfkvScraper>(client => ConfigureBrowserClient(client, "https://www.sfkv.ch/"))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All })
+    .AddStandardResilienceHandler(ConfigureResilience);
+builder.Services.AddHttpClient<UvwebScraper>(client => ConfigureBrowserClient(client, "https://www.uvweb.kegler.ch/"))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All, UseCookies = true, CookieContainer = new CookieContainer() })
+    .AddStandardResilienceHandler(ConfigureResilience);
 builder.Services.AddScoped<MasterDataImporter>();
 builder.Services.AddScoped<UvwebImporter>();
 builder.Services.AddSingleton<ImportRunner>();
@@ -80,3 +83,23 @@ app.MapRazorComponents<App>()
     .AddAdditionalAssemblies(typeof(Routes).Assembly);
 
 await app.RunAsync();
+
+static void ConfigureResilience(HttpStandardResilienceOptions options)
+{
+    // Die UV-Seiten brauchen teils über 30 s; drei Wiederholungen mit 3, 6, 12 s Backoff.
+    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(60);
+    options.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(5);
+    options.CircuitBreaker.SamplingDuration = TimeSpan.FromMinutes(2);
+    options.Retry.MaxRetryAttempts = 3;
+    options.Retry.Delay = TimeSpan.FromSeconds(3);
+}
+
+static void ConfigureBrowserClient(HttpClient client, string baseAddress)
+{
+    client.BaseAddress = new Uri(baseAddress);
+    // Das Gesamt-Timeout steuert der Resilience-Handler.
+    client.Timeout = Timeout.InfiniteTimeSpan;
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 SwissBowling/1.0");
+    client.DefaultRequestHeaders.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("de-CH,de;q=0.9");
+}
