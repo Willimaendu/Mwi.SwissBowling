@@ -81,4 +81,4 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Routes).Assembly);
 
-app.Run();
+await app.RunAsync();
