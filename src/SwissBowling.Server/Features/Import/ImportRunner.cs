@@ -13,6 +13,7 @@ namespace SwissBowling.Server.Features.Import;
 public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, IServiceScopeFactory scopes, ILogger<ImportRunner> logger)
 {
     private const int Parallelism = 4;
+    private static readonly TimeSpan StaleAfter = TimeSpan.FromHours(1);
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     /// <summary>Startet einen Lauf, falls keiner aktiv ist, und liefert dessen ID.</summary>
@@ -27,6 +28,16 @@ public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, ISer
         try
         {
             await using var db = await dbFactory.CreateDbContextAsync(ct);
+
+            // Sperre auch über Prozessgrenzen: ein noch laufender Lauf einer anderen Instanz blockiert ebenfalls.
+            // Läufe, die älter als die Frist sind, gelten als abgebrochen (z.B. Prozess beendet) und werden ignoriert.
+            var since = DateTimeOffset.UtcNow - StaleAfter;
+            if (await db.ImportRuns.AnyAsync(r => r.Status == ImportRunStatus.Running && r.StartedAt > since, ct))
+            {
+                _gate.Release();
+                return null;
+            }
+
             db.ImportRuns.Add(run);
             await db.SaveChangesAsync(ct);
         }
@@ -46,7 +57,7 @@ public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, ISer
         {
             // Ein Kontext für den ganzen Lauf; der Change Tracker wird nach jedem Schritt geleert.
             await using var db = await dbFactory.CreateDbContextAsync();
-            var log = new RunLog(db, runId);
+            var log = new RunLog(db, runId, logger);
             var masterData = new MasterDataImporter(db);
             var importer = new UvwebImporter(db);
 
@@ -128,7 +139,7 @@ public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, ISer
             await using var db = await dbFactory.CreateDbContextAsync();
             db.ImportLogEntries.Add(new ImportLogEntry { RunId = runId, Source = "Lauf abgebrochen", Message = message, IsError = true });
             await db.SaveChangesAsync();
-            await new RunLog(db, runId).FinishAsync(ImportRunStatus.Failed);
+            await new RunLog(db, runId, logger).FinishAsync(ImportRunStatus.Failed);
         }
         catch (Exception ex)
         {
@@ -140,7 +151,7 @@ public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, ISer
     /// Schreibt Fortschritt und Protokolleinträge sofort in die Datenbank, damit die Oberfläche mitlesen kann.
     /// Nach jedem Schritt wird der Change Tracker geleert, damit lange Läufe nicht immer mehr Speicher binden.
     /// </summary>
-    private sealed class RunLog(AppDbContext db, Guid runId)
+    private sealed class RunLog(AppDbContext db, Guid runId, ILogger logger)
     {
         public Task StepAsync(string step, Func<Task> action) => StepAsync(step, async () =>
         {
@@ -197,8 +208,12 @@ public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, ISer
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // Ein einzelner fehlerhafter Schritt bricht den Lauf nicht ab.
+                logger.LogError(ex, "Importschritt «{Source}» fehlgeschlagen", source);
+                var message = ex is DbUpdateConcurrencyException concurrency
+                    ? $"Zeile nicht mehr vorhanden: {string.Join(", ", concurrency.Entries.Take(10).Select(e => $"{e.Metadata.ClrType.Name} ({e.State}, {e.Property("Id").CurrentValue})"))}"
+                    : ex.Message;
                 db.ChangeTracker.Clear();
-                db.ImportLogEntries.Add(new ImportLogEntry { RunId = runId, Source = source, Message = ex.Message, IsError = true });
+                db.ImportLogEntries.Add(new ImportLogEntry { RunId = runId, Source = source, Message = message, IsError = true });
                 await db.SaveChangesAsync();
             }
             finally
