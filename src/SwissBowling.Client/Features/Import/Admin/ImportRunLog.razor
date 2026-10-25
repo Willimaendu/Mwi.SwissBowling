@@ -1,0 +1,29 @@
+@* Protokoll eines Importlaufs – seitenweise vom Server, neueste Einträge zuerst *@
+<MudTable @ref="_table" T="ImportLogEntryDto" ServerData="LoadPageAsync" Dense="true" Hover="true" Elevation="0" RowsPerPage="50"
+          RowClassFunc="@((e, _) => e.IsError ? "mud-error-text" : string.Empty)">
+    <ToolBarContent>
+        <MudSwitch T="bool" @bind-Value="_errorsOnly" @bind-Value:after="ReloadAsync" Label="Nur Fehler" Color="Color.Error" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh Style="width: 90px;">Zeit</MudTh>
+        <MudTh>Quelle</MudTh>
+        <MudTh Class="text-right">Klubs</MudTh>
+        <MudTh Class="text-right">Kegler</MudTh>
+        <MudTh Class="text-right">Resultate</MudTh>
+        <MudTh>Meldung</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd Class="mud-text-secondary">@context.Time.ToLocalTime().ToString("HH:mm:ss")</MudTd>
+        <MudTd>@context.Source</MudTd>
+        <MudTd Class="text-right">@(context.Clubs > 0 ? context.Clubs : "")</MudTd>
+        <MudTd Class="text-right">@(context.Players > 0 ? context.Players : "")</MudTd>
+        <MudTd Class="text-right">@(context.Results > 0 ? context.Results : "")</MudTd>
+        <MudTd>@context.Message</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText Class="pa-4 mud-text-secondary">@(_errorsOnly ? "Keine Fehler." : "Noch keine Einträge.")</MudText>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="Pro Seite" InfoFormat="{first_item}–{last_item} von {all_items}" PageSizeOptions="@([50, 100, 200])" />
+    </PagerContent>
+</MudTable>

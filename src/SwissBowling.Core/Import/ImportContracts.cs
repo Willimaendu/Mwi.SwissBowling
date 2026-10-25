@@ -2,8 +2,12 @@ namespace SwissBowling.Core.Import;
 
 public static class ImportRoutes
 {
-    /// <summary>Importläufe: POST startet einen Lauf, GET listet die bisherigen.</summary>
+    /// <summary>Importläufe: POST startet einen Lauf, GET listet die bisherigen (ohne Protokolleinträge).</summary>
     public const string Runs = "api/import/runs";
+
+    /// <summary>Protokolleinträge eines Laufs, neueste zuerst, seitenweise.</summary>
+    public static string Entries(Guid runId, bool errorsOnly, int page, int pageSize) =>
+        $"{Runs}/{runId}/entries?errorsOnly={errorsOnly}&page={page}&pageSize={pageSize}";
 }
 
 public enum ImportRunStatus
@@ -19,6 +23,7 @@ public sealed record StartImportRequest(bool IncludeArchive = true);
 /// <summary>Ein Protokolleintrag: was wurde aus welcher Quelle übernommen (angelegt oder aktualisiert).</summary>
 public sealed record ImportLogEntryDto(DateTimeOffset Time, string Source, int Clubs, int Players, int Results, string? Message, bool IsError);
 
+/// <summary>Lauf mit Summen über das Protokoll; die Einträge selbst werden separat geladen.</summary>
 public sealed record ImportRunDto(
     Guid Id,
     DateTimeOffset StartedAt,
@@ -29,5 +34,4 @@ public sealed record ImportRunDto(
     int Clubs,
     int Players,
     int Results,
-    int Errors,
-    IReadOnlyList<ImportLogEntryDto> Entries);
+    int Errors);

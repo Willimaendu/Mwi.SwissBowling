@@ -20,11 +20,6 @@ public class ImportRun
     public string? CurrentStep { get; set; }
 
     public List<ImportLogEntry> Entries { get; set; } = [];
-
-    public ImportRunDto ToDto() => new(
-        Id, StartedAt, FinishedAt, Status, IncludeArchive, CurrentStep,
-        Entries.Sum(e => e.Clubs), Entries.Sum(e => e.Players), Entries.Sum(e => e.Results), Entries.Count(e => e.IsError),
-        Entries.OrderBy(e => e.Time).Select(e => e.ToDto()).ToList());
 }
 
 public class ImportLogEntry

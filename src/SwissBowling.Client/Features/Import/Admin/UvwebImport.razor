@@ -55,25 +55,8 @@
                     </div>
                 </TitleContent>
                 <ChildContent>
-                    <MudTable T="ImportLogEntryDto" Items="run.Entries.OrderByDescending(e => e.Time)" Dense="true" Hover="true" Elevation="0" FixedHeader="true" Height="400px"
-                              RowClassFunc="@((e, _) => e.IsError ? "mud-error-text" : string.Empty)">
-                        <HeaderContent>
-                            <MudTh Style="width: 90px;">Zeit</MudTh>
-                            <MudTh>Quelle</MudTh>
-                            <MudTh Class="text-right">Klubs</MudTh>
-                            <MudTh Class="text-right">Kegler</MudTh>
-                            <MudTh Class="text-right">Resultate</MudTh>
-                            <MudTh>Meldung</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd Class="mud-text-secondary">@context.Time.ToLocalTime().ToString("HH:mm:ss")</MudTd>
-                            <MudTd>@context.Source</MudTd>
-                            <MudTd Class="text-right">@(context.Clubs > 0 ? context.Clubs : "")</MudTd>
-                            <MudTd Class="text-right">@(context.Players > 0 ? context.Players : "")</MudTd>
-                            <MudTd Class="text-right">@(context.Results > 0 ? context.Results : "")</MudTd>
-                            <MudTd>@context.Message</MudTd>
-                        </RowTemplate>
-                    </MudTable>
+                    @* Einträge erst beim Aufklappen laden – Läufe haben tausende Zeilen *@
+                    <ImportRunLog RunId="run.Id" Running="@(run.Status == ImportRunStatus.Running)" />
                 </ChildContent>
             </MudExpansionPanel>
         }
