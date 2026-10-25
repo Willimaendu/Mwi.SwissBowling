@@ -43,7 +43,7 @@ public static class PlayerEndpoints
         var own = await db.Results.AsNoTracking()
             .Where(r => r.PlayerId == id)
             .OrderByDescending(r => r.Championship.StartDate)
-            .Select(r => new { r.ChampionshipId, r.Championship.Name, r.Discipline, r.Date, r.Pins, r.Nines, r.Award })
+            .Select(r => new { r.ChampionshipId, r.Championship.Name, r.Discipline, Date = r.Date ?? r.Championship.EndDate, r.Championship.Throws, r.Pins, r.Nines, r.Award })
             .ToListAsync(ct);
 
         // Platzierung innerhalb von Disziplin und Kategorie: alle entsprechenden Resultate dieser Meisterschaften rangieren.
@@ -61,7 +61,7 @@ public static class PlayerEndpoints
         {
             var ranking = rankings[(r.ChampionshipId, r.Discipline)];
             var rank = ranking.FirstOrDefault(x => x.Item.PlayerId == id).Rank;
-            return new PlayerResultDto(r.ChampionshipId, r.Name, r.Discipline, r.Date, r.Pins, r.Nines, r.Award, rank, ranking.Count);
+            return new PlayerResultDto(r.ChampionshipId, r.Name, r.Discipline, r.Date, r.Throws, r.Pins, r.Nines, r.Award, rank, ranking.Count);
         }).ToList();
 
         return TypedResults.Ok(new PlayerDetailDto(player.ToDto(), results));

@@ -1,4 +1,8 @@
 <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg">
     <MudText Typo="Typo.h5" Class="font-weight-bold">@Value</MudText>
     <MudText Typo="Typo.body2" Class="mud-text-secondary">@Label</MudText>
+    @if (Hint is not null)
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block text-truncate" title="@Hint">@Hint</MudText>
+    }
 </MudPaper>

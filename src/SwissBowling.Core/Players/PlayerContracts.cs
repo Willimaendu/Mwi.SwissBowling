@@ -49,11 +49,16 @@ public sealed record PlayerResultDto(
     Guid ChampionshipId,
     string ChampionshipName,
     Discipline Discipline,
-    DateOnly? Date,
+    DateOnly Date,
+    int Throws,
     int Pins,
     int Nines,
     bool Award,
     int Rank,
-    int Participants);
+    int Participants)
+{
+    /// <summary>Holz pro Wurf – die vergleichbare Grösse über Meisterschaften mit unterschiedlicher Wurfzahl.</summary>
+    public double Average => Throws == 0 ? 0 : (double)Pins / Throws;
+}
 
 public sealed record PlayerDetailDto(PlayerDto Player, IReadOnlyList<PlayerResultDto> Results);

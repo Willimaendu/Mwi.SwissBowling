@@ -17,6 +17,7 @@ public sealed class UvwebImporter(AppDbContext db)
 {
     public async Task<ImportSummary> ImportAsync(UvwebChampionship source, IReadOnlyList<UvwebResult> results, CancellationToken ct)
     {
+        results = results.Where(r => IsPlausible(source, r.Pins, r.Nines)).ToList();
         var association = await GetAssociationAsync(source, ct);
         var championship = await UpsertChampionshipAsync(source, association, ct);
 
@@ -56,6 +57,7 @@ public sealed class UvwebImporter(AppDbContext db)
 
     public async Task<ImportSummary> ImportArchiveAsync(UvwebChampionship source, IReadOnlyList<UvwebArchiveResult> results, CancellationToken ct)
     {
+        results = results.Where(r => IsPlausible(source, r.Pins, r.Nines)).ToList();
         var association = await GetAssociationAsync(source, ct);
         var championship = await UpsertChampionshipAsync(source, association, ct);
 
@@ -92,6 +94,13 @@ public sealed class UvwebImporter(AppDbContext db)
         await db.SaveChangesAsync(ct);
         return new ImportSummary($"{source.Name} (Archiv)", newClubs, newPlayers, results.Count);
     }
+
+    /// <summary>
+    /// Ranglisten enthalten teilweise Zwischenstände oder Gesamtwertungen über mehrere Durchgänge (z.B. 6763 Holz bei
+    /// 100 Wurf). Ein Einzelresultat kann höchstens 9 Holz pro Wurf und höchstens einen Neuner pro Wurf haben.
+    /// </summary>
+    private static bool IsPlausible(UvwebChampionship source, int pins, int nines) =>
+        pins <= source.Throws * 9 && nines <= source.Throws;
 
     private async Task<Association> GetAssociationAsync(UvwebChampionship source, CancellationToken ct) =>
         await db.Associations.FirstOrDefaultAsync(a => a.ExternalId == source.UvId, ct)

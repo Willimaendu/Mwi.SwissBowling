@@ -1,0 +1,9 @@
+.chart-card {
+  height: 100%;
+}
+
+/* Diagramm-Beschriftungen in der Seitenschrift statt der MudChart-Voreinstellung */
+::deep .mud-chart text {
+  font-family: inherit;
+  fill: var(--mud-palette-text-secondary);
+}

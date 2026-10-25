@@ -1,0 +1,34 @@
+@* Kennzahlen und Diagramme eines Keglers – alles auf Basis «Holz pro Wurf», damit Meisterschaften mit unterschiedlicher Wurfzahl vergleichbar sind *@
+<MudGrid Spacing="3" Class="mb-4">
+    <MudItem xs="6" md="3"><StatCard Label="Resultate" Value="@Results.Count.ToString()" /></MudItem>
+    <MudItem xs="6" md="3"><StatCard Label="Schnitt pro Wurf" Value="@Format(_average)" Hint="@($"Σ {_totalPins} Holz / {_totalThrows} Wurf")" /></MudItem>
+    <MudItem xs="6" md="3"><StatCard Label="Bester Schnitt" Value="@Format(_best?.Average)" Hint="@_best?.ChampionshipName" /></MudItem>
+    <MudItem xs="6" md="3"><StatCard Label="Podestplätze / Auszeichnungen" Value="@($"{_podium} / {_awards}")" Hint="@($"Auszeichnungsquote {_awardRate:P0}")" /></MudItem>
+</MudGrid>
+
+@if (Results.Count >= 2)
+{
+    <MudGrid Spacing="3" Class="mb-6">
+        <MudItem xs="12" lg="7">
+            <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg chart-card">
+                <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Schnitt pro Wurf im Verlauf</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Letzte @_trend.Count Meisterschaften, chronologisch</MudText>
+                <MudChart ChartType="ChartType.Line" ChartSeries="@_trendSeries" XAxisLabels="@_trendLabels" ChartOptions="@LineOptions" Width="100%" Height="260px" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6" lg="3">
+            <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg chart-card">
+                <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Jahresschnitt</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Holz pro Wurf je Jahr</MudText>
+                <MudChart ChartType="ChartType.Bar" ChartSeries="@_yearSeries" XAxisLabels="@_yearLabels" ChartOptions="@BarOptions" Width="100%" Height="260px" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6" lg="2">
+            <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg chart-card">
+                <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Platzierungen</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Podest · Auszeichnung · ohne</MudText>
+                <MudChart ChartType="ChartType.Donut" InputData="@_placementData" InputLabels="@PlacementLabels" ChartOptions="@DonutOptions" Width="100%" Height="220px" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}

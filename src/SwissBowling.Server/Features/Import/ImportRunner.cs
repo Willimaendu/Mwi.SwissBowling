@@ -56,6 +56,16 @@ public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, ISer
             var uvweb = scope.ServiceProvider.GetRequiredService<UvwebScraper>();
             var ct = CancellationToken.None;
 
+            await log.StepAsync("Bereinigung: Meisterschaften mit unplausiblen Resultaten", async Task<ImportSummary?> () =>
+            {
+                // Zwischenstände/Gesamtwertungen früherer Läufe: betroffene importierte Meisterschaften löschen,
+                // damit sie unten neu geladen werden (aktuelle per HTML, ältere aus dem Archiv).
+                var removed = await db.Championships
+                    .Where(c => c.ExternalId != null && c.Results.Any(r => r.Pins > c.Throws * 9 || r.Nines > c.Throws))
+                    .ExecuteDeleteAsync(ct);
+                return removed == 0 ? null : new ImportSummary($"Bereinigung: {removed} Meisterschaften werden neu geladen", 0, 0, 0);
+            });
+
             await log.StepAsync("Stammdaten: Unterverbände von sfkv.ch laden", async () =>
             {
                 var codes = await sfkv.GetAssociationCodesAsync(ct);
@@ -132,14 +142,17 @@ public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, ISer
     /// </summary>
     private sealed class RunLog(AppDbContext db, Guid runId)
     {
-        public async Task StepAsync(string step, Func<Task> action)
+        public Task StepAsync(string step, Func<Task> action) => StepAsync(step, async () =>
+        {
+            await action();
+            return null;
+        });
+
+        /// <summary>Schritt mit eigenem Protokolleintrag (Zusammenfassung).</summary>
+        public async Task StepAsync(string step, Func<Task<ImportSummary?>> action)
         {
             await db.ImportRuns.Where(r => r.Id == runId).ExecuteUpdateAsync(s => s.SetProperty(r => r.CurrentStep, step));
-            await RunAsync(step, async () =>
-            {
-                await action();
-                return null;
-            });
+            await RunAsync(step, action);
         }
 
         /// <summary>
