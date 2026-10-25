@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
+using SwissBowling.Client.Features.Players.Admin;
 using SwissBowling.Core;
+using SwissBowling.Core.Associations;
 using SwissBowling.Core.Championships;
+using SwissBowling.Core.Clubs;
 using SwissBowling.Core.Players;
 using SwissBowling.Core.Results;
 
@@ -17,6 +21,7 @@ public partial class ResultEntry
     private Discipline _discipline = Discipline.Championship;
     private string _search = string.Empty;
     private bool _onlyWithResult;
+    private PlayerDto? _newPlayer;
 
     private int DirtyCount => _rows.Count(r => r.IsDirty);
 
@@ -33,6 +38,49 @@ public partial class ResultEntry
     {
         var byPlayer = _saved.Where(r => r.Discipline == _discipline).ToDictionary(r => r.PlayerId);
         _rows = _players.Select(p => new Row(p, byPlayer.GetValueOrDefault(p.Id))).ToList();
+    }
+
+    /// <summary>Kegler aller Unterverbände suchen – für Gäste, die nicht zum veranstaltenden UV gehören.</summary>
+    private async Task<IEnumerable<PlayerDto>> SearchPlayersAsync(string? text, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return [];
+        }
+
+        var page = await Api.GetAsync<PagedResult<PlayerDto>>(PlayerRoutes.Search(new PlayerFilter(text), 1, 20), ct);
+        return page.Items.Where(p => _players.All(x => x.Id != p.Id));
+    }
+
+    private void AddSelectedPlayer()
+    {
+        AddPlayer(_newPlayer);
+        _newPlayer = null;
+    }
+
+    /// <summary>Fügt den Kegler oben in die Liste ein; das Resultat wird wie bei allen anderen erfasst und gespeichert.</summary>
+    private void AddPlayer(PlayerDto? player)
+    {
+        if (player is null || _players.Any(p => p.Id == player.Id))
+        {
+            return;
+        }
+
+        _players.Insert(0, player);
+        _rows.Insert(0, new Row(player, null));
+        _search = string.Empty;
+        _onlyWithResult = false;
+    }
+
+    private async Task CreatePlayerAsync()
+    {
+        var associations = await Api.GetAsync<List<AssociationDto>>(AssociationRoutes.Base);
+        var clubs = await Api.GetAsync<List<ClubDto>>(ClubRoutes.Base);
+        var parameters = new DialogParameters<PlayerDialog> { { d => d.Clubs, clubs }, { d => d.Associations, associations } };
+        if (await ShowDialogAsync<PlayerDialog, PlayerDto>("Neuer Kegler", parameters) is { } created)
+        {
+            AddPlayer(created);
+        }
     }
 
     private Task SwitchDisciplineAsync(Discipline discipline)

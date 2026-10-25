@@ -32,6 +32,18 @@
                               Immediate="true" DebounceInterval="300" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 320px;" />
                 <MudSpacer />
                 <MudSwitch T="bool" @bind-Value="_onlyWithResult" Label="Nur mit Resultat" Color="Color.Primary" />
+                @* Gäste anderer Unterverbände oder noch nicht erfasste Kegler zur Liste hinzufügen *@
+                <MudAutocomplete T="PlayerDto" @bind-Value="_newPlayer" @bind-Value:after="AddSelectedPlayer" SearchFunc="SearchPlayersAsync" ToStringFunc="@(p => p?.Name ?? string.Empty)"
+                                 Placeholder="Kegler hinzufügen …" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.PersonAdd"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense" MinCharacters="2" DebounceInterval="300" ResetValueOnEmptyText="true" CoerceText="false" Style="width: 300px;">
+                    <ItemTemplate Context="player">
+                        @player.Name <span class="mud-text-secondary ml-1">@(player.ClubName ?? "Einzelmitglied") · @player.AssociationName</span>
+                    </ItemTemplate>
+                    <NoItemsTemplate>
+                        <MudText Class="px-4 py-2 mud-text-secondary">Kein Kegler gefunden</MudText>
+                    </NoItemsTemplate>
+                </MudAutocomplete>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="CreatePlayerAsync">Neuer Kegler</MudButton>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Kegler</MudTh>
