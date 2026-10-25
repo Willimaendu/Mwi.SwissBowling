@@ -28,6 +28,7 @@ builder.EnrichNpgsqlDbContext<AppDbContext>();
 builder.Services.AddHostedService<DbInitializer>();
 builder.Services.AddJwtIdentity();
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ConcurrencyExceptionHandler>();
 builder.Services.AddOpenApi();
 // API-Antworten (JSON) komprimieren; statische Dateien liefert MapStaticAssets bereits vorkomprimiert.
 builder.Services.AddResponseCompression(o => o.EnableForHttps = true);

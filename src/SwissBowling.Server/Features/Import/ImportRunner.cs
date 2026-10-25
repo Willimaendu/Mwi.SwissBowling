@@ -67,14 +67,24 @@ public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, ISer
             var uvweb = scope.ServiceProvider.GetRequiredService<UvwebScraper>();
             var ct = CancellationToken.None;
 
-            await log.StepAsync("Bereinigung: Meisterschaften mit unplausiblen Resultaten", async Task<ImportSummary?> () =>
+            await log.StepAsync("Bereinigung: unplausible Resultate", async Task<ImportSummary?> () =>
             {
-                // Zwischenstände/Gesamtwertungen früherer Läufe: betroffene importierte Meisterschaften löschen,
-                // damit sie unten neu geladen werden (aktuelle per HTML, ältere aus dem Archiv).
-                var removed = await db.Championships
+                // Zwischenstände/Gesamtwertungen früherer Läufe (über dem Maximum von 9 Holz bzw. 1 Neuner pro Wurf) entfernen.
+                // Bleibt einer importierten Meisterschaft kein Resultat, wird sie gelöscht und unten neu geladen.
+                var affected = await db.Championships
                     .Where(c => c.ExternalId != null && c.Results.Any(r => r.Pins > c.Throws * 9 || r.Nines > c.Throws))
+                    .Select(c => c.Id)
+                    .ToListAsync(ct);
+                if (affected.Count == 0)
+                {
+                    return null;
+                }
+
+                var removed = await db.Results
+                    .Where(r => affected.Contains(r.ChampionshipId) && (r.Pins > r.Championship.Throws * 9 || r.Nines > r.Championship.Throws))
                     .ExecuteDeleteAsync(ct);
-                return removed == 0 ? null : new ImportSummary($"Bereinigung: {removed} Meisterschaften werden neu geladen", 0, 0, 0);
+                var reload = await db.Championships.Where(c => affected.Contains(c.Id) && !c.Results.Any()).ExecuteDeleteAsync(ct);
+                return new ImportSummary($"Bereinigung: {removed} Resultate entfernt, {reload} Meisterschaften werden neu geladen", 0, 0, 0);
             });
 
             await log.StepAsync("Stammdaten: Unterverbände von sfkv.ch laden", async () =>
