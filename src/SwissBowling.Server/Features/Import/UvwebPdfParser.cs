@@ -40,7 +40,8 @@ public static partial class UvwebPdfParser
         {
             if (SectionPattern().IsMatch(line))
             {
-                discipline = Sections.GetValueOrDefault(line);
+                // Unbekannte Abschnitte (SP, AME, KOMB …) setzen die Disziplin auf null – deren Zeilen werden übersprungen.
+                discipline = Sections.TryGetValue(line, out var known) ? known : null;
                 category = null;
                 continue;
             }

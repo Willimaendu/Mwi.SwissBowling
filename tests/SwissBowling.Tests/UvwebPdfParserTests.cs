@@ -26,7 +26,10 @@ public sealed class UvwebPdfParserTests
             "1. Auderset Lydia, Caesar 799 / 30",
             "AME",
             "Kategorie A (11 Teilnehmer)",
-            "1. Soltermann Jürg / Scheidegger Roland, River Boys / River Boys 644 / 31"
+            "1. Soltermann Jürg / Scheidegger Roland, River Boys / River Boys 644 / 31",
+            "SP",
+            "Kategorie A (23 Teilnehmer)",
+            "1. Willimann Josef, Lamm 472 / 28"
         ];
 
         var results = UvwebPdfParser.ParseLines(lines);
