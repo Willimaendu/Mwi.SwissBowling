@@ -10,8 +10,15 @@
               RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler/{args.Item!.Id}"))" Breakpoint="Breakpoint.None"
               Virtualize="true" FixedHeader="true" Height="@AppTheme.TableHeight">
         <ToolBarContent>
-            <MudTextField @bind-Value="_search" Placeholder="Name, Klub oder Lizenz" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                          Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-0 flex-grow-1" />
+            <MudTextField @bind-Value="_search" Placeholder="Name oder Lizenz" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1" />
+            <MudAutocomplete T="ClubDto" @bind-Value="_club" SearchFunc="SearchClubsAsync" ToStringFunc="@(c => c?.Name ?? string.Empty)" Label="Klub"
+                             Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" ResetValueOnEmptyText="true" CoerceText="true" MaxItems="30"
+                             Class="ml-3" Style="max-width: 280px;">
+                <ItemTemplate Context="club">
+                    @club.Name <span class="mud-text-secondary ml-1">@club.City</span>
+                </ItemTemplate>
+            </MudAutocomplete>
             <MudSelect T="PlayerCategory?" @bind-Value="_category" Label="Kategorie" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Class="ml-3" Style="max-width: 180px;">
                 @foreach (var category in Enum.GetValues<PlayerCategory>())
                 {
