@@ -89,6 +89,12 @@ public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, ISer
             await log.StepAsync("Aktuelle Ranglisten von UVweb laden", async () =>
             {
                 var current = await uvweb.GetCurrentAsync(ct);
+                if (current.Count == 0)
+                {
+                    // Auf UVweb gibt es praktisch immer aktuelle Ranglisten – eine leere Liste heisst: Seite nicht wie erwartet geladen.
+                    throw new InvalidOperationException("Keine aktuellen Ranglisten gefunden – Antwort von UVweb entspricht nicht dem erwarteten Aufbau.");
+                }
+
                 await log.ImportAllAsync(current,
                     item => $"{item.Association}: {item.Name}",
                     async item => (Championship: await uvweb.GetChampionshipAsync(item.MsId, item.UvId, ct), Results: await uvweb.GetResultsAsync(item.MsId, item.UvId, item.RanglisteId, ct)),

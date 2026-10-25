@@ -30,15 +30,20 @@ builder.Services.AddJwtIdentity();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
-// Import: Stammdaten von www.sfkv.ch, Resultate von www.uvweb.kegler.ch
-// Beide Quellen antworten zeitweise langsam oder mit 5xx – deshalb grosszügiges Timeout und Wiederholungen.
-// Beide Seiten werden wie von einem Browser abgerufen (UVweb rendert für unbekannte Browser abweichend) und antworten
-// zeitweise langsam oder mit 5xx – der Standard-Resilience-Handler wiederholt solche Anfragen mit Backoff.
+// Import: Stammdaten von www.sfkv.ch, Resultate von www.uvweb.kegler.ch. Beide Quellen antworten zeitweise langsam
+// oder mit 5xx – der Standard-Resilience-Handler wiederholt solche Anfragen mit Backoff.
+// sfkv.ch: Browser-Header, sonst liefert der Cache-Layer 504 für die UV-Seiten.
 builder.Services.AddHttpClient<SfkvScraper>(client => ConfigureBrowserClient(client, "https://www.sfkv.ch/"))
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All })
     .AddStandardResilienceHandler(ConfigureResilience);
-builder.Services.AddHttpClient<UvwebScraper>(client => ConfigureBrowserClient(client, "https://www.uvweb.kegler.ch/"))
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All, UseCookies = true, CookieContainer = new CookieContainer() })
+// UVweb (WebForms): bewusst schlichter Client ohne Accept-Encoding – mit Browser-Headern kam die Ranglistenübersicht leer zurück.
+builder.Services.AddHttpClient<UvwebScraper>(client =>
+    {
+        client.BaseAddress = new Uri("https://www.uvweb.kegler.ch/");
+        client.Timeout = Timeout.InfiniteTimeSpan;
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) SwissBowling/1.0");
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { UseCookies = true, CookieContainer = new CookieContainer() })
     .AddStandardResilienceHandler(ConfigureResilience);
 builder.Services.AddSingleton<ImportRunner>();
 builder.Services.AddHostedService<UvwebSyncService>();
