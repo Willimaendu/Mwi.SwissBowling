@@ -19,8 +19,9 @@ public static class AssociationEndpoints
         group.MapDelete("/{id:guid}", Delete).RequireAuthorization(Policies.Admin);
     }
 
-    private static async Task<IResult> GetAll(AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetAll(IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var items = await db.Associations.AsNoTracking().OrderBy(a => a.Name)
             .Select(a => new { Association = a, Clubs = a.Clubs.Count, Players = a.Players.Count(p => p.IsActive) })
             .ToListAsync(ct);
@@ -28,8 +29,9 @@ public static class AssociationEndpoints
         return TypedResults.Ok(items.Select(x => x.Association.ToDto(x.Clubs, x.Players)));
     }
 
-    private static async Task<IResult> GetDetail(Guid id, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetDetail(Guid id, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var association = await db.Associations.AsNoTracking()
             .Include(a => a.Board)
             .Include(a => a.Venues)
@@ -52,16 +54,18 @@ public static class AssociationEndpoints
             association.Venues.OrderBy(v => v.Zip).Select(v => v.ToDto()).ToList()));
     }
 
-    private static async Task<IResult> Create(SaveAssociationRequest request, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Create(SaveAssociationRequest request, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var association = new Association { Name = request.Name.Trim(), ShortCode = request.ShortCode?.Trim(), Website = request.Website?.Trim() };
         db.Associations.Add(association);
         await db.SaveChangesAsync(ct);
         return TypedResults.Created(AssociationRoutes.ById(association.Id), association.ToDto());
     }
 
-    private static async Task<IResult> Update(Guid id, SaveAssociationRequest request, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Update(Guid id, SaveAssociationRequest request, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var association = await Query(db, tracking: true).FirstOrDefaultAsync(a => a.Id == id, ct);
         if (association is null)
         {
@@ -75,8 +79,9 @@ public static class AssociationEndpoints
         return TypedResults.Ok(association.ToDto());
     }
 
-    private static async Task<IResult> Delete(Guid id, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Delete(Guid id, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var association = await db.Associations.FindAsync([id], ct);
         if (association is null)
         {

@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
 using MudBlazor.Services;
 using Scalar.AspNetCore;
@@ -18,7 +19,12 @@ using SwissBowling.Server.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-builder.AddNpgsqlDbContext<AppDbContext>("swissbowling");
+// DbContextFactory: jede Verwendung erzeugt ihren eigenen, kurzlebigen Kontext (Endpoints, Import im Hintergrund).
+// AddDbContextFactory registriert AppDbContext zusätzlich als Scoped – das braucht ASP.NET Core Identity.
+// EnrichNpgsqlDbContext ergänzt Aspire-Retries, Health Check und Telemetrie.
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("swissbowling") ?? throw new InvalidOperationException("ConnectionString 'swissbowling' fehlt.")));
+builder.EnrichNpgsqlDbContext<AppDbContext>();
 builder.Services.AddHostedService<DbInitializer>();
 builder.Services.AddJwtIdentity();
 builder.Services.AddProblemDetails();
@@ -34,8 +40,6 @@ builder.Services.AddHttpClient<SfkvScraper>(client => ConfigureBrowserClient(cli
 builder.Services.AddHttpClient<UvwebScraper>(client => ConfigureBrowserClient(client, "https://www.uvweb.kegler.ch/"))
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All, UseCookies = true, CookieContainer = new CookieContainer() })
     .AddStandardResilienceHandler(ConfigureResilience);
-builder.Services.AddScoped<MasterDataImporter>();
-builder.Services.AddScoped<UvwebImporter>();
 builder.Services.AddSingleton<ImportRunner>();
 builder.Services.AddHostedService<UvwebSyncService>();
 

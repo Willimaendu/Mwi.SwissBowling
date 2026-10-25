@@ -18,8 +18,9 @@ public static class ClubEndpoints
         group.MapDelete("/{id:guid}", Delete).RequireAuthorization(Policies.Admin);
     }
 
-    private static async Task<IResult> GetAll(AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetAll(IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var clubs = await db.Clubs.AsNoTracking().Include(c => c.Association).OrderBy(c => c.Name)
             .Select(c => new { Club = c, ActivePlayers = c.Players.Count(p => p.IsActive) })
             .ToListAsync(ct);
@@ -27,8 +28,9 @@ public static class ClubEndpoints
         return TypedResults.Ok(clubs.Select(x => x.Club.ToDto(x.ActivePlayers)));
     }
 
-    private static async Task<IResult> Create(SaveClubRequest request, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Create(SaveClubRequest request, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var association = await db.Associations.FindAsync([request.AssociationId], ct);
         if (association is null)
         {
@@ -42,8 +44,9 @@ public static class ClubEndpoints
         return TypedResults.Created(ClubRoutes.ById(club.Id), club.ToDto());
     }
 
-    private static async Task<IResult> Update(Guid id, SaveClubRequest request, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Update(Guid id, SaveClubRequest request, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var club = await db.Clubs.Include(c => c.Association).Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == id, ct);
         if (club is null)
         {
@@ -66,8 +69,9 @@ public static class ClubEndpoints
         return TypedResults.Ok(club.ToDto());
     }
 
-    private static async Task<IResult> Delete(Guid id, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Delete(Guid id, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var club = await db.Clubs.FindAsync([id], ct);
         if (club is null)
         {

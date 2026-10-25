@@ -10,7 +10,7 @@ namespace SwissBowling.Server.Features.Import;
 /// Unterverbände (nur noch nicht importierte Meisterschaften). Die Quellen werden parallel geladen, die Datenbank
 /// sequenziell beschrieben. Es läuft höchstens ein Lauf gleichzeitig.
 /// </summary>
-public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunner> logger)
+public sealed class ImportRunner(IDbContextFactory<AppDbContext> dbFactory, IServiceScopeFactory scopes, ILogger<ImportRunner> logger)
 {
     private const int Parallelism = 4;
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -26,8 +26,7 @@ public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunn
         var run = new ImportRun { IncludeArchive = includeArchive };
         try
         {
-            using var scope = scopes.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await using var db = await dbFactory.CreateDbContextAsync(ct);
             db.ImportRuns.Add(run);
             await db.SaveChangesAsync(ct);
         }
@@ -45,14 +44,16 @@ public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunn
     {
         try
         {
-            using var scope = scopes.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            // Ein Kontext für den ganzen Lauf; der Change Tracker wird nach jedem Schritt geleert.
+            await using var db = await dbFactory.CreateDbContextAsync();
             var log = new RunLog(db, runId);
+            var masterData = new MasterDataImporter(db);
+            var importer = new UvwebImporter(db);
 
+            // Die Scraper sind typisierte HttpClients und werden pro Lauf aufgelöst.
+            using var scope = scopes.CreateScope();
             var sfkv = scope.ServiceProvider.GetRequiredService<SfkvScraper>();
             var uvweb = scope.ServiceProvider.GetRequiredService<UvwebScraper>();
-            var masterData = scope.ServiceProvider.GetRequiredService<MasterDataImporter>();
-            var importer = scope.ServiceProvider.GetRequiredService<UvwebImporter>();
             var ct = CancellationToken.None;
 
             await log.StepAsync("Stammdaten: Unterverbände von sfkv.ch laden", async () =>
@@ -114,8 +115,7 @@ public sealed class ImportRunner(IServiceScopeFactory scopes, ILogger<ImportRunn
     {
         try
         {
-            using var scope = scopes.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await using var db = await dbFactory.CreateDbContextAsync();
             db.ImportLogEntries.Add(new ImportLogEntry { RunId = runId, Source = "Lauf abgebrochen", Message = message, IsError = true });
             await db.SaveChangesAsync();
             await new RunLog(db, runId).FinishAsync(ImportRunStatus.Failed);

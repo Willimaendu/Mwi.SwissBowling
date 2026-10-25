@@ -65,6 +65,7 @@ Die Nutzung der Daten ist mit dem Betreiber (Martin Schumacher) abgesprochen.
 
 * **Ein Server-Prozess** für API und Blazor-Host: kein Proxy, kein CORS. Scalar-UI unter `/scalar` (Development).
 * **Routen zentral in Core**: Server mappt und Client ruft dieselben Konstanten.
+* **`IDbContextFactory<AppDbContext>`** statt direkt injiziertem Kontext: Endpoints und Importlauf erzeugen ihren eigenen, kurzlebigen `DbContext`; `EnrichNpgsqlDbContext` liefert Aspire-Retries, Health Check und Telemetrie.
 * **Validierung einmal definiert**: DataAnnotations an den Request-Records, serverseitig über einen Endpoint-Filter geprüft.
 * **Blazor Interactive Auto** mit Prerendering; JWT im Browser, Client-Dienste auch im Server registriert (`AddClientServices`).
 * **SOLID**: Abstraktionen (`IApiClient`, `ITokenStore`, `ITokenService`), Basisklassen für wiederkehrende Abläufe, eine Aufgabe pro Klasse.

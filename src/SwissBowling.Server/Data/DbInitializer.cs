@@ -6,12 +6,11 @@ using SwissBowling.Server.Auth;
 namespace SwissBowling.Server.Data;
 
 /// <summary>Legt beim Start Schema, Rollen und den initialen Admin an.</summary>
-public sealed class DbInitializer(IServiceProvider services, IConfiguration configuration, ILogger<DbInitializer> logger) : IHostedService
+public sealed class DbInitializer(IServiceProvider services, IDbContextFactory<AppDbContext> factory, IConfiguration configuration, ILogger<DbInitializer> logger) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await using var db = await factory.CreateDbContextAsync(cancellationToken);
 
         if (db.Database.GetMigrations().Any())
         {
@@ -23,6 +22,8 @@ public sealed class DbInitializer(IServiceProvider services, IConfiguration conf
             await db.Database.EnsureCreatedAsync(cancellationToken);
         }
 
+        // Identity-Manager sind scoped und nutzen den von Identity registrierten DbContext.
+        using var scope = services.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
         foreach (var role in Roles.All)
         {

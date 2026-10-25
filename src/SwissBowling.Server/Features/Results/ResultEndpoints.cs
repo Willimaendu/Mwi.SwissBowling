@@ -20,8 +20,9 @@ public static class ResultEndpoints
         app.MapDelete("api/results/{id:guid}", Delete).WithTags("Resultate").RequireAuthorization(Policies.Scorer);
     }
 
-    private static async Task<IResult> GetForChampionship(Guid championshipId, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetForChampionship(Guid championshipId, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var results = await db.Results.AsNoTracking()
             .Include(r => r.Player).ThenInclude(p => p.Club)
             .Where(r => r.ChampionshipId == championshipId)
@@ -32,8 +33,9 @@ public static class ResultEndpoints
     }
 
     /// <summary>Speichert alle übermittelten Resultate (Upsert pro Kegler und Disziplin).</summary>
-    private static async Task<IResult> Save(Guid championshipId, SaveResultsRequest request, ClaimsPrincipal user, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Save(Guid championshipId, SaveResultsRequest request, ClaimsPrincipal user, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var championship = await db.Championships.Include(c => c.Results).FirstOrDefaultAsync(c => c.Id == championshipId, ct);
         if (championship is null)
         {
@@ -78,11 +80,12 @@ public static class ResultEndpoints
         }
 
         await db.SaveChangesAsync(ct);
-        return await GetForChampionship(championshipId, db, ct);
+        return await GetForChampionship(championshipId, factory, ct);
     }
 
-    private static async Task<IResult> Delete(Guid id, ClaimsPrincipal user, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Delete(Guid id, ClaimsPrincipal user, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var result = await db.Results.Include(r => r.Championship).FirstOrDefaultAsync(r => r.Id == id, ct);
         if (result is null)
         {

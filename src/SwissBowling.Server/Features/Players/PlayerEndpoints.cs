@@ -20,8 +20,9 @@ public static class PlayerEndpoints
         group.MapDelete("/{id:guid}", Delete).RequireAuthorization(Policies.Admin);
     }
 
-    private static async Task<IResult> GetAll(bool? includeInactive, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetAll(bool? includeInactive, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var players = await Query(db)
             .Where(p => includeInactive == true || p.IsActive)
             .OrderBy(p => p.Name)
@@ -30,8 +31,9 @@ public static class PlayerEndpoints
         return TypedResults.Ok(players.Select(p => p.ToDto()));
     }
 
-    private static async Task<IResult> GetDetail(Guid id, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetDetail(Guid id, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var player = await Query(db).FirstOrDefaultAsync(p => p.Id == id, ct);
         if (player is null)
         {
@@ -65,8 +67,9 @@ public static class PlayerEndpoints
         return TypedResults.Ok(new PlayerDetailDto(player.ToDto(), results));
     }
 
-    private static async Task<IResult> Create(SavePlayerRequest request, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Create(SavePlayerRequest request, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var (association, club, problem) = await ResolveAsync(request, db, ct);
         if (problem is not null)
         {
@@ -85,8 +88,9 @@ public static class PlayerEndpoints
         return TypedResults.Created(PlayerRoutes.ById(player.Id), player.ToDto());
     }
 
-    private static async Task<IResult> Update(Guid id, SavePlayerRequest request, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Update(Guid id, SavePlayerRequest request, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var player = await Query(db, tracking: true).FirstOrDefaultAsync(p => p.Id == id, ct);
         if (player is null)
         {
@@ -112,8 +116,9 @@ public static class PlayerEndpoints
         return TypedResults.Ok(player.ToDto());
     }
 
-    private static async Task<IResult> Delete(Guid id, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Delete(Guid id, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var player = await db.Players.FindAsync([id], ct);
         if (player is null)
         {

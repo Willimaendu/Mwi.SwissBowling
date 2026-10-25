@@ -16,14 +16,16 @@ public static class ImportEndpoints
         group.MapPost("/", StartRun).WithSummary("Import-/Aktualisierungslauf starten (Stammdaten, aktuelle Ranglisten, optional Archiv)");
     }
 
-    private static async Task<IResult> GetRuns(AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetRuns(IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var runs = await db.ImportRuns.AsNoTracking().Include(r => r.Entries).OrderByDescending(r => r.StartedAt).Take(20).ToListAsync(ct);
         return TypedResults.Ok(runs.Select(r => r.ToDto()));
     }
 
-    private static async Task<IResult> StartRun(StartImportRequest request, ImportRunner runner, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> StartRun(StartImportRequest request, ImportRunner runner, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var id = await runner.StartAsync(request.IncludeArchive, ct);
         if (id is null)
         {

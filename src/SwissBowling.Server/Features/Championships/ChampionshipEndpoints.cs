@@ -20,8 +20,9 @@ public static class ChampionshipEndpoints
         group.MapDelete("/{id:guid}", Delete).RequireAuthorization(Policies.Admin);
     }
 
-    private static async Task<IResult> GetAll(int? year, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetAll(int? year, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         // Resultate nur zählen statt laden – die Liste bleibt auch mit vielen Meisterschaften schnell.
         var items = await db.Championships.AsNoTracking()
             .Include(c => c.Association)
@@ -33,11 +34,15 @@ public static class ChampionshipEndpoints
         return TypedResults.Ok(items.Select(x => x.Championship.ToDto(x.ResultCount)));
     }
 
-    private static async Task<IResult> GetYears(AppDbContext db, CancellationToken ct) =>
-        TypedResults.Ok(await db.Championships.Select(c => c.StartDate.Year).Distinct().OrderByDescending(y => y).ToListAsync(ct));
-
-    private static async Task<IResult> GetDetail(Guid id, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetYears(IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        return TypedResults.Ok(await db.Championships.Select(c => c.StartDate.Year).Distinct().OrderByDescending(y => y).ToListAsync(ct));
+    }
+
+    private static async Task<IResult> GetDetail(Guid id, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var championship = await db.Championships.AsNoTracking()
             .Include(c => c.Association)
             .Include(c => c.Results).ThenInclude(r => r.Player).ThenInclude(p => p.Club)
@@ -59,8 +64,9 @@ public static class ChampionshipEndpoints
         return TypedResults.Ok(new ChampionshipDetailDto(championship.ToDto(), ranking));
     }
 
-    private static async Task<IResult> Create(SaveChampionshipRequest request, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Create(SaveChampionshipRequest request, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         if (Validate(request) is { } problem)
         {
             return problem;
@@ -79,8 +85,9 @@ public static class ChampionshipEndpoints
         return TypedResults.Created(ChampionshipRoutes.ById(championship.Id), championship.ToDto());
     }
 
-    private static async Task<IResult> Update(Guid id, SaveChampionshipRequest request, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Update(Guid id, SaveChampionshipRequest request, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         if (Validate(request) is { } problem)
         {
             return problem;
@@ -108,8 +115,9 @@ public static class ChampionshipEndpoints
         return TypedResults.Ok(championship.ToDto());
     }
 
-    private static async Task<IResult> Delete(Guid id, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> Delete(Guid id, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
     {
+        await using var db = await factory.CreateDbContextAsync(ct);
         var championship = await db.Championships.FindAsync([id], ct);
         if (championship is null)
         {
