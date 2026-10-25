@@ -14,12 +14,12 @@
                           Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1" />
             <MudAutocomplete T="ClubDto" @bind-Value="_club" SearchFunc="SearchClubsAsync" ToStringFunc="@(c => c?.Name ?? string.Empty)" Label="Klub"
                              Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" ResetValueOnEmptyText="true" CoerceText="true" MaxItems="30"
-                             Class="ml-3" Style="max-width: 280px;">
+                             Style="width: 280px;">
                 <ItemTemplate Context="club">
                     @club.Name <span class="mud-text-secondary ml-1">@club.City</span>
                 </ItemTemplate>
             </MudAutocomplete>
-            <MudSelect T="PlayerCategory?" @bind-Value="_category" Label="Kategorie" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Class="ml-3" Style="max-width: 180px;">
+            <MudSelect T="PlayerCategory?" @bind-Value="_category" Label="Kategorie" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="width: 180px;">
                 @foreach (var category in Enum.GetValues<PlayerCategory>())
                 {
                     <MudSelectItem T="PlayerCategory?" Value="@category">@category.Label()</MudSelectItem>

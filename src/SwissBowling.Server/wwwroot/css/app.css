@@ -1,11 +1,18 @@
 /* Seitenweite Ergänzungen zu MudBlazor. Komponentenspezifisches gehört in die jeweilige .razor.css. */
 
 /*
- * MudBlazor reserviert über Eingabefeldern mit Label Platz für das schwebende Label (margin-top).
- * In Toolbars und im Seitenkopf stehen die Felder neben Buttons, Schaltern oder Feldern ohne Label –
- * dort sollen alle Elemente auf einer Linie liegen.
+ * Filterleisten (Tabellen-Toolbar, Seitenkopf-Aktionen): MudBlazor reserviert über Eingabefeldern mit Label Platz
+ * für das schwebende Label (margin-top) – neben Feldern ohne Label, Buttons oder Schaltern stehen sie dann tiefer.
+ * Hier liegen alle Elemente auf einer Linie, mit einheitlichem Abstand.
  */
-.mud-toolbar .mud-input-control,
+.mud-table-toolbar,
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mud-table-toolbar .mud-input-control,
 .page-header-actions .mud-input-control {
   margin-top: 0;
 }
