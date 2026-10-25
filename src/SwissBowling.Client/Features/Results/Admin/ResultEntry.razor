@@ -29,7 +29,7 @@
                     }
                 </MudButtonGroup>
                 <MudTextField @bind-Value="_search" Placeholder="Kegler oder Klub filtern" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                              Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 320px;" />
+                              Immediate="true" DebounceInterval="300" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 320px;" />
                 <MudSpacer />
                 <MudSwitch T="bool" @bind-Value="_onlyWithResult" Label="Nur mit Resultat" Color="Color.Primary" />
             </ToolBarContent>

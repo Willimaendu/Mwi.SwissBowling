@@ -5,21 +5,19 @@
 
 <PageHeader Title="Keglerinnen & Kegler" Subtitle="Alle aktiven Mitglieder mit Klub und Kategorie" />
 
-<LoadingState Loading="Loading" Error="@Error" IsEmpty="_players.Count == 0" EmptyText="Noch keine Kegler erfasst.">
-    <MudTable T="PlayerDto" Items="_players" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches"
-              RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler/{args.Item!.Id}"))" Breakpoint="Breakpoint.None"
-              Virtualize="true" FixedHeader="true" Height="@AppTheme.TableHeight">
+<LoadingState Loading="Loading" Error="@Error">
+    <MudTable @ref="_table" T="PlayerDto" ServerData="LoadPageAsync" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
+              RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler/{args.Item!.Id}"))" Breakpoint="Breakpoint.None" RowsPerPage="50">
         <ToolBarContent>
-            <MudTextField @bind-Value="_search" Placeholder="Name oder Lizenz" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                          Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1" />
-            <MudAutocomplete T="ClubDto" @bind-Value="_club" SearchFunc="SearchClubsAsync" ToStringFunc="@(c => c?.Name ?? string.Empty)" Label="Klub"
-                             Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" ResetValueOnEmptyText="true" CoerceText="true" MaxItems="30"
-                             Style="width: 280px;">
+            <MudTextField @bind-Value="_search" @bind-Value:after="ReloadAsync" Placeholder="Name, Ort oder Lizenz" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true" DebounceInterval="300" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Class="flex-grow-1" />
+            <MudAutocomplete T="ClubDto" @bind-Value="_club" @bind-Value:after="ReloadAsync" SearchFunc="SearchClubsAsync" ToStringFunc="@(c => c?.Name ?? string.Empty)" Label="Klub"
+                             Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" ResetValueOnEmptyText="true" CoerceText="true" MaxItems="30" Style="width: 280px;">
                 <ItemTemplate Context="club">
                     @club.Name <span class="mud-text-secondary ml-1">@club.City</span>
                 </ItemTemplate>
             </MudAutocomplete>
-            <MudSelect T="PlayerCategory?" @bind-Value="_category" Label="Kategorie" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="width: 180px;">
+            <MudSelect T="PlayerCategory?" @bind-Value="_category" @bind-Value:after="ReloadAsync" Label="Kategorie" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="width: 180px;">
                 @foreach (var category in Enum.GetValues<PlayerCategory>())
                 {
                     <MudSelectItem T="PlayerCategory?" Value="@category">@category.Label()</MudSelectItem>
@@ -27,7 +25,7 @@
             </MudSelect>
         </ToolBarContent>
         <HeaderContent>
-            <MudTh><MudTableSortLabel SortBy="new Func<PlayerDto, object>(p => p.Name)" InitialDirection="SortDirection.Ascending">Name</MudTableSortLabel></MudTh>
+            <MudTh>Name</MudTh>
             <MudTh Class="d-none d-sm-table-cell">Ort</MudTh>
             <MudTh>Klub</MudTh>
             <MudTh Class="d-none d-md-table-cell">Unterverband</MudTh>
@@ -40,5 +38,11 @@
             <MudTd Class="d-none d-md-table-cell mud-text-secondary">@context.AssociationName</MudTd>
             <MudTd Class="d-none d-sm-table-cell">@context.Category.Label()</MudTd>
         </RowTemplate>
+        <NoRecordsContent>
+            <MudText Class="pa-6 mud-text-secondary">Keine Kegler gefunden.</MudText>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager RowsPerPageString="Pro Seite" InfoFormat="{first_item}–{last_item} von {all_items}" PageSizeOptions="@([25, 50, 100])" />
+        </PagerContent>
     </MudTable>
 </LoadingState>

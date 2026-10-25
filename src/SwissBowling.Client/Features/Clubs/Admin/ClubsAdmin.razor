@@ -20,7 +20,7 @@
               Virtualize="true" FixedHeader="true" Height="@AppTheme.TableHeight">
         <ToolBarContent>
             <MudTextField @bind-Value="_search" Placeholder="Suchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                          Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 320px;" />
+                          Immediate="true" DebounceInterval="300" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 320px;" />
         </ToolBarContent>
         <HeaderContent>
             <MudTh>Name</MudTh>

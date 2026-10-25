@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SwissBowling.Core;
 using SwissBowling.Core.Championships;
 using SwissBowling.Core.Players;
 using SwissBowling.Server.Auth;
@@ -20,15 +21,42 @@ public static class PlayerEndpoints
         group.MapDelete("/{id:guid}", Delete).RequireAuthorization(Policies.Admin);
     }
 
-    private static async Task<IResult> GetAll(bool? includeInactive, IDbContextFactory<AppDbContext> factory, CancellationToken ct)
+    /// <summary>Gefilterte Seite der Keglerliste; Filter und Paging laufen in der Datenbank.</summary>
+    private static async Task<IResult> GetAll(
+        IDbContextFactory<AppDbContext> factory, CancellationToken ct,
+        string? search, Guid? clubId, Guid? associationId, PlayerCategory? category, bool? includeInactive, int page = 1, int pageSize = 50)
     {
         await using var db = await factory.CreateDbContextAsync(ct);
-        var players = await Query(db)
-            .Where(p => includeInactive == true || p.IsActive)
-            .OrderBy(p => p.Name)
+        var query = Query(db).Where(p => includeInactive == true || p.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search.Trim()}%";
+            query = query.Where(p => EF.Functions.ILike(p.Name, pattern) || EF.Functions.ILike(p.City!, pattern) || EF.Functions.ILike(p.LicenseNumber!, pattern));
+        }
+
+        if (clubId is { } club)
+        {
+            query = query.Where(p => p.ClubId == club);
+        }
+
+        if (associationId is { } association)
+        {
+            query = query.Where(p => p.AssociationId == association);
+        }
+
+        if (category is { } cat)
+        {
+            query = query.Where(p => p.Category == cat);
+        }
+
+        var total = await query.CountAsync(ct);
+        var size = Math.Clamp(pageSize, 1, PlayerRoutes.MaxPageSize);
+        var players = await query.OrderBy(p => p.Name).ThenBy(p => p.Id)
+            .Skip(Math.Max(0, page - 1) * size).Take(size)
             .ToListAsync(ct);
 
-        return TypedResults.Ok(players.Select(p => p.ToDto()));
+        return TypedResults.Ok(new PagedResult<PlayerDto>(players.Select(p => p.ToDto()).ToList(), total));
     }
 
     private static async Task<IResult> GetDetail(Guid id, IDbContextFactory<AppDbContext> factory, CancellationToken ct)

@@ -1,4 +1,6 @@
 using MudBlazor;
+using SwissBowling.Client.Shared.Services;
+using SwissBowling.Core;
 using SwissBowling.Core.Associations;
 using SwissBowling.Core.Clubs;
 using SwissBowling.Core.Players;
@@ -7,7 +9,7 @@ namespace SwissBowling.Client.Features.Players.Admin;
 
 public partial class PlayersAdmin
 {
-    private List<PlayerDto> _players = [];
+    private MudTable<PlayerDto>? _table;
     private List<ClubDto> _clubs = [];
     private List<AssociationDto> _associations = [];
     private string _search = string.Empty;
@@ -17,17 +19,24 @@ public partial class PlayersAdmin
     {
         _associations = await Api.GetAsync<List<AssociationDto>>(AssociationRoutes.Base);
         _clubs = await Api.GetAsync<List<ClubDto>>(ClubRoutes.Base);
-        await ReloadPlayersAsync();
     });
 
-    private async Task ReloadPlayersAsync() => _players = await Api.GetAsync<List<PlayerDto>>(PlayerRoutes.All(includeInactive: true));
+    private async Task<TableData<PlayerDto>> LoadPageAsync(TableState state, CancellationToken ct)
+    {
+        try
+        {
+            var filter = new PlayerFilter(_search, IncludeInactive: _showInactive);
+            var page = await Api.GetAsync<PagedResult<PlayerDto>>(PlayerRoutes.Search(filter, state.Page + 1, state.PageSize));
+            return new TableData<PlayerDto> { Items = page.Items, TotalItems = page.Total };
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+            return new TableData<PlayerDto> { Items = [], TotalItems = 0 };
+        }
+    }
 
-    private bool Matches(PlayerDto player) =>
-        (_showInactive || player.IsActive)
-        && (string.IsNullOrWhiteSpace(_search)
-            || player.Name.Contains(_search, StringComparison.OrdinalIgnoreCase)
-            || (player.ClubName?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false)
-            || (player.LicenseNumber?.Contains(_search, StringComparison.OrdinalIgnoreCase) ?? false));
+    private Task ReloadAsync() => _table?.ReloadServerData() ?? Task.CompletedTask;
 
     private async Task EditAsync(PlayerDto? player)
     {
@@ -40,7 +49,7 @@ public partial class PlayersAdmin
 
         if (await ShowDialogAsync<PlayerDialog, PlayerDto>(player is null ? "Neuer Kegler" : "Kegler bearbeiten", parameters) is not null)
         {
-            await TryAsync(ReloadPlayersAsync);
+            await ReloadAsync();
         }
     }
 
@@ -49,7 +58,7 @@ public partial class PlayersAdmin
         if (await ConfirmAsync("Kegler löschen", $"Soll {player.Name} gelöscht werden? Kegler mit Resultaten können nur deaktiviert werden.")
             && await TryAsync(() => Api.DeleteAsync(PlayerRoutes.ById(player.Id)), "Kegler gelöscht."))
         {
-            await TryAsync(ReloadPlayersAsync);
+            await ReloadAsync();
         }
     }
 }

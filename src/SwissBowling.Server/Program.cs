@@ -29,6 +29,8 @@ builder.Services.AddHostedService<DbInitializer>();
 builder.Services.AddJwtIdentity();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+// API-Antworten (JSON) komprimieren; statische Dateien liefert MapStaticAssets bereits vorkomprimiert.
+builder.Services.AddResponseCompression(o => o.EnableForHttps = true);
 
 // Import: Stammdaten von www.sfkv.ch, Resultate von www.uvweb.kegler.ch. Beide Quellen antworten zeitweise langsam
 // oder mit 5xx – der Standard-Resilience-Handler wiederholt solche Anfragen mit Backoff.
@@ -70,6 +72,7 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseResponseCompression();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();

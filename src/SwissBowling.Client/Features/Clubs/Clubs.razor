@@ -10,7 +10,7 @@
               RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler?club={args.Item!.Id}"))">
         <ToolBarContent>
             <MudTextField @bind-Value="_search" Placeholder="Klub oder Ort suchen" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                          Immediate="true" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 320px;" />
+                          Immediate="true" DebounceInterval="300" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 320px;" />
         </ToolBarContent>
         <HeaderContent>
             <MudTh>Klub</MudTh>

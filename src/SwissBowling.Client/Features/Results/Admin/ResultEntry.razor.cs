@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using SwissBowling.Core;
 using SwissBowling.Core.Championships;
 using SwissBowling.Core.Players;
 using SwissBowling.Core.Results;
@@ -23,7 +24,8 @@ public partial class ResultEntry
     {
         _championship = (await Api.GetAsync<ChampionshipDetailDto>(ChampionshipRoutes.ById(Id))).Championship;
         _saved = await Api.GetAsync<List<ResultDto>>(ResultRoutes.ForChampionship(Id));
-        _players = await Api.GetAsync<List<PlayerDto>>(PlayerRoutes.All(includeInactive: false));
+        // Erfasst werden Kegler des veranstaltenden Unterverbands; Gäste anderer UVs kommen über den Import.
+        _players = (await Api.GetAsync<PagedResult<PlayerDto>>(PlayerRoutes.Search(new PlayerFilter(AssociationId: _championship.AssociationId), 1, PlayerRoutes.MaxPageSize))).Items.ToList();
         BuildRows();
     });
 

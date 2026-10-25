@@ -9,8 +9,44 @@ public static class PlayerRoutes
 
     public static string ById(Guid id) => $"{Base}/{id}";
 
-    public static string All(bool includeInactive) => $"{Base}?includeInactive={includeInactive}";
+    /// <summary>Obergrenze pro Seite (für Listen eines einzelnen Unterverbands, z.B. Resultaterfassung).</summary>
+    public const int MaxPageSize = 1000;
+
+    /// <summary>Serverseitig gefilterte, seitenweise Liste – die Keglerliste wird nie komplett in den Browser geladen.</summary>
+    public static string Search(PlayerFilter filter, int page, int pageSize)
+    {
+        var query = new List<string> { $"page={page}", $"pageSize={pageSize}" };
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            query.Add($"search={Uri.EscapeDataString(filter.Search.Trim())}");
+        }
+
+        if (filter.ClubId is { } club)
+        {
+            query.Add($"clubId={club}");
+        }
+
+        if (filter.AssociationId is { } association)
+        {
+            query.Add($"associationId={association}");
+        }
+
+        if (filter.Category is { } category)
+        {
+            query.Add($"category={(int)category}");
+        }
+
+        if (filter.IncludeInactive)
+        {
+            query.Add("includeInactive=true");
+        }
+
+        return $"{Base}?{string.Join('&', query)}";
+    }
 }
+
+/// <summary>Filter der Keglerliste; Suche über Name, Ort und Lizenznummer.</summary>
+public sealed record PlayerFilter(string? Search = null, Guid? ClubId = null, Guid? AssociationId = null, PlayerCategory? Category = null, bool IncludeInactive = false);
 
 /// <summary>SFKV-Kategorien: A (stärkste), B, C und G (Gäste/Jüngere).</summary>
 public enum PlayerCategory
