@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using SwissBowling.Server.Auth;
 using SwissBowling.Server.Features.Associations;
 using SwissBowling.Server.Features.Championships;
@@ -35,6 +36,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // Die Ids unserer Entitäten vergibt der Code (Guid v7, zeitlich sortierbar). Ohne diese Einstellung gilt ein
+        // Guid-Schlüssel für EF als «wird beim Einfügen generiert»; neue Objekte, die über eine Navigation angehängt
+        // werden, hält EF wegen des bereits gesetzten Schlüssels dann für bestehende (Modified statt Added) und
+        // schickt ein UPDATE ins Leere (DbUpdateConcurrencyException). Identity-Typen bleiben unverändert.
+        foreach (var entityType in builder.Model.GetEntityTypes().Where(t => t.ClrType.Namespace?.StartsWith("SwissBowling.Server.Features", StringComparison.Ordinal) == true))
+        {
+            foreach (var key in entityType.FindPrimaryKey()?.Properties ?? [])
+            {
+                key.ValueGenerated = ValueGenerated.Never;
+            }
+        }
 
         builder.Entity<ImportRun>().HasMany(r => r.Entries).WithOne(e => e.Run).OnDelete(DeleteBehavior.Cascade);
 
