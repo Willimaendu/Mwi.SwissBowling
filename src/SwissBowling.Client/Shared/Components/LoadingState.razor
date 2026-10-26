@@ -1,7 +1,14 @@
 @* Lade-, Fehler- und Leerzustand an einer Stelle *@
 @if (Loading)
 {
-    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" Class="rounded-lg" />
+    @if (LoadingContent is not null)
+    {
+        @LoadingContent
+    }
+    else
+    {
+        <MudPaper Elevation="0" Outlined="true" Class="rounded-lg"><TableSkeleton Columns="@Columns" /></MudPaper>
+    }
 }
 else if (Error is not null)
 {

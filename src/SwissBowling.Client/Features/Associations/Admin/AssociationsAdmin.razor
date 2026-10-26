@@ -10,7 +10,7 @@
     </Actions>
 </PageHeader>
 
-<LoadingState Loading="Loading" Error="@Error" IsEmpty="_items.Count == 0" EmptyText="Noch keine Unterverbände – anlegen oder über den UVweb-Import übernehmen.">
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_items.Count == 0" EmptyText="Noch keine Unterverbände – anlegen oder über den UVweb-Import übernehmen." Columns="6">
     <MudTable T="AssociationDto" Items="_items" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
         <HeaderContent>
             <MudTh>Name</MudTh>

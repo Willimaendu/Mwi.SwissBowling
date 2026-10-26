@@ -11,16 +11,16 @@
     <MudGrid Spacing="3" Class="mb-6">
         <MudItem xs="12" lg="7">
             <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg chart-card">
-                <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Schnitt pro Wurf im Verlauf</MudText>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">Letzte @_trend.Count Meisterschaften, chronologisch</MudText>
-                <MudChart ChartType="ChartType.Line" ChartSeries="@_trendSeries" XAxisLabels="@_trendLabels" ChartOptions="@LineOptions" Width="100%" Height="260px" />
+                <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Schnitt im Verlauf</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Holz auf 100 Wurf · letzte @_trend.Count Meisterschaften, chronologisch</MudText>
+                <MudChart ChartType="ChartType.Line" ChartSeries="@_trendSeries" XAxisLabels="@_trendLabels" ChartOptions="@_lineOptions" Width="100%" Height="260px" />
             </MudPaper>
         </MudItem>
         <MudItem xs="12" md="6" lg="3">
             <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg chart-card">
                 <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Jahresschnitt</MudText>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">Holz pro Wurf je Jahr</MudText>
-                <MudChart ChartType="ChartType.Bar" ChartSeries="@_yearSeries" XAxisLabels="@_yearLabels" ChartOptions="@BarOptions" Width="100%" Height="260px" />
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Holz auf 100 Wurf je Jahr</MudText>
+                <MudChart ChartType="ChartType.Bar" ChartSeries="@_yearSeries" XAxisLabels="@_yearLabels" ChartOptions="@_barOptions" Width="100%" Height="260px" />
             </MudPaper>
         </MudItem>
         <MudItem xs="12" md="6" lg="2">

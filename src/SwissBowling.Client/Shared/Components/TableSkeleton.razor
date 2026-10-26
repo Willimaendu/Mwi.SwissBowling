@@ -1,0 +1,18 @@
+@* Platzhalter in Tabellenform, solange Daten geladen werden – kein Umspringen zwischen leer, «keine Einträge» und Inhalt *@
+<div class="table-skeleton" aria-busy="true" aria-label="Wird geladen">
+    <div class="table-skeleton-header">
+        @for (var i = 0; i < Columns; i++)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Text" Width="@(i == 0 ? "60%" : "45%")" />
+        }
+    </div>
+    @for (var row = 0; row < Rows; row++)
+    {
+        <div class="table-skeleton-row" style="--delay: @(row * 60)ms">
+            @for (var i = 0; i < Columns; i++)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="@(i == 0 ? "75%" : "55%")" />
+            }
+        </div>
+    }
+</div>

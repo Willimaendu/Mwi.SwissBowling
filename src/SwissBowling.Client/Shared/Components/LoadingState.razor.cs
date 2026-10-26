@@ -13,4 +13,9 @@ public partial class LoadingState
     [Parameter] public string EmptyText { get; set; } = "Keine Einträge vorhanden.";
 
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Platzhalter während des Ladens; ohne Angabe ein Tabellen-Skelett mit <see cref="Columns"/> Spalten.</summary>
+    [Parameter] public RenderFragment? LoadingContent { get; set; }
+
+    [Parameter] public int Columns { get; set; } = 5;
 }

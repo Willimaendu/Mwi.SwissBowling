@@ -1,0 +1,24 @@
+@* Platzhalter für Kartenraster (Meisterschaften, Unterverbände) – gleiche Spaltenaufteilung wie die späteren Karten *@
+<MudGrid Spacing="3" aria-busy="true" aria-label="Wird geladen">
+    @for (var i = 0; i < Count; i++)
+    {
+        <MudItem xs="12" sm="@Sm" md="@Md" lg="@Lg">
+            <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg">
+                <div class="d-flex justify-space-between align-start gap-3">
+                    <div class="flex-grow-1">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="60%" Height="22px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" Height="14px" />
+                        @if (ThreeLines)
+                        {
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="45%" Height="14px" />
+                        }
+                    </div>
+                    @if (WithFigure)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="48px" Height="40px" Class="rounded" />
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>

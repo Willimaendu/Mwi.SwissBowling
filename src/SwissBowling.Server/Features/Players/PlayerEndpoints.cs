@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using SwissBowling.Core;
-using SwissBowling.Core.Championships;
 using SwissBowling.Core.Players;
 using SwissBowling.Server.Auth;
 using SwissBowling.Server.Data;
@@ -68,29 +67,18 @@ public static class PlayerEndpoints
             return Problems.NotFound("Kegler");
         }
 
-        var own = await db.Results.AsNoTracking()
+        // Platzierung innerhalb von Disziplin und Kategorie direkt in SQL: Rang = 1 + Anzahl besserer Resultate
+        // (mehr Holz, bei Gleichstand mehr Neuner) – dieselbe Regel wie RankingCalculator, ohne die Felder zu laden.
+        var category = player.Category;
+        var results = await db.Results.AsNoTracking()
             .Where(r => r.PlayerId == id)
             .OrderByDescending(r => r.Championship.StartDate)
-            .Select(r => new { r.ChampionshipId, r.Championship.Name, r.Discipline, Date = r.Date ?? r.Championship.EndDate, r.Championship.Throws, r.Pins, r.Nines, r.Award })
+            .Select(r => new PlayerResultDto(
+                r.ChampionshipId, r.Championship.Name, r.Discipline, r.Date ?? r.Championship.EndDate, r.Championship.Throws, r.Pins, r.Nines, r.Award,
+                1 + db.Results.Count(o => o.ChampionshipId == r.ChampionshipId && o.Discipline == r.Discipline && o.Player.Category == category
+                                           && (o.Pins > r.Pins || (o.Pins == r.Pins && o.Nines > r.Nines))),
+                db.Results.Count(o => o.ChampionshipId == r.ChampionshipId && o.Discipline == r.Discipline && o.Player.Category == category)))
             .ToListAsync(ct);
-
-        // Platzierung innerhalb von Disziplin und Kategorie: alle entsprechenden Resultate dieser Meisterschaften rangieren.
-        var championshipIds = own.Select(r => r.ChampionshipId).ToList();
-        var field = await db.Results.AsNoTracking()
-            .Where(r => championshipIds.Contains(r.ChampionshipId) && r.Player.Category == player.Category)
-            .Select(r => new { r.ChampionshipId, r.Discipline, r.PlayerId, r.Pins, r.Nines })
-            .ToListAsync(ct);
-
-        var rankings = field.GroupBy(r => (r.ChampionshipId, r.Discipline)).ToDictionary(
-            g => g.Key,
-            g => RankingCalculator.Rank(g, r => r.Pins, r => r.Nines));
-
-        var results = own.Select(r =>
-        {
-            var ranking = rankings[(r.ChampionshipId, r.Discipline)];
-            var rank = ranking.FirstOrDefault(x => x.Item.PlayerId == id).Rank;
-            return new PlayerResultDto(r.ChampionshipId, r.Name, r.Discipline, r.Date, r.Throws, r.Pins, r.Nines, r.Award, rank, ranking.Count);
-        }).ToList();
 
         return TypedResults.Ok(new PlayerDetailDto(player.ToDto(), results));
     }

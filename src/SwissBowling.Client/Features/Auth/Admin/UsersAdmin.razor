@@ -10,7 +10,7 @@
     </Actions>
 </PageHeader>
 
-<LoadingState Loading="Loading" Error="@Error" IsEmpty="_users.Count == 0" EmptyText="Keine Benutzer.">
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_users.Count == 0" EmptyText="Keine Benutzer." Columns="3">
     <MudTable T="UserDto" Items="_users" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg">
         <HeaderContent>
             <MudTh>E-Mail</MudTh>

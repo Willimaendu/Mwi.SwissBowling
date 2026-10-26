@@ -1,7 +1,7 @@
 @page "/meisterschaften"
 @inherits ApiPage
 
-<PageTitle>Meisterschaften – Swiss Bowling</PageTitle>
+<PageTitle>Meisterschaften – SFKV</PageTitle>
 
 <PageHeader Title="Meisterschaften" Subtitle="Alle Meisterschaften nach Jahr und Unterverband">
     <Actions>
@@ -21,10 +21,13 @@
 </PageHeader>
 
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="!Filtered.Any()" EmptyText="Keine Meisterschaften gefunden.">
+    <LoadingContent><CardSkeleton Count="8" ThreeLines="true" WithFigure="true" /></LoadingContent>
+    <ChildContent>
     <MudGrid Spacing="3">
         @foreach (var championship in Filtered)
         {
             <MudItem xs="12" md="6"><ChampionshipCard Championship="championship" /></MudItem>
         }
     </MudGrid>
+    </ChildContent>
 </LoadingState>

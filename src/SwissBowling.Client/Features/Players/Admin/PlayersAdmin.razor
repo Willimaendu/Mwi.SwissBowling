@@ -15,7 +15,7 @@
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">Bitte zuerst einen <MudLink Href="/admin/unterverbaende">Unterverband</MudLink> anlegen.</MudAlert>
 }
 
-<LoadingState Loading="Loading" Error="@Error">
+<LoadingState Loading="Loading" Error="@Error" Columns="7">
     <MudTable @ref="_table" T="PlayerDto" ServerData="LoadPageAsync" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" RowsPerPage="50">
         <ToolBarContent>
             <MudTextField @bind-Value="_search" @bind-Value:after="ReloadAsync" Placeholder="Name, Ort oder Lizenz" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
@@ -44,6 +44,9 @@
                 <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteAsync(context))" />
             </MudTd>
         </RowTemplate>
+        <LoadingContent>
+            <TableSkeleton Rows="10" Columns="6" />
+        </LoadingContent>
         <NoRecordsContent>
             <MudText Class="pa-6 mud-text-secondary">Keine Kegler gefunden.</MudText>
         </NoRecordsContent>

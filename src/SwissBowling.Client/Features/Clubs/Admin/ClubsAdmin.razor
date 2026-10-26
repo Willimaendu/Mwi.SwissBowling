@@ -15,7 +15,7 @@
     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-4">Bitte zuerst einen <MudLink Href="/admin/unterverbaende">Unterverband</MudLink> anlegen.</MudAlert>
 }
 
-<LoadingState Loading="Loading" Error="@Error" IsEmpty="_clubs.Count == 0" EmptyText="Noch keine Klubs.">
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_clubs.Count == 0" EmptyText="Noch keine Klubs." Columns="7">
     <MudTable T="ClubDto" Items="_clubs" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches"
               Virtualize="true" FixedHeader="true" Height="@AppTheme.TableHeight">
         <ToolBarContent>

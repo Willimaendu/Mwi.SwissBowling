@@ -1,11 +1,11 @@
 @page "/klubs"
 @inherits ApiPage
 
-<PageTitle>Klubs – Swiss Bowling</PageTitle>
+<PageTitle>Klubs – SFKV</PageTitle>
 
 <PageHeader Title="Klubs" Subtitle="Alle Kegelklubs nach Unterverband" />
 
-<LoadingState Loading="Loading" Error="@Error" IsEmpty="_clubs.Count == 0" EmptyText="Noch keine Klubs erfasst.">
+<LoadingState Loading="Loading" Error="@Error" IsEmpty="_clubs.Count == 0" EmptyText="Noch keine Klubs erfasst." Columns="6">
     <MudTable T="ClubDto" Items="_clubs" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg" Filter="Matches" GroupBy="_groupByAssociation"
               RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/kegler?club={args.Item!.Id}"))">
         <ToolBarContent>

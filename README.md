@@ -1,4 +1,4 @@
-# Swiss Bowling – Meisterschaftsbetrieb & Resultaterfassung
+# SFKV – Meisterschaftsbetrieb & Resultaterfassung
 
 Meisterschaften im Schweizer Kegeln (SFKV) verwalten, Resultate erfassen, Ranglisten öffentlich einsehen – inklusive Import
 der aktuell auf [www.uvweb.kegler.ch](https://www.uvweb.kegler.ch) publizierten Ranglisten.
@@ -8,7 +8,7 @@ der aktuell auf [www.uvweb.kegler.ch](https://www.uvweb.kegler.ch) publizierten 
 | `SwissBowling.AppHost` | .NET Aspire: PostgreSQL (Container) + Server, Dashboard mit Telemetrie |
 | `SwissBowling.Core` | Alles, was Server **und** Client nutzen: Verträge (DTOs/Requests mit DataAnnotations), API-Routen, Enums, Rangierung |
 | `SwissBowling.Server` | REST API (Minimal APIs), EF Core + Identity + JWT, UVweb-Import, Blazor-Host (Prerendering, Interactive Server) |
-| `SwissBowling.Client` | Blazor WebAssembly: Seiten, Layouts, API-Client, Anmeldung |
+| `SwissBowling.Client` | Razor-Klassenbibliothek: Seiten, Layouts, API-Client, Anmeldung (gerendert im Server) |
 | `SwissBowling.Tests` | xUnit-Tests (Rangierung, PDF-Parser) |
 
 Paketversionen werden zentral und **exakt** in `Directory.Packages.props` gepflegt (Central Package Management, keine Floating Versions).
@@ -67,7 +67,7 @@ Die Nutzung der Daten ist mit dem Betreiber (Martin Schumacher) abgesprochen.
 * **Routen zentral in Core**: Server mappt und Client ruft dieselben Konstanten.
 * **`IDbContextFactory<AppDbContext>`** statt direkt injiziertem Kontext: Endpoints und Importlauf erzeugen ihren eigenen, kurzlebigen `DbContext`; `EnrichNpgsqlDbContext` liefert Aspire-Retries, Health Check und Telemetrie.
 * **Validierung einmal definiert**: DataAnnotations an den Request-Records, serverseitig über einen Endpoint-Filter geprüft.
-* **Blazor Interactive Auto** mit Prerendering; JWT im Browser, Client-Dienste auch im Server registriert (`AddClientServices`).
+* **Blazor Interactive Server** mit Prerendering: kein WebAssembly-Download, sofort interaktiv; JWT im Browser (localStorage), UI-Komponenten und Dienste im Client-Projekt (`AddClientServices`).
 * **SOLID**: Abstraktionen (`IApiClient`, `ITokenStore`, `ITokenService`), Basisklassen für wiederkehrende Abläufe, eine Aufgabe pro Klasse.
 
 ## Starten
@@ -80,6 +80,20 @@ dotnet run --project src/SwissBowling.AppHost
 
 Development-Login: `admin@swissbowling.local` / `Admin123!`. Erster Schritt im Admin: `/admin/import` → «Import starten».
 In Produktion `Jwt__SigningKey` (≥ 32 Zeichen) und `Seed__AdminPassword` als Secrets setzen.
+
+## Betrieb mit mehreren Replikas
+
+Die API ist zustandslos (JWT), die Datenbank der einzige gemeinsame Zustand; der Importlauf ist über die Datenbank auf eine
+Instanz begrenzt. Für Blazor Interactive Server gelten zwei Bedingungen:
+
+* **Sticky Sessions** am Load Balancer / Ingress (Cookie-Affinity): Jeder Browser-Tab hält eine SignalR-Verbindung zu einer
+  Instanz; Verbindungsaufbau und WebSocket müssen bei derselben landen. Alternative ohne Affinity: Azure SignalR Service oder ein
+  Redis-Backplane.
+* **Gemeinsamer Data-Protection-Key-Ring**: `DataProtection__KeysPath` auf ein von allen Replikas geteiltes Volume zeigen lassen
+  (Antiforgery und Circuit-Handshake). Ohne diese Einstellung (Entwicklung) nutzt jede Instanz ihren lokalen Speicher.
+
+Fällt eine Instanz aus, verlieren die darauf verbundenen Tabs nur ihren UI-Zustand (ungespeicherte Eingaben); Blazor verbindet
+nach einem Reload neu. Gespeicherte Daten sind nicht betroffen.
 
 Migrationen (ohne sie legt der Start das Schema per `EnsureCreated` an):
 

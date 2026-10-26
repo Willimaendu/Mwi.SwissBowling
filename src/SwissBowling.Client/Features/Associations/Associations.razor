@@ -1,11 +1,13 @@
 @page "/unterverbaende"
 @inherits ApiPage
 
-<PageTitle>Unterverbände – Swiss Bowling</PageTitle>
+<PageTitle>Unterverbände – SFKV</PageTitle>
 
 <PageHeader Title="Unterverbände" Subtitle="Die regionalen Unterverbände der SFKV mit Klubs, Mitgliedern und Kegelbahnen" />
 
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="_items.Count == 0" EmptyText="Noch keine Unterverbände erfasst.">
+    <LoadingContent><CardSkeleton Count="12" Sm="6" Md="6" Lg="4" /></LoadingContent>
+    <ChildContent>
     <MudGrid Spacing="3">
         @foreach (var association in _items)
         {
@@ -17,4 +19,5 @@
             </MudItem>
         }
     </MudGrid>
+    </ChildContent>
 </LoadingState>

@@ -29,6 +29,11 @@
 }
 
 <LoadingState Loading="Loading" Error="@Error" IsEmpty="_runs.Count == 0" EmptyText="Noch kein Importlauf.">
+    <LoadingContent>
+        @* Zeilen in der Form der Aufklapp-Panels: Status, Datum, Zusammenfassung *@
+        <MudPaper Elevation="0" Outlined="true" Class="rounded-lg"><TableSkeleton Rows="5" Columns="3" /></MudPaper>
+    </LoadingContent>
+    <ChildContent>
     <MudExpansionPanels MultiExpansion="false" Elevation="0" Outlined="true" Class="rounded-lg">
         @foreach (var run in _runs)
         {
@@ -61,4 +66,5 @@
             </MudExpansionPanel>
         }
     </MudExpansionPanels>
+    </ChildContent>
 </LoadingState>

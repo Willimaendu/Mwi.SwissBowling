@@ -20,6 +20,9 @@
         <MudTd Class="text-right">@(context.Results > 0 ? context.Results : "")</MudTd>
         <MudTd>@context.Message</MudTd>
     </RowTemplate>
+    <LoadingContent>
+        <TableSkeleton Rows="6" Columns="6" />
+    </LoadingContent>
     <NoRecordsContent>
         <MudText Class="pa-4 mud-text-secondary">@(_errorsOnly ? "Keine Fehler." : "Noch keine Einträge.")</MudText>
     </NoRecordsContent>

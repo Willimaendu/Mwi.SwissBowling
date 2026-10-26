@@ -5,6 +5,8 @@
 <PageTitle>@(_detail?.Championship.Name ?? "Meisterschaft") – Administration</PageTitle>
 
 <LoadingState Loading="Loading" Error="@Error">
+    <LoadingContent><DetailSkeleton WithStats="false" WithTabs="true" TableColumns="6" /></LoadingContent>
+    <ChildContent>
     @if (_detail is { } detail)
     {
         <PageHeader Title="@detail.Championship.Name"
@@ -36,4 +38,5 @@
             <RankingTabs Ranking="detail.Ranking" />
         }
     }
+    </ChildContent>
 </LoadingState>

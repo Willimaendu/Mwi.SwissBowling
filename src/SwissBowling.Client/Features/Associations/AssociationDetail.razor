@@ -1,9 +1,11 @@
 @page "/unterverbaende/{Id:guid}"
 @inherits ApiPage
 
-<PageTitle>@(_detail?.Association.Name ?? "Unterverband") – Swiss Bowling</PageTitle>
+<PageTitle>@(_detail?.Association.Name ?? "Unterverband") – SFKV</PageTitle>
 
 <LoadingState Loading="Loading" Error="@Error">
+    <LoadingContent><DetailSkeleton WithStats="false" WithTabs="true" TableColumns="5" /></LoadingContent>
+    <ChildContent>
     @if (_detail is { } detail)
     {
         <PageHeader Title="@($"UV {detail.Association.Name}")"
@@ -93,4 +95,5 @@
             </MudTabPanel>
         </MudTabs>
     }
+    </ChildContent>
 </LoadingState>

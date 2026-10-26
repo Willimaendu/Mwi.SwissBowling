@@ -1,16 +1,22 @@
 @page "/kegler/{Id:guid}"
 @inherits ApiPage
 
-<PageTitle>@(_detail?.Player.Name ?? "Kegler") – Swiss Bowling</PageTitle>
+<PageTitle>@(_detail?.Player.Name ?? "Kegler") – SFKV</PageTitle>
 
 <LoadingState Loading="Loading" Error="@Error">
+    <LoadingContent><DetailSkeleton WithCharts="true" TableColumns="8" /></LoadingContent>
+    <ChildContent>
     @if (_detail is { } detail)
     {
         <PageHeader Title="@detail.Player.Name"
                     Subtitle="@($"{detail.Player.ClubName ?? "Einzelmitglied"} · UV {detail.Player.AssociationName} · {detail.Player.Category.Label()}{(detail.Player.City is { } city ? $" · {city}" : "")}")"
                     Breadcrumbs="@([new("Kegler", "/kegler"), new(detail.Player.Name, null, disabled: true)])" />
 
-        <PlayerStats Results="detail.Results" />
+        @* Im Server-Modus würde eine Render-Exception den ganzen Circuit beenden – die Statistik bleibt deshalb isoliert *@
+        <ErrorBoundary>
+            <ChildContent><PlayerStats Results="detail.Results" /></ChildContent>
+            <ErrorContent><MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">Die Statistik konnte nicht dargestellt werden.</MudAlert></ErrorContent>
+        </ErrorBoundary>
 
         <MudTable T="PlayerResultDto" Items="detail.Results" Hover="true" Dense="true" Elevation="0" Outlined="true" Class="rounded-lg"
                   RowClass="cursor-pointer" OnRowClick="@(args => Navigation.NavigateTo($"/meisterschaften/{args.Item!.ChampionshipId}?kegler={detail.Player.Id}"))">
@@ -46,4 +52,5 @@
             </NoRecordsContent>
         </MudTable>
     }
+    </ChildContent>
 </LoadingState>

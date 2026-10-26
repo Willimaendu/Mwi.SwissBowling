@@ -1,7 +1,7 @@
 @page "/kegler"
 @inherits ApiPage
 
-<PageTitle>Kegler – Swiss Bowling</PageTitle>
+<PageTitle>Kegler – SFKV</PageTitle>
 
 <PageHeader Title="Keglerinnen & Kegler" Subtitle="Alle aktiven Mitglieder mit Klub und Kategorie" />
 
@@ -38,6 +38,9 @@
             <MudTd Class="d-none d-md-table-cell mud-text-secondary">@context.AssociationName</MudTd>
             <MudTd Class="d-none d-sm-table-cell">@context.Category.Label()</MudTd>
         </RowTemplate>
+        <LoadingContent>
+            <TableSkeleton Rows="10" />
+        </LoadingContent>
         <NoRecordsContent>
             <MudText Class="pa-6 mud-text-secondary">Keine Kegler gefunden.</MudText>
         </NoRecordsContent>

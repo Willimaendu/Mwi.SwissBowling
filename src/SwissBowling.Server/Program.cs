@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Net;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
 using MudBlazor.Services;
@@ -51,8 +53,17 @@ builder.Services.AddHttpClient<UvwebScraper>(client =>
 builder.Services.AddSingleton<ImportRunner>();
 builder.Services.AddHostedService<UvwebSyncService>();
 
-// Blazor (Interactive Auto) – Prerendering und Interactive Server laufen hier und brauchen die Client-Dienste.
-builder.Services.AddRazorComponents().AddInteractiveServerComponents().AddInteractiveWebAssemblyComponents();
+// Blazor Interactive Server: kein WebAssembly-Download, sofort interaktiv; die UI-Komponenten liegen im Client-Projekt.
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.GetCultureInfo("de-CH");
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+
+// Mehrere Replikas: Antiforgery- und Circuit-Schlüssel müssen allen Instanzen bekannt sein (gemeinsamer Key-Ring,
+// z.B. ein geteiltes Volume). Ohne DataProtection:KeysPath (Entwicklung) bleibt der lokale Standardspeicher.
+var dataProtection = builder.Services.AddDataProtection().SetApplicationName("SwissBowling");
+if (builder.Configuration["DataProtection:KeysPath"] is { Length: > 0 } keysPath)
+{
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+}
 builder.Services.AddMudServices();
 builder.Services.AddClientServices();
 
@@ -63,9 +74,8 @@ app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseWebAssemblyDebugging();
     app.MapOpenApi();
-    app.MapScalarApiReference(o => o.WithTitle("Swiss Bowling API"));
+    app.MapScalarApiReference(o => o.WithTitle("SFKV API"));
 }
 else
 {
@@ -92,7 +102,6 @@ api.MapImport();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Routes).Assembly);
 
 await app.RunAsync();

@@ -1,9 +1,11 @@
 @page "/meisterschaften/{Id:guid}"
 @inherits ApiPage
 
-<PageTitle>@(_detail?.Championship.Name ?? "Meisterschaft") – Swiss Bowling</PageTitle>
+<PageTitle>@(_detail?.Championship.Name ?? "Meisterschaft") – SFKV</PageTitle>
 
 <LoadingState Loading="Loading" Error="@Error">
+    <LoadingContent><DetailSkeleton WithTabs="true" TableColumns="6" /></LoadingContent>
+    <ChildContent>
     @if (_detail is { } detail)
     {
         <PageHeader Title="@detail.Championship.Name"
@@ -26,4 +28,5 @@
             <RankingTabs Ranking="detail.Ranking" HighlightPlayerId="HighlightPlayerId" />
         }
     }
+    </ChildContent>
 </LoadingState>

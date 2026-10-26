@@ -6,6 +6,8 @@
 
 <div class="result-entry">
 <LoadingState Loading="Loading" Error="@Error">
+    <LoadingContent><DetailSkeleton WithStats="false" TableColumns="7" /></LoadingContent>
+    <ChildContent>
     @if (_championship is { } championship)
     {
         <PageHeader Title="@($"{championship.Name} – Resultaterfassung")"
@@ -65,5 +67,6 @@
             </RowTemplate>
         </MudTable>
     }
+    </ChildContent>
 </LoadingState>
 </div>

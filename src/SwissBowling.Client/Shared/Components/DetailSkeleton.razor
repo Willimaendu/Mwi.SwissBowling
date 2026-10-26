@@ -1,0 +1,43 @@
+@* Platzhalter für Detailseiten (Kegler, Meisterschaft, Unterverband): Titel, optional Kennzahlen, Diagramme oder Reiter, Tabelle –
+   in der Form der späteren Seite, damit beim Einblenden nichts springt *@
+<div class="detail-skeleton" aria-busy="true" aria-label="Wird geladen">
+    <MudSkeleton SkeletonType="SkeletonType.Text" Width="120px" Height="14px" />
+    <MudSkeleton SkeletonType="SkeletonType.Text" Width="40%" Height="34px" Class="mt-1" />
+    <MudSkeleton SkeletonType="SkeletonType.Text" Width="55%" Height="18px" Class="mb-6" />
+
+    @if (WithStats)
+    {
+        <MudGrid Spacing="3" Class="mb-4">
+            @for (var i = 0; i < 4; i++)
+            {
+                <MudItem xs="6" md="3">
+                    <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg">
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="50%" Height="28px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Text" Width="70%" Height="14px" />
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+
+    @if (WithCharts)
+    {
+        <MudGrid Spacing="3" Class="mb-6">
+            <MudItem xs="12" lg="7"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="rounded-lg" /></MudItem>
+            <MudItem xs="12" md="6" lg="3"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="rounded-lg" /></MudItem>
+            <MudItem xs="12" md="6" lg="2"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="rounded-lg" /></MudItem>
+        </MudGrid>
+    }
+
+    <MudPaper Elevation="0" Outlined="true" Class="rounded-lg">
+        @if (WithTabs)
+        {
+            <div class="d-flex gap-6 px-4 pt-3 pb-2" style="border-bottom: 1px solid var(--mud-palette-lines-default);">
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="110px" Height="20px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="90px" Height="20px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Width="130px" Height="20px" />
+            </div>
+        }
+        <TableSkeleton Rows="6" Columns="@TableColumns" />
+    </MudPaper>
+</div>
